@@ -1,5 +1,4 @@
-[     2][I][esp32-hal-psram.c:102] psramAddToHeap(): PSRAM added to the heap.
-=========== Before Setup Start ===========
+[    21][I][esp32-hal-psram.c:102] psramAddToHeap(): PSRAM added=========== Before Setup Start ===========
 Chip Info:
 ------------------------------------------
   Model             : ESP32-P4
@@ -18,10 +17,10 @@ Chip Info:
 ------------------------------------------
 INTERNAL Memory Info:
 ------------------------------------------
-  Total Size        :   514856 B ( 502.8 KB)
-  Free Bytes        :   476316 B ( 465.2 KB)
+  Total Size        :   514760 B ( 502.7 KB)
+  Free Bytes        :   476220 B ( 465.1 KB)
   Allocated Bytes   :    32500 B (  31.7 KB)
-  Minimum Free Bytes:   472276 B ( 461.2 KB)
+  Minimum Free Bytes:   472180 B ( 461.1 KB)
   Largest Free Block:   385012 B ( 376.0 KB)
 ------------------------------------------
 SPIRAM Memory Info:
@@ -66,64 +65,65 @@ Board Info:
   Arduino Variant   : esp32p4
   Arduino FQBN      : esp32:esp32:esp32p4:UploadSpeed=921600,USBMode=hwcdc,CDCOnBoot=cdc,MSCOnBoot=default,DFUOnBoot=default,UploadMode=default,CPUFreq=360,FlashFreq=80,FlashMode=qio,FlashSize=16M,PartitionScheme=custom,DebugLevel=debug,PSRAM=enabled,EraseFlash=all,JTAGAdapter=default
 ============ Before Setup End ============
-[   134][I][esp32-hal-periman.c:141] perimanSetPinBus(): Pin 24 already has type USB_DM (45) with bus 0x4ff2767c
-[   134][I][esp32-hal-periman.c:141] perimanSetPinBus(): Pin 25 already has type USB_DP (46) with bus 0x4ff2767c
+[  1343][I][esp32-hal-periman.c:141] perimanSetPinBus(): Pin 24 already has type USB_DM (45) with bus 0x4ff276d8
+[  1343][I][esp32-hal-periman.c:141] perimanSetPinBus(): Pin 25 already has type USB_DP (46) with bus 0x4ff276d8
 
 === ESP32P4 Gallery Debug Output ===
 Starting initialization sequence with enhanced error handling...
 Initializing file system using LittleFS...
-E (1134) esp_littlefs: Failed to initialize LittleFS
-[  1135][E][LittleFS.cpp:79] begin(): Mounting LittleFS failed! Error: 261
+E (2323) esp_littlefs: partition "spiffs" could not be found
+E (2324) esp_littlefs: Failed to initialize LittleFS
+[  2345][E][LittleFS.cpp:79] begin(): Mounting LittleFS failed! Error: 261
 LittleFS mount failed, formatting...
-E (1134) task_wdt: esp_task_wdt_status(763): TWDT was never initialized
-[  1140][E][esp32-hal-misc.c:162] disableCore0WDT(): Failed to remove Core 0 IDLE task from WDT
-E (1139) esp_littlefs: partition "spiffs" could not be found
-E (1144) esp_littlefs: Failed to initialize to format.
-[  1151][E][LittleFS.cpp:104] format(): Formatting LittleFS failed! Error: 261
+E (2324) task_wdt: esp_task_wdt_status(763): TWDT was never initialized
+[  2350][E][esp32-hal-misc.c:162] disableCore0WDT(): Failed to remove Core 0 IDLE task from WDT
+E (2329) esp_littlefs: partition "spiffs" could not be found
+E (2334) esp_littlefs: Failed to initialize to format.
+[  2360][E][LittleFS.cpp:104] format(): Formatting LittleFS failed! Error: 261
 LittleFS initialization failed - continuing without file system
 
 ------- Logger Initialized -------
-[  0:00:01.152][  INFO][#000000] Logger initialized: level=1, serial=ON, flash=OFF
+[  0:00:02.361][  INFO][#000000] Logger initialized: level=1, serial=ON, flash=OFF
 [DEBUG] Log level set to 1
 [DEBUG] Serial debug output enabled
-[  0:00:01.155][  INFO][#000001] ====================================
-[  0:00:01.156][  INFO][#000002] ESP32P4 Image Gallery Starting
-[  0:00:01.157][  INFO][#000003] Date: 2025-06-17 10:56:36 UTC
-[  0:00:01.158][  INFO][#000004] User: Chamil1983
-[  0:00:01.159][  INFO][#000005] ====================================
-[  0:00:01.160][  INFO][#000006] System mutexes initialized
-[  0:00:01.161][  INFO][#000007] Initializing enhanced watchdog system
+[  0:00:02.364][  INFO][#000001] ====================================
+[  0:00:02.365][  INFO][#000002] ESP32P4 Image Gallery Starting
+[  0:00:02.366][  INFO][#000003] Date: 2025-06-17 10:56:36 UTC
+[  0:00:02.367][  INFO][#000004] User: Chamil1983
+[  0:00:02.368][  INFO][#000005] ====================================
+[  0:00:02.369][  INFO][#000006] System mutexes initialized
+[  0:00:02.370][  INFO][#000007] Initializing enhanced watchdog system
 Setting up watchdog with critical error protection...
-E (1160) task_wdt: esp_task_wdt_deinit(642): TWDT was never initialized
+E (2350) task_wdt: esp_task_wdt_deinit(642): TWDT was never initialized
 Main task subscribed to watchdog
 Watchdog initialized with 30 second timeout, panic mode: OFF
-[  0:00:01.262][  INFO][#000008] Watchdog initialized successfully
-[  0:00:01.263][  INFO][#000009] Initializing LCD with up to 2 attempts...
-[  0:00:01.264][  INFO][#000010] Setting up LCD...
-[  1265][I][jd9365_lcd.cpp:50] example_bsp_enable_dsi_phy_power(): [example] MIPI DSI PHY Powered on
-[  1267][I][jd9365_lcd.cpp:83] begin(): [example] Install MIPI DSI LCD control panel
-[  0:00:01.553][  INFO][#000011] LCD initialized successfully with backlight ON
-[  0:00:01.554][  INFO][#000012] LCD initialized successfully on attempt 1
-[  0:00:01.555][  INFO][#000013] Initializing Touch with up to 2 attempts...
-[  0:00:01.556][  INFO][#000014] Setting up Touch...
-[  0:00:02.634][  INFO][#000015] Touch initialized successfully
-[  0:00:02.635][  INFO][#000016] Touch initialized successfully on attempt 1
-[  0:00:02.636][  INFO][#000017] Initializing SD Card with up to 3 attempts...
-[  0:00:02.637][  INFO][#000018] Setting up SD Card with robust initialization...
-[  0:00:02.638][  INFO][#000019] Waiting for power stabilization...
-[  0:00:04.639][  INFO][#000020] Resetting SD pins...
-[  0:00:04.740][  INFO][#000021] Ensuring SD_MMC is deinitialized...
-[  0:00:05.241][  INFO][#000022] Configuring SD pins...
-[  0:00:05.242][  INFO][#000023] SD init attempt 1: 1-bit mode at 125KHz (ultra conservative)
-[  0:00:05.907][  INFO][#000024] Validating SD card...
-[  0:00:05.909][  INFO][#000025] SD Card Type: SDHC
-[  0:00:05.910][  INFO][#000026] SD Card Size: 128000MB
-[  0:00:05.911][  INFO][#000027] SD card initialized successfully in ultra-conservative mode
-[  0:00:05.912][  INFO][#000028] SD Card initialized successfully on attempt 1
-[  0:00:05.913][  INFO][#000029] Initializing WiFi with up to 2 attempts...
-[  0:00:05.914][  INFO][#000030] Setting up WiFi in AP mode with enhanced stability...
-[  5915][W][STA.cpp:543] disconnect(): STA already disconnected.
-sdio_mempool_create free:31937496 min-free:31937496 lfb-def:31457268 lfb-8bit:31457268
+[  0:00:02.471][  INFO][#000008] Watchdog initialized successfully
+[  0:00:02.472][  INFO][#000009] Initializing LCD with up to 2 attempts...
+[  0:00:02.473][  INFO][#000010] Setting up LCD...
+[  2474][I][jd9365_lcd.cpp:50] example_bsp_enable_dsi_phy_power(): [example] MIPI DSI PHY Powered on
+[  2476][I][jd9365_lcd.cpp:83] begin(): [example] Install MIPI DSI LCD control panel
+[  0:00:02.763][  INFO][#000011] LCD initialized successfully with backlight ON
+[  0:00:02.764][  INFO][#000012] LCD initialized successfully on attempt 1
+[  0:00:02.765][  INFO][#000013] Initializing Touch with up to 2 attempts...
+[  0:00:02.766][  INFO][#000014] Setting up Touch...
+[  0:00:03.845][  INFO][#000015] Touch initialized successfully
+[  0:00:03.846][  INFO][#000016] Touch initialized successfully on attempt 1
+[  0:00:03.847][  INFO][#000017] Initializing SD Card with up to 3 attempts...
+[  0:00:03.848][  INFO][#000018] Setting up SD Card with robust initialization...
+[  0:00:03.849][  INFO][#000019] Waiting for power stabilization...
+[  0:00:05.850][  INFO][#000020] Resetting SD pins...
+[  0:00:05.951][  INFO][#000021] Ensuring SD_MMC is deinitialized...
+[  0:00:06.452][  INFO][#000022] Configuring SD pins...
+[  0:00:06.453][  INFO][#000023] SD init attempt 1: 1-bit mode at 125KHz (ultra conservative)
+[  0:00:07.119][  INFO][#000024] Validating SD card...
+[  0:00:07.120][  INFO][#000025] SD Card Type: SDHC
+[  0:00:07.121][  INFO][#000026] SD Card Size: 128000MB
+[  0:00:07.121][  INFO][#000027] SD card initialized successfully in ultra-conservative mode
+[  0:00:07.122][  INFO][#000028] SD Card initialized successfully on attempt 1
+[  0:00:07.123][  INFO][#000029] Initializing WiFi with up to 2 attempts...
+[  0:00:07.124][  INFO][#000030] Setting up WiFi in AP mode with enhanced stability...
+[  7125][W][STA.cpp:543] disconnect(): STA already disconnected.
+sdio_mempool_create free:31937388 min-free:31937388 lfb-def:31457268 lfb-8bit:31457268
 
 Name: 
 Type: SDIO
@@ -144,64 +144,69 @@ TUPLE: CFTABLE_ENTRY, size: 8
   IR: 30, mask: 1,   IRQ: FF FF
   LEN: FFFF
 TUPLE: END
-[  0:00:08.960][  INFO][#000031] AP start attempt 1...
-[  0:00:09.200][  INFO][#000032] WiFi AP Mode active with enhanced stability
-[  0:00:09.201][  INFO][#000033] AP SSID: ESP32P4-ImageViewer
-[  0:00:09.202][  INFO][#000034] AP IP Address: 192.168.4.1
-[  0:00:09.203][  INFO][#000035] AP Channel: 6
-[  0:00:09.204][  INFO][#000036] AP Max Clients: 2
-[  0:00:09.205][  INFO][#000037] WiFi initialized successfully on attempt 1
-[  0:00:09.206][  INFO][#000038] Initializing LVGL with up to 1 attempts...
-[  0:00:09.207][  INFO][#000039] Setting up LVGL...
-[  0:00:09.208][ DEBUG][#000040] Allocating LVGL buffers: 64000 bytes each
-[  0:00:09.210][  INFO][#000041] LVGL initialized successfully
-[  0:00:09.211][  INFO][#000042] LVGL initialized successfully on attempt 1
-[  0:00:09.212][  INFO][#000043] Initializing UI with up to 1 attempts...
-[  0:00:09.213][  INFO][#000044] Setting up UI...
-[  0:00:09.217][  INFO][#000045] UI initialized successfully
-[  0:00:09.218][  INFO][#000046] UI initialized successfully on attempt 1
-[  0:00:09.219][  INFO][#000047] Initializing WebServer with up to 2 attempts...
-[  0:00:09.220][  INFO][#000048] Setting up WebServer...
-[  0:00:09.222][  INFO][#000049] WebServer started on port 80
-[  0:00:09.222][  INFO][#000050] WebServer initialized successfully on attempt 1
-[  0:00:09.223][  INFO][#000051] Created task: LVGL Task on core 1
-[  0:00:09.225][  INFO][#000052] Scanning for images...
-[  0:00:09.227][  INFO][#000053] Scanning for images with enhanced validation...
-[  0:00:09.250][  INFO][#000054] Phase 1: Identifying valid and corrupt images...
-[  0:00:09.295][ DEBUG][#000055] Found image 0: /images/img_39767.jpg (939213 bytes)
-[  0:00:09.311][ DEBUG][#000056] Found image 1: /images/img_79907.jpg (1586123 bytes)
-[  0:00:09.326][ DEBUG][#000057] Found image 2: /images/img_32173_chicago skyline.jpg (1101785 bytes)
-[  0:00:09.340][ DEBUG][#000058] Found image 3: /images/img_11892.jpg (939213 bytes)
-[  0:00:09.356][ DEBUG][#000059] Found image 4: /images/img_11059.jpg (843783 bytes)
-[  0:00:09.370][  WARN][#000060] JPEG missing EOI marker - may be corrupted: /images/img_42344.jpg
-[  0:00:09.374][ DEBUG][#000061] Found image 5: /images/img_42344.jpg (14360 bytes)
-[  0:00:09.390][  WARN][#000062] JPEG missing EOI marker - may be corrupted: /images/img_22824_Eagles_Birds.jpg
-[  0:00:09.391][ DEBUG][#000063] Found image 6: /images/img_22824_Eagles_Birds.jpg (16308 bytes)
-[  0:00:09.392][  INFO][#000064] Found 7 valid images, removed 0 corrupted files
-[  0:00:09.393][  INFO][#000065] Found 7 images
-[  0:00:09.394][  INFO][#000066] Loading first image
-[  0:00:09.395][  INFO][#000067] Displaying image 0: /images/img_39767.jpg
-[  0:00:09.877][ DEBUG][#000068] Screen cleared in 481 ms
-[  0:00:09.955][  INFO][#000069] Starting JPEG decoding for /images/img_39767.jpg (939213 bytes)
-[  0:00:09.956][  INFO][#000070] Decoding image at full resolution
-[  0:00:12.426][  INFO][#000071] JPEG decoded successfully (rotated): 1280x800 -> 800x1280
-[  0:00:12.427][  INFO][#000072] JPEG decoding took 2487 ms, result: success
-[  0:00:12.428][  WARN][#000073] JPEG rendering took 2488 ms
-[  0:00:12.658][  INFO][#000074] Successfully displayed image 0
-[  0:00:12.659][  INFO][#000075] Successfully displayed image 0
-[  0:00:12.660][  INFO][#000076] Created task: Slideshow Task on core 0
-[  0:00:12.660][  INFO][#000077] Slideshow task started
-[  0:00:12.661][  INFO][#000078] Initialization complete, system status:
-[  0:00:12.663][  INFO][#000079] LCD: OK, Touch: OK, SD: OK
-[  0:00:12.664][  INFO][#000080] WiFi: OK, LVGL: OK, UI: OK, Server: OK
+[  0:00:10.262][  INFO][#000031] Starting AP with SSID: ESP32P4-ImageViewer
+[  0:00:10.263][  INFO][#000032] AP start attempt 1...
+[  0:00:10.488][  INFO][#000033] WiFi AP Mode active with enhanced stability
+[  0:00:10.489][  INFO][#000034] AP SSID: ESP32P4-ImageViewer
+[  0:00:10.490][  INFO][#000035] AP IP Address: 192.168.4.1
+[  0:00:10.491][  INFO][#000036] AP Channel: 1
+[  0:00:10.492][  INFO][#000037] AP Max Clients: 4
+[  0:00:10.493][  INFO][#000038] WiFi initialized successfully on attempt 1
+[  0:00:10.494][  INFO][#000039] Initializing LVGL with up to 1 attempts...
+[  0:00:10.495][  INFO][#000040] Setting up LVGL...
+[  0:00:10.495][ DEBUG][#000041] Allocating LVGL buffers: 64000 bytes each
+[  0:00:10.497][  INFO][#000042] LVGL initialized successfully
+[  0:00:10.498][  INFO][#000043] LVGL initialized successfully on attempt 1
+[  0:00:10.499][  INFO][#000044] Initializing UI with up to 1 attempts...
+[  0:00:10.500][  INFO][#000045] Setting up UI...
+[  0:00:10.503][  INFO][#000046] UI initialized successfully
+[  0:00:10.504][  INFO][#000047] UI initialized successfully on attempt 1
+[  0:00:10.505][  INFO][#000048] Initializing WebServer with up to 2 attempts...
+[  0:00:10.506][  INFO][#000049] Setting up WebServer with enhanced connectivity...
+[  0:00:10.508][  INFO][#000050] WebServer started on port 80 with enhanced error handling
+[  0:00:10.509][  INFO][#000051] WebServer initialized successfully on attempt 1
+[  0:00:10.510][  INFO][#000052] Created task: LVGL Task on core 1
+[  0:00:10.512][  INFO][#000053] Scanning for images...
+[  0:00:10.514][  INFO][#000054] Scanning for images with enhanced validation...
+[  0:00:10.538][  INFO][#000055] Phase 1: Identifying valid and corrupt images...
+[  0:00:10.583][ DEBUG][#000056] Found image 0: /images/img_39767.jpg (939213 bytes)
+[  0:00:10.599][ DEBUG][#000057] Found image 1: /images/img_79907.jpg (1586123 bytes)
+[  0:00:10.614][ DEBUG][#000058] Found image 2: /images/img_32173_chicago skyline.jpg (1101785 bytes)
+[  0:00:10.628][ DEBUG][#000059] Found image 3: /images/img_11892.jpg (939213 bytes)
+[  0:00:10.644][ DEBUG][#000060] Found image 4: /images/img_11059.jpg (843783 bytes)
+[  0:00:10.645][  WARN][#000061] Marking small file for deletion: /images/img_53753_Eagles_Birds.jpg (0 bytes)
+[  0:00:10.661][  WARN][#000062] JPEG missing EOI marker - may be corrupted: /images/img_42344.jpg
+[  0:00:10.664][ DEBUG][#000063] Found image 5: /images/img_42344.jpg (14360 bytes)
+[  0:00:10.680][  WARN][#000064] JPEG missing EOI marker - may be corrupted: /images/img_22824_Eagles_Birds.jpg
+[  0:00:10.681][ DEBUG][#000065] Found image 6: /images/img_22824_Eagles_Birds.jpg (16308 bytes)
+[  0:00:10.682][  INFO][#000066] Phase 2: Deleting 1 corrupted files...
+[  0:00:10.683][  INFO][#000067] Deleting corrupted file: /images/img_53753_Eagles_Birds.jpg
+[  0:00:10.688][  INFO][#000068] Successfully deleted: /images/img_53753_Eagles_Birds.jpg
+[  0:00:10.690][  INFO][#000069] Found 7 valid images, removed 1 corrupted files
+[  0:00:10.691][  INFO][#000070] Found 7 images
+[  0:00:10.692][  INFO][#000071] Loading first image
+[  0:00:10.693][  INFO][#000072] Displaying image 0: /images/img_39767.jpg
+[  0:00:11.175][ DEBUG][#000073] Screen cleared in 481 ms
+[  0:00:11.254][  INFO][#000074] Starting JPEG decoding for /images/img_39767.jpg (939213 bytes)
+[  0:00:11.255][  INFO][#000075] Decoding image at full resolution
+[  0:00:13.725][  INFO][#000076] JPEG decoded successfully (rotated): 1280x800 -> 800x1280
+[  0:00:13.726][  INFO][#000077] JPEG decoding took 2487 ms, result: success
+[  0:00:13.727][  WARN][#000078] JPEG rendering took 2488 ms
+[  0:00:13.958][  INFO][#000079] Successfully displayed image 0
+[  0:00:13.959][  INFO][#000080] Successfully displayed image 0
+[  0:00:13.960][  INFO][#000081] Created task: Slideshow Task on core 0
+[  0:00:13.960][  INFO][#000082] Slideshow task started
+[  0:00:13.961][  INFO][#000083] Initialization complete, system status:
+[  0:00:13.963][  INFO][#000084] LCD: OK, Touch: OK, SD: OK
+[  0:00:13.964][  INFO][#000085] WiFi: OK, LVGL: OK, UI: OK, Server: OK
 =========== After Setup Start ============
 INTERNAL Memory Info:
 ------------------------------------------
-  Total Size        :   514856 B ( 502.8 KB)
-  Free Bytes        :   387440 B ( 378.4 KB)
-  Allocated Bytes   :   116496 B ( 113.8 KB)
-  Minimum Free Bytes:   386412 B ( 377.4 KB)
-  Largest Free Block:   344052 B ( 336.0 KB)
+  Total Size        :   514760 B ( 502.7 KB)
+  Free Bytes        :   382596 B ( 373.6 KB)
+  Allocated Bytes   :   121404 B ( 118.6 KB)
+  Minimum Free Bytes:   377644 B ( 368.8 KB)
+  Largest Free Block:   335860 B ( 328.0 KB)
 ------------------------------------------
 SPIRAM Memory Info:
 ------------------------------------------
@@ -227,4 +232,59 @@ GPIO Info:
     44 : SDMMC_CMD
     45 : SDMMC_POWER
 ============ After Setup End =============
-[  0:00:15.661][  INFO][#000081] Slideshow task initialized
+[  0:00:15.012][ DEBUG][#000086] WiFi status - AP: Active, Clients: 0
+[  0:00:15.019][ DEBUG][#000087] AP running but no clients connected
+[  0:00:16.961][  INFO][#000088] Slideshow task initialized
+[  0:00:19.566][  WARN][#000089] 404 Not Found: /ipv6check
+[  0:00:19.783][  WARN][#000090] 404 Not Found: /connecttest.txt
+[  0:00:20.070][  WARN][#000091] 404 Not Found: /204
+[ 20361][D][NetworkClient.cpp:576] connected(): Disconnected: RES: 0, ERR: 128
+[ 20385][D][NetworkClient.cpp:576] connected(): Disconnected: RES: 0, ERR: 128
+[ 20588][D][NetworkClient.cpp:576] connected(): Disconnected: RES: 0, ERR: 128
+[ 23451][D][NetworkClient.cpp:576] connected(): Disconnected: RES: 0, ERR: 128
+[ 24457][D][NetworkClient.cpp:576] connected(): Disconnected: RES: 0, ERR: 128
+[ 25667][D][NetworkClient.cpp:576] connected(): Disconnected: RES: 0, ERR: 128
+[ 25714][D][NetworkClient.cpp:576] connected(): Disconnected: RES: 0, ERR: 128
+[ 26541][D][NetworkClient.cpp:576] connected(): Disconnected: RES: 0, ERR: 128
+[  0:00:26.993][  WARN][#000092] 404 Not Found: /204
+[  0:00:30.015][ DEBUG][#000093] WiFi status - AP: Active, Clients: 1
+[  0:00:34.466][  WARN][#000094] 404 Not Found: /204
+[ 35752][D][NetworkClient.cpp:576] connected(): Disconnected: RES: 0, ERR: 128
+[  0:00:40.658][  INFO][#000095] Serving main page
+[  0:00:40.673][  INFO][#000096] Main page served successfully
+[  0:00:45.023][ DEBUG][#000097] WiFi status - AP: Active, Clients: 1
+[ 45702][D][NetworkClient.cpp:576] connected(): Disconnected: RES: 0, ERR: 128
+[  0:00:45.727][  WARN][#000098] 404 Not Found: /204
+[ 45741][D][NetworkClient.cpp:576] connected(): Disconnected: RES: 0, ERR: 128
+[  0:00:48.473][  INFO][#000099] Starting new upload: Eagles Birds.jpg -> /images/img_48473_Eagles_Birds.jpg
+[  0:00:48.486][  INFO][#000100] File created successfully for upload: /images/img_48473_Eagles_Birds.jpg
+[  0:00:48.489][ DEBUG][#000101] Received 1436 bytes of upload data
+[  0:00:48.493][ DEBUG][#000102] Received 1436 bytes of upload data
+[  0:00:48.498][ DEBUG][#000103] Received 1436 bytes of upload data
+[  0:00:48.502][ DEBUG][#000104] Received 1436 bytes of upload data
+[  0:00:48.506][ DEBUG][#000105] Received 1436 bytes of upload data
+[  0:00:48.510][ DEBUG][#000106] Received 1436 bytes of upload data
+[  0:00:48.513][ DEBUG][#000107] Received 1436 bytes of upload data
+[  0:00:48.517][ DEBUG][#000108] Received 1436 bytes of upload data
+[  0:00:48.520][ DEBUG][#000109] Received 1436 bytes of upload data
+[  0:00:48.529][ DEBUG][#000110] Received 1436 bytes of upload data
+[  0:00:48.533][ DEBUG][#000111] Received 1436 bytes of upload data
+[  0:00:48.538][ DEBUG][#000112] Received 1436 bytes of upload data
+[  0:00:48.542][ DEBUG][#000113] Received 1436 bytes of upload data
+[  0:00:48.548][ DEBUG][#000114] Received 1436 bytes of upload data
+[  0:00:48.552][ DEBUG][#000115] Received 1436 bytes of upload data
+[  0:00:48.558][ DEBUG][#000116] Received 1436 bytes of upload data
+[  0:00:48.561][ DEBUG][#000117] Received 1436 bytes of upload data
+[  0:00:48.567][ DEBUG][#000118] Received 1436 bytes of upload data
+[  0:00:48.571][ DEBUG][#000119] Received 1436 bytes of upload data
+[  0:00:48.577][ DEBUG][#000120] Received 1436 bytes of upload data
+[  0:00:48.581][ DEBUG][#000121] Received 1436 bytes of upload data
+[  0:00:48.590][ DEBUG][#000122] Received 1436 bytes of upload data
+[  0:00:48.593][ DEBUG][#000123] Received 1436 bytes of upload data
+[  0:00:48.599][ DEBUG][#000124] Received 1436 bytes of upload data
+[  0:00:48.603][ DEBUG][#000125] Received 1436 bytes of upload data
+[  0:00:48.609][ DEBUG][#000126] Received 1436 bytes of upload data
+[  0:00:48.612][ DEBUG][#000127] Received 1436 bytes of upload data
+[  0:00:48.628][ DEBUG][#000128] Received 1436 bytes of upload data
+[  0:00:55.629][ ERROR][#000129] SD Write error: 140 of 1436 bytes written
+[  0:01:00.631][ ERROR][#000130] Upload aborted
