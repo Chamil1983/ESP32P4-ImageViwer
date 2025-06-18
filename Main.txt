@@ -1,4 +1,5 @@
-[    21][I][esp32-hal-psram.c:102] psramAddToHeap(): PSRAM added=========== Before Setup Start ===========
+[     2][I][esp32-hal-psram.c:102] psramAddToHeap(): PSRAM added to the heap.
+=========== Before Setup Start ===========
 Chip Info:
 ------------------------------------------
   Model             : ESP32-P4
@@ -17,10 +18,10 @@ Chip Info:
 ------------------------------------------
 INTERNAL Memory Info:
 ------------------------------------------
-  Total Size        :   514840 B ( 502.8 KB)
-  Free Bytes        :   476300 B ( 465.1 KB)
+  Total Size        :   514568 B ( 502.5 KB)
+  Free Bytes        :   476028 B ( 464.9 KB)
   Allocated Bytes   :    32500 B (  31.7 KB)
-  Minimum Free Bytes:   472260 B ( 461.2 KB)
+  Minimum Free Bytes:   471988 B ( 460.9 KB)
   Largest Free Block:   385012 B ( 376.0 KB)
 ------------------------------------------
 SPIRAM Memory Info:
@@ -65,68 +66,66 @@ Board Info:
   Arduino Variant   : esp32p4
   Arduino FQBN      : esp32:esp32:esp32p4:UploadSpeed=921600,USBMode=hwcdc,CDCOnBoot=cdc,MSCOnBoot=default,DFUOnBoot=default,UploadMode=default,CPUFreq=360,FlashFreq=80,FlashMode=qio,FlashSize=16M,PartitionScheme=custom,DebugLevel=debug,PSRAM=enabled,EraseFlash=all,JTAGAdapter=default
 ============ Before Setup End ============
-[   253][I][esp32-hal-periman.c:141] perimanSetPinBus(): Pin 24 already has type USB_DM (45) with bus 0x4ff276a8
-[   253][I][esp32-hal-periman.c:141] perimanSetPinBus(): Pin 25 already has type USB_DP (46) with bus 0x4ff276a8
+[   134][I][esp32-hal-periman.c:141] perimanSetPinBus(): Pin 24 already has type USB_DM (45) with bus 0x4ff277a8
+[   134][I][esp32-hal-periman.c:141] perimanSetPinBus(): Pin 25 already has type USB_DP (46) with bus 0x4ff277a8
 
 === ESP32P4 Gallery Debug Output ===
 Starting initialization sequence with enhanced error handling...
 Initializing file system using LittleFS...
-E (1233) esp_littlefs: partition "spiffs" could not be found
-E (1234) esp_littlefs: Failed to initialize LittleFS
-[  1255][E][LittleFS.cpp:79] begin(): Mounting LittleFS failed! Error: 261
-E (1234) esp_littlefs: partition "spiffs" could not be found
-E (1238) esp_littlefs: Failed to initialize LittleFS
-[  1263][E][LittleFS.cpp:79] begin(): Mounting LittleFS failed! Error: 261
+[  1135][E][LittleFS.cpp:79] begin(): Mounting LittleFS failed! Error: 261
+E (1134) esp_littlefs: partition "spiffs" could not be found
+E (1138) esp_littlefs: Failed to initialize LittleFS
+[  1144][E][LittleFS.cpp:79] begin(): Mounting LittleFS failed! Error: 261
 LittleFS mount failed, formatting...
-E (1243) task_wdt: esp_task_wdt_status(763): TWDT was never initialized
-[  1270][E][esp32-hal-misc.c:162] disableCore0WDT(): Failed to remove Core 0 IDLE task from WDT
-E (1249) esp_littlefs: partition "spiffs" could not be found
-E (1254) esp_littlefs: Failed to initialize to format.
-[  1280][E][LittleFS.cpp:104] format(): Formatting LittleFS failed! Error: 261
+E (1143) task_wdt: esp_task_wdt_status(763): TWDT was never initialized
+[  1151][E][esp32-hal-misc.c:162] disableCore0WDT(): Failed to remove Core 0 IDLE task from WDT
+E (1149) esp_littlefs: partition "spiffs" could not be found
+E (1154) esp_littlefs: Failed to initialize to format.
+[  1161][E][LittleFS.cpp:104] format(): Formatting LittleFS failed! Error: 261
 LittleFS initialization failed - continuing without file system
 
 ------- Logger Initialized -------
-[  0:00:01.281][  INFO][#000000] Logger initialized: level=1, serial=ON, flash=OFF
+[  0:00:01.162][  INFO][#000000] Logger initialized: level=1, serial=ON, flash=OFF
 [DEBUG] Log level set to 1
 [DEBUG] Serial debug output enabled
-[  0:00:01.284][  INFO][#000001] ====================================
-[  0:00:01.285][  INFO][#000002] ESP32P4 Image Gallery Starting
-[  0:00:01.286][  INFO][#000003] Date: 2025-06-17 10:56:36 UTC
-[  0:00:01.287][  INFO][#000004] User: Chamil1983
-[  0:00:01.288][  INFO][#000005] ====================================
-[  0:00:01.289][  INFO][#000006] System mutexes initialized
-[  0:00:01.290][  INFO][#000007] Initializing enhanced watchdog system
+[  0:00:01.165][  INFO][#000001] ====================================
+[  0:00:01.166][  INFO][#000002] ESP32P4 Image Gallery Starting
+[  0:00:01.167][  INFO][#000003] Date: 2025-06-17 10:56:36 UTC
+[  0:00:01.168][  INFO][#000004] User: Chamil1983
+[  0:00:01.169][  INFO][#000005] ====================================
+[  0:00:01.170][  INFO][#000006] System mutexes initialized
+[  0:00:01.171][  INFO][#000007] Initializing enhanced watchdog system
 Setting up watchdog with critical error protection...
-E (1270) task_wdt: esp_task_wdt_deinit(642): TWDT was never initialized
+E (1170) task_wdt: esp_task_wdt_deinit(642): TWDT was never initialized
 Main task subscribed to watchdog
 Watchdog initialized with 30 second timeout, panic mode: OFF
-[  0:00:01.391][  INFO][#000008] Watchdog initialized successfully
-[  0:00:01.392][  INFO][#000009] Initializing LCD with up to 2 attempts...
-[  0:00:01.393][  INFO][#000010] Setting up LCD...
-[  1394][I][jd9365_lcd.cpp:50] example_bsp_enable_dsi_phy_power(): [example] MIPI DSI PHY Powered on
-[  1396][I][jd9365_lcd.cpp:83] begin(): [example] Install MIPI DSI LCD control panel
-[  0:00:01.682][  INFO][#000011] LCD initialized successfully with backlight ON
-[  0:00:01.683][  INFO][#000012] LCD initialized successfully on attempt 1
-[  0:00:01.684][  INFO][#000013] Initializing Touch with up to 2 attempts...
-[  0:00:01.685][  INFO][#000014] Setting up Touch...
-[  0:00:02.762][  INFO][#000015] Touch initialized successfully
-[  0:00:02.763][  INFO][#000016] Touch initialized successfully on attempt 1
-[  0:00:02.764][  INFO][#000017] Initializing SD Card with up to 3 attempts...
-[  0:00:02.765][  INFO][#000018] Setting up SD Card with robust initialization...
-[  0:00:02.766][  INFO][#000019] Waiting for power stabilization...
-[  0:00:04.767][  INFO][#000020] Resetting SD pins...
-[  0:00:04.868][  INFO][#000021] Ensuring SD_MMC is deinitialized...
-[  0:00:05.369][  INFO][#000022] Configuring SD pins...
-[  0:00:05.370][  INFO][#000023] SD init attempt 1: 1-bit mode at 125KHz (ultra conservative)
-[  0:00:06.036][  INFO][#000024] Validating SD card...
-[  0:00:06.036][  INFO][#000025] SD Card Type: SDHC
-[  0:00:06.037][  INFO][#000026] SD Card Size: 128000MB
-[  0:00:06.038][  INFO][#000027] SD card initialized successfully in ultra-conservative mode
-[  0:00:06.039][  INFO][#000028] SD Card initialized successfully on attempt 1
-[  0:00:06.040][  INFO][#000029] Initializing WiFi with up to 2 attempts...
-[  0:00:06.041][  INFO][#000030] Setting up WiFi in AP mode with maximum reliability...
-[  6042][E][STA.cpp:530] disconnect(): STA not started! You must call begin first.
-sdio_mempool_create free:31937472 min-free:31937472 lfb-def:31457268 lfb-8bit:31457268
+[  0:00:01.273][  INFO][#000008] Watchdog initialized successfully
+[  0:00:01.274][  INFO][#000009] Initializing LCD with up to 2 attempts...
+[  0:00:01.275][  INFO][#000010] Setting up LCD...
+[  1275][I][jd9365_lcd.cpp:50] example_bsp_enable_dsi_phy_power(): [example] MIPI DSI PHY Powered on
+[  1277][I][jd9365_lcd.cpp:83] begin(): [example] Install MIPI DSI LCD control panel
+[  0:00:01.563][  INFO][#000011] LCD initialized successfully with backlight ON
+[  0:00:01.564][  INFO][#000012] LCD initialized successfully on attempt 1
+[  0:00:01.565][  INFO][#000013] Initializing Touch with up to 2 attempts...
+[  0:00:01.566][  INFO][#000014] Setting up Touch...
+[  0:00:02.641][  INFO][#000015] Touch initialized successfully
+[  0:00:02.642][  INFO][#000016] Touch initialized successfully on attempt 1
+[  0:00:02.643][  INFO][#000017] Initializing SD Card with up to 3 attempts...
+[  0:00:02.644][  INFO][#000018] Setting up SD Card with robust initialization...
+[  0:00:02.645][  INFO][#000019] Waiting for power stabilization...
+[  0:00:04.646][  INFO][#000020] Resetting SD pins...
+[  0:00:04.746][  INFO][#000021] Ensuring SD_MMC is deinitialized...
+[  0:00:05.247][  INFO][#000022] Configuring SD pins...
+[  0:00:05.248][  INFO][#000023] SD init attempt 1: 1-bit mode at 125KHz (ultra conservative)
+[  0:00:05.913][  INFO][#000024] Validating SD card...
+[  0:00:05.915][  INFO][#000025] SD Card Type: SDHC
+[  0:00:05.916][  INFO][#000026] SD Card Size: 128000MB
+[  0:00:05.917][  INFO][#000027] SD card initialized successfully in ultra-conservative mode
+[  0:00:05.918][  INFO][#000028] SD Card initialized successfully on attempt 1
+[  0:00:05.919][  INFO][#000029] Initializing WiFi with up to 2 attempts...
+[  0:00:05.920][  INFO][#000030] Setting up WiFi in AP mode with maximum reliability...
+[  5921][E][STA.cpp:530] disconnect(): STA not started! You must call begin first.
+sdio_mempool_create free:31937196 min-free:31937196 lfb-def:31457268 lfb-8bit:31457268
 
 Name: 
 Type: SDIO
@@ -147,66 +146,688 @@ TUPLE: CFTABLE_ENTRY, size: 8
   IR: 30, mask: 1,   IRQ: FF FF
   LEN: FFFF
 TUPLE: END
-[  0:00:09.088][  INFO][#000031] Starting AP with SSID: ESP32P4-ImageViewer
-[  0:00:09.089][  INFO][#000032] AP start attempt 1...
-[  0:00:09.298][  INFO][#000033] WiFi AP Mode active with enhanced stability
-[  0:00:09.299][  INFO][#000034] AP SSID: ESP32P4-ImageViewer
-[  0:00:09.299][  INFO][#000035] AP IP Address: 192.168.4.1
-[  0:00:09.300][  INFO][#000036] AP Channel: 6
-[  0:00:09.301][  INFO][#000037] AP Max Clients: 4
-[  0:00:09.302][  INFO][#000038] AP Power: Maximum
-[  0:00:09.303][  INFO][#000039] WiFi initialized successfully on attempt 1
-[  0:00:09.304][  INFO][#000040] Initializing LVGL with up to 1 attempts...
-[  0:00:09.305][  INFO][#000041] Setting up LVGL...
-[  0:00:09.306][ DEBUG][#000042] Allocating LVGL buffers: 64000 bytes each
-[  0:00:09.308][  INFO][#000043] LVGL initialized successfully
-[  0:00:09.308][  INFO][#000044] LVGL initialized successfully on attempt 1
-[  0:00:09.309][  INFO][#000045] Initializing UI with up to 1 attempts...
-[  0:00:09.310][  INFO][#000046] Setting up UI...
-[  0:00:09.313][  INFO][#000047] UI initialized successfully
-[  0:00:09.314][  INFO][#000048] UI initialized successfully on attempt 1
-[  0:00:09.315][  INFO][#000049] Initializing WebServer with up to 2 attempts...
-[  0:00:09.316][  INFO][#000050] Setting up WebServer with enhanced connectivity...
-[  0:00:09.318][  INFO][#000051] WebServer started on port 80 with enhanced error handling
-[  0:00:09.319][  INFO][#000052] WebServer initialized successfully on attempt 1
-[  0:00:09.320][  INFO][#000053] Created task: LVGL Task on core 1
-[  0:00:09.322][  INFO][#000054] Scanning for images...
-[  0:00:09.324][  INFO][#000055] Scanning for images with enhanced validation...
-[  0:00:09.349][  INFO][#000056] Phase 1: Identifying valid and corrupt images...
-[  0:00:09.392][ DEBUG][#000057] Found image 0: /images/img_39767.jpg (939213 bytes)
-[  0:00:09.407][ DEBUG][#000058] Found image 1: /images/img_79907.jpg (1586123 bytes)
-[  0:00:09.422][ DEBUG][#000059] Found image 2: /images/img_32173_chicago skyline.jpg (1101785 bytes)
-[  0:00:09.437][ DEBUG][#000060] Found image 3: /images/img_11892.jpg (939213 bytes)
-[  0:00:09.452][ DEBUG][#000061] Found image 4: /images/img_11059.jpg (843783 bytes)
-[  0:00:09.466][  WARN][#000062] JPEG missing EOI marker - may be corrupted: /images/img_42344.jpg
-[  0:00:09.470][ DEBUG][#000063] Found image 5: /images/img_42344.jpg (14360 bytes)
-[  0:00:09.486][  WARN][#000064] JPEG missing EOI marker - may be corrupted: /images/img_22824_Eagles_Birds.jpg
-[  0:00:09.487][ DEBUG][#000065] Found image 6: /images/img_22824_Eagles_Birds.jpg (16308 bytes)
-[  0:00:09.488][  INFO][#000066] Found 7 valid images, removed 0 corrupted files
-[  0:00:09.489][  INFO][#000067] Found 7 images
-[  0:00:09.489][  INFO][#000068] Loading first image
-[  0:00:09.489][  INFO][#000069] Displaying image 0: /images/img_39767.jpg
-[  0:00:09.971][ DEBUG][#000070] Screen cleared in 481 ms
-[  0:00:10.050][  INFO][#000071] Starting JPEG decoding for /images/img_39767.jpg (939213 bytes)
-[  0:00:10.051][  INFO][#000072] Decoding image at full resolution
-[  0:00:12.525][  INFO][#000073] JPEG decoded successfully (rotated): 1280x800 -> 800x1280
-[  0:00:12.526][  INFO][#000074] JPEG decoding took 2491 ms, result: success
-[  0:00:12.527][  WARN][#000075] JPEG rendering took 2492 ms
-[  0:00:12.758][  INFO][#000076] Successfully displayed image 0
-[  0:00:12.759][  INFO][#000077] Successfully displayed image 0
-[  0:00:12.760][  INFO][#000079] Created task: Slideshow Task on core 0
-[  0:00:12.760][  INFO][#000078] Slideshow task started
-[  0:00:12.761][  INFO][#000080] Initialization complete, system status:
-[  0:00:12.763][  INFO][#000081] LCD: OK, Touch: OK, SD: OK
-[  0:00:12.764][  INFO][#000082] WiFi: OK, LVGL: OK, UI: OK, Server: OK
+[  0:00:08.967][  INFO][#000031] Starting AP with SSID: ESP32P4-ImageViewer
+[  0:00:08.968][  INFO][#000032] AP start attempt 1...
+[  0:00:09.177][  INFO][#000033] WiFi AP Mode active with enhanced stability
+[  0:00:09.178][  INFO][#000034] AP SSID: ESP32P4-ImageViewer
+[  0:00:09.179][  INFO][#000035] AP IP Address: 192.168.4.1
+[  0:00:09.180][  INFO][#000036] AP Channel: 6
+[  0:00:09.181][  INFO][#000037] AP Max Clients: 4
+[  0:00:09.182][  INFO][#000038] AP Power: Maximum
+[  0:00:09.183][  INFO][#000039] WiFi initialized successfully on attempt 1
+[  0:00:09.184][  INFO][#000040] Initializing LVGL with up to 1 attempts...
+[  0:00:09.185][  INFO][#000041] Setting up LVGL...
+[  0:00:09.186][ DEBUG][#000042] Allocating LVGL buffers: 64000 bytes each
+[  0:00:09.188][  INFO][#000043] LVGL initialized successfully
+[  0:00:09.188][  INFO][#000044] LVGL initialized successfully on attempt 1
+[  0:00:09.189][  INFO][#000045] Initializing UI with up to 1 attempts...
+[  0:00:09.190][  INFO][#000046] Setting up UI...
+[  0:00:09.194][  INFO][#000047] UI initialized successfully
+[  0:00:09.195][  INFO][#000048] UI initialized successfully on attempt 1
+[  0:00:09.196][  INFO][#000049] Initializing WebServer with up to 2 attempts...
+[  0:00:09.197][  INFO][#000050] Setting up WebServer with enhanced connectivity...
+[  0:00:09.199][  INFO][#000051] WebServer started on port 80 with enhanced error handling
+[  0:00:09.200][  INFO][#000052] WebServer initialized successfully on attempt 1
+[  0:00:09.243][  INFO][#000054] Scanning for images...
+[  0:00:09.243][  INFO][#000053] Slideshow task started
+
+assert failed: multi_heap_free multi_heap_poisoning.c:279 (head != NULL)
+Core  1 register dump:
+MEPC    : 0x4ff018d8  RA      : 0x4ff08790  SP      : 0x4ff34540  GP      : 0x4ff11f00  
+TP      : 0x4ff349e0  T0      : 0x37363534  T1      : 0x7271706f  T2      : 0x33323130  
+S0/FP   : 0x00000001  S1      : 0x4ff346b8  A0      : 0x4ff345a4  A1      : 0x4ff143ed  
+A2      : 0x00000001  A3      : 0x00000029  A4      : 0x00000001  A5      : 0x4ff40000  
+A6      : 0x0000000c  A7      : 0x76757473  S2      : 0x0000007f  S3      : 0x4ff34598  
+S4      : 0x4ff34598  S5      : 0x4ff345a4  S6      : 0x400d2000  S7      : 0x00000000  
+S8      : 0x00000000  S9      : 0x00000000  S10     : 0x00000000  S11     : 0x00000000  
+T3      : 0x6e6d6c6b  T4      : 0x6a696867  T5      : 0x66656463  T6      : 0x62613938  
+MSTATUS : 0x00011880  MTVEC   : 0x4ff00003  MCAUSE  : 0x00000002  MTVAL   : 0x00000000  
+MHARTID : 0x00000001  
+
+Stack memory:
+4ff34540: 0x4ff40b50 0x00000060 0x40105a04 0x4ff1065c 0x00000000 0x4ff3067c 0x4ff34650 0x4ff143ec
+4ff34560: 0xffffffff 0x00000046 0x4ff40000 0x00393732 0x400ddf84 0x4ff149b0 0x40105a04 0x4ff149c0
+4ff34580: 0x400ddfae 0x4ff149c4 0x4ff3456c 0x4ff149c8 0x400ddf88 0x4ff143ec 0x00000000 0x00000000
+4ff345a0: 0x4f000000 0x65737361 0x66207472 0x656c6961 0x6d203a64 0x69746c75 0x6165685f 0x72665f70
+4ff345c0: 0x6d206565 0x69746c75 0x6165685f 0x6f705f70 0x6e6f7369 0x2e676e69 0x37323a63 0x68282039
+4ff345e0: 0x20646165 0x4e203d21 0x294c4c55 0x00000000 0x400d2000 0x40004000 0x4ff40000 0x4ff30218
+4ff34600: 0x4ff19a4c 0x00000001 0x4ff306b4 0x4fc0327c 0x00000004 0x00000000 0x20800008 0x1f000000
+4ff34620: 0x00000007 0x0000000a 0x4ff2fb7c 0x4ff34644 0x4ff2fb4c 0x40004000 0x400d2000 0x4ff0eeba
+4ff34640: 0x00000000 0x4ff306fc 0xbaad5678 0x4ff3067c 0x00000001 0x4ff3067c 0x00000007 0x0000000a
+4ff34660: 0x4ff2fb7c 0x4ff2fb38 0x00000000 0x88c51306 0x00000000 0x40004000 0x4ff40000 0x4ff30218
+4ff34680: 0x4ff19a4c 0x4ff306bc 0x4ff2b570 0x4ff0ed12 0x00000000 0x4ff30208 0x4ff30218 0x4004ae7a
+4ff346a0: 0x4ff19a4c 0x4ff30208 0x4ff30208 0x4004b24c 0x400d2000 0x40004000 0x00000031 0x400072b4
+4ff346c0: 0x400d2000 0x40004000 0x4ff40000 0x4ff40000 0x4ff27000 0x4ff40000 0x4ff19a4c 0x4000762c
+4ff346e0: 0x303a3030 0x30322e39 0x4ff3484c 0x400d3f38 0x00000000 0x00000000 0x00000000 0x3020205b
+4ff34700: 0x3a30303a 0x322e3930 0x5b5d3030 0x3a302020 0x303a3030 0x34322e39 0x5d320033 0x62655720
+4ff34720: 0x76726553 0x69207265 0x6974696e 0x3020205b 0x3a30303a 0x322e3930 0x5b5d3334 0x4e492020
+4ff34740: 0x5b5d4f46 0x30303023 0x5d343530 0x61635320 0x6e696e6e 0x6f662067 0x6d692072 0x73656761
+4ff34760: 0x002e2e2e 0x00000000 0x00000000 0x000001f4 0x400d2000 0x400069f8 0x4ff1a000 0x400d388c
+4ff34780: 0xffffffff 0x4ff34c70 0x00000100 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000
+4ff347a0: 0x400d2000 0x40004000 0x4ff40000 0x4ff40000 0xffffffff 0x4ff34c70 0x00000100 0x400b8330
+4ff347c0: 0x726f7020 0x30382074 0x4ff34862 0x6e652068 0x000000e9 0xffff0208 0x4ff3484c 0x000000ff
+4ff347e0: 0x6e696c64 0x40000067 0x4ff1a000 0x400b835e 0x00000000 0x00000000 0x00000000 0x88c51306
+4ff34800: 0x00000002 0x4ff40000 0x4ff3484c 0x4ff0ce26 0x400d2000 0x400069f8 0x4ff34938 0x400b835e
+4ff34820: 0x65767265 0x6e692072 0x61697469 0x88c51306 0x00000002 0x4ff40000 0x4ff199f8 0x4000777a
+4ff34840: 0x7461206e 0x706d6574 0x4ff34968 0x6e616353 0x676e696e 0x726f6620 0x616d6920 0x2e736567
+4ff34860: 0x4f002e2e 0x4ff29618 0x00004000 0x00000000 0x20800008 0x00000001 0x00000004 0x00000006
+4ff34880: 0x00000000 0x4ff48a88 0x4ff152b0 0x00000001 0x50000a00 0x00000000 0x00000000 0x00000000
+4ff348a0: 0x00000000 0x00000000 0x4ff1a000 0x88c51306 0x4ff40000 0x4ff15000 0x4ff4036c 0x00000001
+4ff348c0: 0x00000000 0x00000000 0x4ff2b8fc 0x4ff0eb8c 0x4ff40b50 0x00000160 0x4ff40b50 0x4ff0ebe0
+4ff348e0: 0x4ff4adec 0x400d1ee4 0x400045f4 0x00001000 0x00000001 0x00000001 0x00000000 0x4ff023c4
+4ff34900: 0x4ff40000 0x00000000 0x400045f4 0x00001000 0x4ff28000 0x4ff2816c 0x4ff4bfe4 0x4ff0add6
+4ff34920: 0x00000000 0x4ff4af60 0x4ff4bfe4 0x4ff0afe2 0x00000000 0x400d1ee4 0x400045f4 0x00001000
+
+
+
+ELF file SHA256: 8c4ae4b9a
+
+Rebooting...
+ESP-ROM:esp32p4-eco2-20240710
+Build:Jul 10 2024
+rst:0xc (SW_CPU_RESET),boot:0x30f (SPI_FAST_FLASH_BOOT)
+Core0 Saved PC:0x4ff04572
+Core1 Saved PC:0x4ff022da
+SPI mode:DIO, clock div:1
+load:0x4ff33ce0,len:0x11c8
+load:0x4ff2abd0,len:0xc1c
+load:0x4ff2cbd0,len:0x32fc
+entry 0x4ff2abd0
+[    20][I][esp32-hal-psram.c:102] psramAddToHeap(): PSRAM added to the heap.
+=========== Before Setup Start ===========
+Chip Info:
+------------------------------------------
+  Model             : ESP32-P4
+  Package           : 0
+  Revision          : 1.00
+  Cores             : 2
+  CPU Frequency     : 360 MHz
+  XTAL Frequency    : 40 MHz
+  Features Bitfield : 0000000000
+  Embedded Flash    : No
+  Embedded PSRAM    : No
+  2.4GHz WiFi       : No
+  Classic BT        : No
+  BT Low Energy     : No
+  IEEE 802.15.4     : No
+------------------------------------------
+INTERNAL Memory Info:
+------------------------------------------
+  Total Size        :   514568 B ( 502.5 KB)
+  Free Bytes        :   476028 B ( 464.9 KB)
+  Allocated Bytes   :    32500 B (  31.7 KB)
+  Minimum Free Bytes:   471988 B ( 460.9 KB)
+  Largest Free Block:   385012 B ( 376.0 KB)
+------------------------------------------
+SPIRAM Memory Info:
+------------------------------------------
+  Total Size        : 33554432 B (32768.0 KB)
+  Free Bytes        : 33551856 B (32765.5 KB)
+  Allocated Bytes   :        0 B (   0.0 KB)
+  Minimum Free Bytes: 33551856 B (32765.5 KB)
+  Largest Free Block: 33030132 B (32256.0 KB)
+  Bus Mode          : QSPI
+------------------------------------------
+Flash Info:
+------------------------------------------
+  Chip Size         : 16777216 B (16 MB)
+  Block Size        :    65536 B (  64.0 KB)
+  Sector Size       :     4096 B (   4.0 KB)
+  Page Size         :      256 B (   0.2 KB)
+  Bus Speed         : 80 MHz
+  Bus Mode          : QIO
+------------------------------------------
+Partitions Info:
+------------------------------------------
+                nvs : addr: 0x00009000, size:    24.0 KB, type: DATA, subtype: NVS
+           phy_init : addr: 0x0000F000, size:     4.0 KB, type: DATA, subtype: PHY
+            factory : addr: 0x00010000, size:  4096.0 KB, type:  APP, subtype: FACTORY
+            storage : addr: 0x00410000, size:  8192.0 KB, type: DATA, subtype: SPIFFS
+           coredump : addr: 0x00C10000, size:  1024.0 KB, type: DATA, subtype: COREDUMP
+           log_dump : addr: 0x00D10000, size:  1024.0 KB, type: DATA, subtype: 0x08
+             config : addr: 0x00E10000, size:   128.0 KB, type: DATA, subtype: NVS
+           reserved : addr: 0x00E30000, size:  1856.0 KB, type: DATA, subtype: 0xFF
+------------------------------------------
+Software Info:
+------------------------------------------
+  Compile Date/Time : Jun 15 2025 21:37:55
+  Compile Host OS   : windows
+  ESP-IDF Version   : v5.4.1-1-g2f7dcd862a-dirty
+  Arduino Version   : 3.2.0
+------------------------------------------
+Board Info:
+------------------------------------------
+  Arduino Board     : ESP32P4_DEV
+  Arduino Variant   : esp32p4
+  Arduino FQBN      : esp32:esp32:esp32p4:UploadSpeed=921600,USBMode=hwcdc,CDCOnBoot=cdc,MSCOnBoot=default,DFUOnBoot=default,UploadMode=default,CPUFreq=360,FlashFreq=80,FlashMode=qio,FlashSize=16M,PartitionScheme=custom,DebugLevel=debug,PSRAM=enabled,EraseFlash=all,JTAGAdapter=default
+============ Before Setup End ============
+[   141][I][esp32-hal-periman.c:141] perimanSetPinBus(): Pin 24 already has type USB_DM (45) with bus 0x4ff277a8
+[   141][I][esp32-hal-periman.c:141] perimanSetPinBus(): Pin 25 already has type USB_DP (46) with bus 0x4ff277a8
+
+=== ESP32P4 Gallery Debug Output ===
+Starting initialization sequence with enhanced error handling...
+Initializing file system using LittleFS...
+[  1143][E][LittleFS.cpp:79] begin(): Mounting LittleFS failed! Error: 261
+E (1123) esp_littlefs: partition "spiffs" could not be found
+E (1127) esp_littlefs: Failed to initialize LittleFS
+[  1152]Guru Meditation Error: Core  1 panic'ed (Store access fault). Exception was unhandled.
+
+Core  1 register dump:
+MEPC    : 0x4004995a  RA      : 0x40049878  SP      : 0x4ff29390  GP      : 0x4ff11f00  
+TP      : 0x4ff349e0  T0      : 0x00000fff  T1      : 0x00000000  T2      : 0xffffffff  
+S0/FP   : 0x500d2000  S1      : 0x00000008  A0      : 0x4ff2fdfe  A1      : 0x4ff2fdfe  
+A2      : 0x00000004  A3      : 0x0000001a  A4      : 0x00000009  A5      : 0x00000002  
+A6      : 0x0000001a  A7      : 0x4ff2fd88  S2      : 0x4ff40000  S3      : 0x4ff40000  
+S4      : 0x00000000  S5      : 0x00000000  S6      : 0x00000000  S7      : 0x4fc02d74  
+S8      : 0x4ff347f0  S9      : 0x4ff30222  S10     : 0x400d3986  S11     : 0x4ff30254  
+T3      : 0x00000000  T4      : 0x74617a69  T5      : 0x6c616974  T6      : 0x696e6920  
+MSTATUS : 0x00011880  MTVEC   : 0x4ff00003  MCAUSE  : 0x00000007  MTVAL   : 0x500d2000  
+MHARTID : 0x00000001  
+
+Stack memory:
+4ff29390: 0x00000000 0x00000000 0x00000000 0x0000001a 0x00000002 0x00000000 0x00000000 0x4ff30208
+4ff293b0: 0x00011880 0xb8000012 0x00000004 0x4ff002c2 0x00000000 0x00000000 0x00000000 0x4ff34c08
+4ff293d0: 0x00000000 0x00000000 0x500e2000 0x4ff06a2a 0x4ff06a36 0x4ff29440 0x4ff29440 0x4ff294e0
+4ff293f0: 0x4ff294d0 0x00000000 0x4ff293fc 0xffffffff 0x4ff293fc 0x4ff293fc 0x00000001 0x4ff29410
+4ff29410: 0xffffffff 0x4ff323ac 0x4ff323ac 0x00000000 0x0000000a 0x00000010 0x00000001 0x00000000
+4ff29430: 0x00000000 0x00000000 0xb33fffff 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000
+4ff29450: 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000
+4ff29470: 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000
+4ff29490: 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000
+4ff294b0: 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000
+4ff294d0: 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x4ff294e8 0xffffffff 0x4ff294e8
+4ff294f0: 0x4ff294e8 0x00000000 0x4ff294fc 0xffffffff 0x4ff294fc 0x4ff294fc 0x00000000 0x4ff29508
+4ff29510: 0x00000000 0x00000000 0x00000000 0x4ff29520 0xffffffff 0x4ff29520 0x4ff29520 0x00000000
+4ff29530: 0x4ff29534 0xffffffff 0x4ff29534 0x4ff29534 0x00000001 0x00000001 0x00000000 0x00000001
+4ff29550: 0x00000000 0x00000000 0x00000004 0xb33fffff 0x00000000 0x00000000 0x4ff29564 0x00000000
+4ff29570: 0x00000000 0x00000000 0x4ff2957c 0xffffffff 0x4ff2957c 0x4ff2957c 0x00000000 0x4ff29590
+4ff29590: 0xffffffff 0x4ff29590 0x4ff29590 0x00000001 0x00000001 0x00000000 0x00000001 0x00000000
+4ff295b0: 0x00000000 0x00000001 0xb33fffff 0x00000000 0x500e2000 0x4ff06a2a 0x4ff06a36 0x00000000
+4ff295d0: 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000
+4ff295f0: 0x00000000 0x00000000 0x4ff2b9ac 0x4ff2b9e0 0x4ff2ba14 0x4ff2ba48 0x00000000 0x00000000
+4ff29610: 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000
+4ff29630: 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000
+4ff29650: 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000
+4ff29670: 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000
+4ff29690: 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000
+4ff296b0: 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000
+4ff296d0: 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000
+4ff296f0: 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000
+4ff29710: 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000
+4ff29730: 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000
+4ff29750: 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000
+4ff29770: 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000
+
+
+
+ELF file SHA256: 8c4ae4b9a
+
+Rebooting...
+ESP-ROM:esp32p4-eco2-20240710
+Build:Jul 10 2024
+rst:0xc (SW_CPU_RESET),boot:0x30f (SPI_FAST_FLASH_BOOT)
+Core0 Saved PC:0x4ff046d6
+Core1 Saved PC:0x4ff022da
+SPI mode:DIO, clock div:1
+load:0x4ff33ce0,len:0x11c8
+load:0x4ff2abd0,len:0xc1c
+load:0x4ff2cbd0,len:0x32fc
+entry 0x4ff2abd0
+[    10][I][esp32-hal-psram.c:102] psramAddToHeap(): PSRAM added to the heap.
+=========== Before Setup Start ===========
+Chip Info:
+------------------------------------------
+  Model             : ESP32-P4
+  Package           : 0
+  Revision          : 1.00
+  Cores             : 2
+  CPU Frequency     : 360 MHz
+  XTAL Frequency    : 40 MHz
+  Features Bitfield : 0000000000
+  Embedded Flash    : No
+  Embedded PSRAM    : No
+  2.4GHz WiFi       : No
+  Classic BT        : No
+  BT Low Energy     : No
+  IEEE 802.15.4     : No
+------------------------------------------
+INTERNAL Memory Info:
+------------------------------------------
+  Total Size        :   514568 B ( 502.5 KB)
+  Free Bytes        :   476028 B ( 464.9 KB)
+  Allocated Bytes   :    32500 B (  31.7 KB)
+  Minimum Free Bytes:   471988 B ( 460.9 KB)
+  Largest Free Block:   385012 B ( 376.0 KB)
+------------------------------------------
+SPIRAM Memory Info:
+------------------------------------------
+  Total Size        : 33554432 B (32768.0 KB)
+  Free Bytes        : 33551856 B (32765.5 KB)
+  Allocated Bytes   :        0 B (   0.0 KB)
+  Minimum Free Bytes: 33551856 B (32765.5 KB)
+  Largest Free Block: 33030132 B (32256.0 KB)
+  Bus Mode          : QSPI
+------------------------------------------
+Flash Info:
+------------------------------------------
+  Chip Size         : 16777216 B (16 MB)
+  Block Size        :    65536 B (  64.0 KB)
+  Sector Size       :     4096 B (   4.0 KB)
+  Page Size         :      256 B (   0.2 KB)
+  Bus Speed         : 80 MHz
+  Bus Mode          : QIO
+------------------------------------------
+Partitions Info:
+------------------------------------------
+                nvs : addr: 0x00009000, size:    24.0 KB, type: DATA, subtype: NVS
+           phy_init : addr: 0x0000F000, size:     4.0 KB, type: DATA, subtype: PHY
+            factory : addr: 0x00010000, size:  4096.0 KB, type:  APP, subtype: FACTORY
+            storage : addr: 0x00410000, size:  8192.0 KB, type: DATA, subtype: SPIFFS
+           coredump : addr: 0x00C10000, size:  1024.0 KB, type: DATA, subtype: COREDUMP
+           log_dump : addr: 0x00D10000, size:  1024.0 KB, type: DATA, subtype: 0x08
+             config : addr: 0x00E10000, size:   128.0 KB, type: DATA, subtype: NVS
+           reserved : addr: 0x00E30000, size:  1856.0 KB, type: DATA, subtype: 0xFF
+------------------------------------------
+Software Info:
+------------------------------------------
+  Compile Date/Time : Jun 15 2025 21:37:55
+  Compile Host OS   : windows
+  ESP-IDF Version   : v5.4.1-1-g2f7dcd862a-dirty
+  Arduino Version   : 3.2.0
+------------------------------------------
+Board Info:
+------------------------------------------
+  Arduino Board     : ESP32P4_DEV
+  Arduino Variant   : esp32p4
+  Arduino FQBN      : esp32:esp32:esp32p4:UploadSpeed=921600,USBMode=hwcdc,CDCOnBoot=cdc,MSCOnBoot=default,DFUOnBoot=default,UploadMode=default,CPUFreq=360,FlashFreq=80,FlashMode=qio,FlashSize=16M,PartitionScheme=custom,DebugLevel=debug,PSRAM=enabled,EraseFlash=all,JTAGAdapter=default
+============ Before Setup End ============
+[   132]Guru Meditation Error: Core  1 panic'ed (Store access fault). Exception was unhandled.
+
+Core  1 register dump:
+MEPC    : 0x4004995a  RA      : 0x40049878  SP      : 0x4ff29390  GP      : 0x4ff11f00  
+TP      : 0x4ff349e0  T0      : 0x00000fff  T1      : 0x00000000  T2      : 0x00000200  
+S0/FP   : 0x500d2000  S1      : 0x00000008  A0      : 0x4ff2fe38  A1      : 0x4ff2fe38  
+A2      : 0x00000004  A3      : 0x0000000a  A4      : 0x00000009  A5      : 0x00000002  
+A6      : 0x0000000a  A7      : 0x4ff2fd88  S2      : 0x4ff40000  S3      : 0x4ff40000  
+S4      : 0x00000000  S5      : 0x00000000  S6      : 0x00000000  S7      : 0x4fc02d74  
+S8      : 0x4ff347e0  S9      : 0x4ff3003a  S10     : 0x400d3986  S11     : 0x4ff300a2  
+T3      : 0x00000000  T4      : 0x00000000  T5      : 0x00000000  T6      : 0x00000000  
+MSTATUS : 0x00011880  MTVEC   : 0x4ff00003  MCAUSE  : 0x00000007  MTVAL   : 0x500d2000  
+MHARTID : 0x00000001  
+
+Stack memory:
+4ff29390: 0x00000000 0x00000000 0x00000000 0x0000000a 0x00011880 0x00000000 0x00000000 0x4ff30030
+4ff293b0: 0x00011880 0xb8000012 0x00000004 0x4ff002c2 0x00000000 0x00000000 0x00000000 0x4ff34c08
+4ff293d0: 0x00000000 0x00000000 0x500e2000 0x4ff06a2a 0x4ff06a36 0x4ff29440 0x4ff29440 0x4ff294e0
+4ff293f0: 0x4ff294d0 0x00000000 0x4ff293fc 0xffffffff 0x4ff293fc 0x4ff293fc 0x00000001 0x4ff29410
+4ff29410: 0xffffffff 0x4ff323ac 0x4ff323ac 0x00000000 0x0000000a 0x00000010 0x00000001 0x00000000
+4ff29430: 0x00000000 0x00000000 0xb33fffff 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000
+4ff29450: 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000
+4ff29470: 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000
+4ff29490: 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000
+4ff294b0: 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000
+4ff294d0: 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x4ff294e8 0xffffffff 0x4ff294e8
+4ff294f0: 0x4ff294e8 0x00000000 0x4ff294fc 0xffffffff 0x4ff294fc 0x4ff294fc 0x00000000 0x4ff29508
+4ff29510: 0x00000000 0x00000000 0x00000000 0x4ff29520 0xffffffff 0x4ff29520 0x4ff29520 0x00000000
+4ff29530: 0x4ff29534 0xffffffff 0x4ff29534 0x4ff29534 0x00000001 0x00000001 0x00000000 0x00000001
+4ff29550: 0x00000000 0x00000000 0x00000004 0xb33fffff 0x00000000 0x00000000 0x4ff29564 0x00000000
+4ff29570: 0x00000000 0x00000000 0x4ff2957c 0xffffffff 0x4ff2957c 0x4ff2957c 0x00000000 0x4ff29590
+4ff29590: 0xffffffff 0x4ff29590 0x4ff29590 0x00000001 0x00000001 0x00000000 0x00000001 0x00000000
+4ff295b0: 0x00000000 0x00000001 0xb33fffff 0x00000000 0x500e2000 0x4ff06a2a 0x4ff06a36 0x00000000
+4ff295d0: 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000
+4ff295f0: 0x00000000 0x00000000 0x4ff2b9ac 0x4ff2b9e0 0x4ff2ba14 0x4ff2ba48 0x00000000 0x00000000
+4ff29610: 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000
+4ff29630: 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000
+4ff29650: 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000
+4ff29670: 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000
+4ff29690: 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000
+4ff296b0: 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000
+4ff296d0: 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000
+4ff296f0: 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000
+4ff29710: 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000
+4ff29730: 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000
+4ff29750: 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000
+4ff29770: 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000
+
+
+
+ELF file SHA256: 8c4ae4b9a
+
+Rebooting...
+ESP-ROM:esp32p4-eco2-20240710
+Build:Jul 10 2024
+rst:0xc (SW_CPU_RESET),boot:0x30f (SPI_FAST_FLASH_BOOT)
+Core0 Saved PC:0x4ff046d6
+Core1 Saved PC:0x4ff022da
+SPI mode:DIO, clock div:1
+load:0x4ff33ce0,len:0x11c8
+load:0x4ff2abd0,len:0xc1c
+load:0x4ff2cbd0,len:0x32fc
+entry 0x4ff2abd0
+[    10][I][esp32-hal-psram.c:102] psramAddToHeap(): PSRAM added to the heap.
+=========== Before Setup Start ===========
+Chip Info:
+------------------------------------------
+  Model             : ESP32-P4
+  Package           : 0
+  Revision          : 1.00
+  Cores             : 2
+  CPU Frequency     : 360 MHz
+  XTAL Frequency    : 40 MHz
+  Features Bitfield : 0000000000
+  Embedded Flash    : No
+  Embedded PSRAM    : No
+  2.4GHz WiFi       : No
+  Classic BT        : No
+  BT Low Energy     : No
+  IEEE 802.15.4     : No
+------------------------------------------
+INTERNAL Memory Info:
+------------------------------------------
+  Total Size        :   514568 B ( 502.5 KB)
+  Free Bytes        :   476028 B ( 464.9 KB)
+  Allocated Bytes   :    32500 B (  31.7 KB)
+  Minimum Free Bytes:   471988 B ( 460.9 KB)
+  Largest Free Block:   385012 B ( 376.0 KB)
+------------------------------------------
+SPIRAM Memory Info:
+------------------------------------------
+  Total Size        : 33554432 B (32768.0 KB)
+  Free Bytes        : 33551856 B (32765.5 KB)
+  Allocated Bytes   :        0 B (   0.0 KB)
+  Minimum Free Bytes: 33551856 B (32765.5 KB)
+  Largest Free Block: 33030132 B (32256.0 KB)
+  Bus Mode          : QSPI
+------------------------------------------
+Flash Info:
+------------------------------------------
+  Chip Size         : 16777216 B (16 MB)
+  Block Size        :    65536 B (  64.0 KB)
+  Sector Size       :     4096 B (   4.0 KB)
+  Page Size         :      256 B (   0.2 KB)
+  Bus Speed         : 80 MHz
+  Bus Mode          : QIO
+------------------------------------------
+Partitions Info:
+------------------------------------------
+                nvs : addr: 0x00009000, size:    24.0 KB, type: DATA, subtype: NVS
+           phy_init : addr: 0x0000F000, size:     4.0 KB, type: DATA, subtype: PHY
+            factory : addr: 0x00010000, size:  4096.0 KB, type:  APP, subtype: FACTORY
+            storage : addr: 0x00410000, size:  8192.0 KB, type: DATA, subtype: SPIFFS
+           coredump : addr: 0x00C10000, size:  1024.0 KB, type: DATA, subtype: COREDUMP
+           log_dump : addr: 0x00D10000, size:  1024.0 KB,Guru Meditation Error: Core  1 panic'ed (Store access fault). Exception was unhandled.
+
+Core  1 register dump:
+MEPC    : 0x4004995a  RA      : 0x40049878  SP      : 0x4ff29390  GP      : 0x4ff11f00  
+TP      : 0x4ff349e0  T0      : 0x00000fff  T1      : 0x00000000  T2      : 0x00000200  
+S0/FP   : 0x500d2000  S1      : 0x00000008  A0      : 0x4ff2fd88  A1      : 0x4ff2fd88  
+A2      : 0x00000004  A3      : 0x00000029  A4      : 0x00000009  A5      : 0x00000002  
+A6      : 0x00000029  A7      : 0x4ff2fd88  S2      : 0x4ff40000  S3      : 0x4ff40000  
+S4      : 0x00000000  S5      : 0x00000000  S6      : 0x00000000  S7      : 0x4fc02d74  
+S8      : 0x4ff34800  S9      : 0x4ff27c9a  S10     : 0x400d3986  S11     : 0x4ff27ccc  
+T3      : 0x00000007  T4      : 0x00000000  T5      : 0x00000000  T6      : 0x00000000  
+MSTATUS : 0x00011880  MTVEC   : 0x4ff00003  MCAUSE  : 0x00000007  MTVAL   : 0x500d2000  
+MHARTID : 0x00000001  
+
+Stack memory:
+4ff29390: 0x00000000 0x00000000 0x00000000 0x00000029 0x00000000 0x00000000 0x00000000 0x4ff27c94
+4ff293b0: 0x00011880 0xb8000012 0x00000004 0x4ff002c2 0x00000000 0x00000000 0x00000000 0x4ff34c08
+4ff293d0: 0x00000000 0x00000000 0x500e2000 0x4ff06a2a 0x4ff06a36 0x4ff29440 0x4ff29440 0x4ff294e0
+4ff293f0: 0x4ff294d0 0x00000000 0x4ff293fc 0xffffffff 0x4ff293fc 0x4ff293fc 0x00000001 0x4ff29410
+4ff29410: 0xffffffff 0x4ff323ac 0x4ff323ac 0x00000000 0x0000000a 0x00000010 0x00000001 0x00000000
+4ff29430: 0x00000000 0x00000000 0xb33fffff 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000
+4ff29450: 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000
+4ff29470: 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000
+4ff29490: 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000
+4ff294b0: 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000
+4ff294d0: 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x4ff294e8 0xffffffff 0x4ff294e8
+4ff294f0: 0x4ff294e8 0x00000000 0x4ff294fc 0xffffffff 0x4ff294fc 0x4ff294fc 0x00000000 0x4ff29508
+4ff29510: 0x00000000 0x00000000 0x00000000 0x4ff29520 0xffffffff 0x4ff29520 0x4ff29520 0x00000000
+4ff29530: 0x4ff29534 0xffffffff 0x4ff29534 0x4ff29534 0x00000001 0x00000001 0x00000000 0x00000001
+4ff29550: 0x00000000 0x00000000 0x00000004 0xb33fffff 0x00000000 0x00000000 0x4ff29564 0x00000000
+4ff29570: 0x00000000 0x00000000 0x4ff2957c 0xffffffff 0x4ff2957c 0x4ff2957c 0x00000000 0x4ff29590
+4ff29590: 0xffffffff 0x4ff29590 0x4ff29590 0x00000001 0x00000001 0x00000000 0x00000001 0x00000000
+4ff295b0: 0x00000000 0x00000001 0xb33fffff 0x00000000 0x500e2000 0x4ff06a2a 0x4ff06a36 0x00000000
+4ff295d0: 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000
+4ff295f0: 0x00000000 0x00000000 0x4ff2b9ac 0x4ff2b9e0 0x4ff2ba14 0x4ff2ba48 0x00000000 0x00000000
+4ff29610: 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000
+4ff29630: 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000
+4ff29650: 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000
+4ff29670: 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000
+4ff29690: 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000
+4ff296b0: 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000
+4ff296d0: 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000
+4ff296f0: 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000
+4ff29710: 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000
+4ff29730: 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000
+4ff29750: 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000
+4ff29770: 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000
+
+
+
+ELF file SHA256: 8c4ae4b9a
+
+Rebooting...
+ESP-ROM:esp32p4-eco2-20240710
+Build:Jul 10 2024
+rst:0xc (SW_CPU_RESET),boot:0x30f (SPI_FAST_FLASH_BOOT)
+Core0 Saved PC:0x4ff046d6
+Core1 Saved PC:0x4ff022da
+SPI mode:DIO, clock div:1
+load:0x4ff33ce0,len:0x11c8
+load:0x4ff2abd0,len:0xc1c
+load:0x4ff2cbd0,len:0x32fc
+entry 0x4ff2abd0
+[    10][I][esp32-hal-psram.c:102] psramAddToHeap(): PSRAM added to the heap.
+=========== Before Setup Start ===========
+Chip Info:
+------------------------------------------
+  Model             : ESP32-P4
+  Package           : 0
+  Revision          : 1.00
+  Cores             : 2
+  CPU Frequency     : 360 MHz
+  XTAL Frequency    : 40 MHz
+  Features Bitfield : 0000000000
+  Embedded Flash    : No
+  Embedded PSRAM    : No
+  2.4GHz WiFi       : No
+  Classic BT        : No
+  BT Low Energy     : No
+  IEEE 802.15.4     : No
+------------------------------------------
+INTERNAL Memory Info:
+------------------------------------------
+  Total Size        :   514568 B ( 502.5 KB)
+  Free Bytes        :   476028 B ( 464.9 KB)
+  Allocated Bytes   :    32500 B (  31.7 KB)
+  Minimum Free Bytes:   471988 B ( 460.9 KB)
+  Largest Free Block:   385012 B ( 376.0 KB)
+------------------------------------------
+SPIRAM Memory Info:
+------------------------------------------
+  Total Size        : 33554432 B (32768.0 KB)
+  Free Bytes        : 33551856 B (32765.5 KB)
+  Allocated Bytes   :        0 B (   0.0 KB)
+  Minimum Free Bytes: 33551856 B (32765.5 KB)
+  Largest Free Block: 33030132 B (32256.0 KB)
+  Bus Mode          : QSPI
+------------------------------------------
+Flash Info:
+------------------------------------------
+  Chip Size         : 16777216 B (16 MB)
+  Block Size        :    65536 B (  64.0 KB)
+  Sector Size       :     4096 B (   4.0 KB)
+  Page Size         :      256 B (   0.2 KB)
+  Bus Speed         : 80 MHz
+  Bus Mode          : QIO
+------------------------------------------
+Partitions Info:
+------------------------------------------
+                nvs : addr: 0x00009000, size:    24.0 KB, type: DATA, subtype: NVS
+           phy_init : addr: 0x0000F000, size:     4.0 KB, type: DATA, subtype: PHY
+            factory : addr: 0x00010000, size:  4096.0 KB, type:  APP, subtype: FACTORY
+            storage : addr: 0x00410000, size:  8192.0 KB, type: DATA, subtype: SPIFFS
+           coredump : addr: 0x00C10000, size:  1024.0 KB, type: DATA, subtype: COREDUMP
+           log_dump : addr: 0x00D10000, size:  1024.0 KB, type: DATA, subtype: 0x08
+             config : addr: 0x00E10000, size:   128.0 KB, type: DATA, subtype: NVS
+           reserved : addr: 0x00E30000, size:  1856.0 KB, type: DATA, subtype: 0xFF
+------------------------------------------
+Software Info:
+------------------------------------------
+  Compile Date/Time : Jun 15 2025 21:37:55
+  Compile Host OS   : windows
+  ESP-IDF Version   : v5.4.1-1-g2f7dcd862a-dirty
+  Arduino Version   : 3.2.0
+------------------------------------------
+Board Info:
+------------------------------------------
+  Arduino Board     : ESP32P4_DEV
+  Arduino Variant   : esp32p4
+  Arduino FQBN      : esp32:esp32:esp32p4:UploadSpeed=921600,USBMode=hwcdc,CDCOnBoot=cdc,MSCOnBoot=default,DFUOnBoot=default,UploadMode=default,CPUFreq=360,FlashFreq=80,FlashMode=qio,FlashSize=16M,PartitionScheme=custom,DebugLevel=debug,PSRAM=enabled,EraseFlash=all,JTAGAdapter=default
+============ Before Setup End ============
+[   131][I][esp32-hal-periman.c:141] perimanSetPinBus(): Pin 24 already has type USB_DM (45) with bus 0x4ff277a8
+[   131][I][esp32-hal-periman.c:141] perimanSetPinBus(): Pin 25 already has type USB_DP (46) with bus 0x4ff277a8
+
+=== ESP32P4 Gallery Debug Output ===
+Starting initialization sequence with enhanced error handling...
+Initializing file system using LittleFS...
+E (1122) esp_littlefs: partition "spiffs" could not be found
+E (1123) esp_littlefs: Failed to initialize LittleFS
+[  1133][E][LittleFS.cpp:79] begin(): Mounting LittleFS failed! Error: 261
+E (1123) esp_littlefs: partition "spiffs" could not be found
+E (1127) esp_littlefs: Failed to initialize LittleFS
+[  1142][E][LittleFS.cpp:79] begin(): Mounting LittleFS failed! Error: 261
+LittleFS mount failed, formatting...
+E (1132) task_wdt: esp_task_wdt_status(763): TWDT was never initialized
+[  1148][E][esp32-hal-misc.c:162] disableCore0WDT(): Failed to remove Core 0 IDLE task from WDT
+E (1138) esp_littlefs: partition "spiffs" could not be found
+E (1143) esp_littlefs: Failed to initialize to format.
+[  1158][E][LittleFS.cpp:104] format(): Formatting LittleFS failed! Error: 261
+LittleFS initialization failed - continuing without file system
+
+------- Logger Initialized -------
+[  0:00:01.159][  INFO][#000000] Logger initialized: level=1, serial=ON, flash=OFF
+[DEBUG] Log level set to 1
+[DEBUG] Serial debug output enabled
+[  0:00:01.161][  INFO][#000001] ====================================
+[  0:00:01.162][  INFO][#000002] ESP32P4 Image Gallery Starting
+[  0:00:01.163][  INFO][#000003] Date: 2025-06-17 10:56:36 UTC
+[  0:00:01.164][  INFO][#000004] User: Chamil1983
+[  0:00:01.165][  INFO][#000005] ====================================
+[  0:00:01.166][  INFO][#000006] System mutexes initialized
+[  0:00:01.167][  INFO][#000007] Initializing enhanced watchdog system
+Setting up watchdog with critical error protection...
+E (1158) task_wdt: esp_task_wdt_deinit(642): TWDT was never initialized
+Main task subscribed to watchdog
+Watchdog initialized with 30 second timeout, panic mode: OFF
+[  0:00:01.268][  INFO][#000008] Watchdog initialized successfully
+[  0:00:01.269][  INFO][#000009] Initializing LCD with up to 2 attempts...
+[  0:00:01.270][  INFO][#000010] Setting up LCD...
+[  1271][I][jd9365_lcd.cpp:50] example_bsp_enable_dsi_phy_power(): [example] MIPI DSI PHY Powered on
+[  1273][I][jd9365_lcd.cpp:83] begin(): [example] Install MIPI DSI LCD control panel
+[  0:00:01.559][  INFO][#000011] LCD initialized successfully with backlight ON
+[  0:00:01.560][  INFO][#000012] LCD initialized successfully on attempt 1
+[  0:00:01.561][  INFO][#000013] Initializing Touch with up to 2 attempts...
+[  0:00:01.562][  INFO][#000014] Setting up Touch...
+[  0:00:02.638][  INFO][#000015] Touch initialized successfully
+[  0:00:02.639][  INFO][#000016] Touch initialized successfully on attempt 1
+[  0:00:02.640][  INFO][#000017] Initializing SD Card with up to 3 attempts...
+[  0:00:02.641][  INFO][#000018] Setting up SD Card with robust initialization...
+[  0:00:02.642][  INFO][#000019] Waiting for power stabilization...
+[  0:00:04.643][  INFO][#000020] Resetting SD pins...
+[  0:00:04.744][  INFO][#000021] Ensuring SD_MMC is deinitialized...
+[  0:00:05.245][  INFO][#000022] Configuring SD pins...
+[  0:00:05.246][  INFO][#000023] SD init attempt 1: 1-bit mode at 125KHz (ultra conservative)
+[  0:00:05.912][  INFO][#000024] Validating SD card...
+[  0:00:05.913][  INFO][#000025] SD Card Type: SDHC
+[  0:00:05.914][  INFO][#000026] SD Card Size: 128000MB
+[  0:00:05.915][  INFO][#000027] SD card initialized successfully in ultra-conservative mode
+[  0:00:05.916][  INFO][#000028] SD Card initialized successfully on attempt 1
+[  0:00:05.917][  INFO][#000029] Initializing WiFi with up to 2 attempts...
+[  0:00:05.918][  INFO][#000030] Setting up WiFi in AP mode with maximum reliability...
+[  5919][E][STA.cpp:530] disconnect(): STA not started! You must call begin first.
+sdio_mempool_create free:31937196 min-free:31937196 lfb-def:31457268 lfb-8bit:31457268
+
+Name: 
+Type: SDIO
+Speed: 40.00 MHz (limit: 40.00 MHz)
+Size: 0MB
+CSD: ver=1, sector_size=0, capacity=0 read_bl_len=0
+SCR: sd_spec=0, bus_width=0
+TUPLE: DEVICE, size: 3: D9 01 FF 
+TUPLE: MANFID, size: 4
+  MANF: 0092, CARD: 6666
+TUPLE: FUNCID, size: 2: 0C 00 
+TUPLE: FUNCE, size: 4: 00 00 02 32 
+TUPLE: CONFIG, size: 5: 01 01 00 02 07 
+TUPLE: CFTABLE_ENTRY, size: 8
+  INDX: C1, Intface: 1, Default: 1, Conf-Entry-Num: 1
+  IF: 41
+  FS: 30, misc: 0, mem_space: 1, irq: 1, io_space: 0, timing: 0, power: 0
+  IR: 30, mask: 1,   IRQ: FF FF
+  LEN: FFFF
+TUPLE: END
+[  0:00:08.965][  INFO][#000031] Starting AP with SSID: ESP32P4-ImageViewer
+[  0:00:08.966][  INFO][#000032] AP start attempt 1...
+[  0:00:09.175][  INFO][#000033] WiFi AP Mode active with enhanced stability
+[  0:00:09.176][  INFO][#000034] AP SSID: ESP32P4-ImageViewer
+[  0:00:09.176][  INFO][#000035] AP IP Address: 192.168.4.1
+[  0:00:09.177][  INFO][#000036] AP Channel: 6
+[  0:00:09.178][  INFO][#000037] AP Max Clients: 4
+[  0:00:09.179][  INFO][#000038] AP Power: Maximum
+[  0:00:09.180][  INFO][#000039] WiFi initialized successfully on attempt 1
+[  0:00:09.181][  INFO][#000040] Initializing LVGL with up to 1 attempts...
+[  0:00:09.182][  INFO][#000041] Setting up LVGL...
+[  0:00:09.183][ DEBUG][#000042] Allocating LVGL buffers: 64000 bytes each
+[  0:00:09.185][  INFO][#000043] LVGL initialized successfully
+[  0:00:09.186][  INFO][#000044] LVGL initialized successfully on attempt 1
+[  0:00:09.187][  INFO][#000045] Initializing UI with up to 1 attempts...
+[  0:00:09.188][  INFO][#000046] Setting up UI...
+[  0:00:09.192][  INFO][#000047] UI initialized successfully
+[  0:00:09.193][  INFO][#000048] UI initialized successfully on attempt 1
+[  0:00:09.194][  INFO][#000049] Initializing WebServer with up to 2 attempts...
+[  0:00:09.195][  INFO][#000050] Setting up WebServer with enhanced connectivity...
+[  0:00:09.197][  INFO][#000051] WebServer started on port 80 with enhanced error handling
+[  0:00:09.198][  INFO][#000052] WebServer initialized successfully on attempt 1
+[  0:
+[  0:00:09.241][  INFO][#000053] Scanning for images...
+[  0:00:09.243][  INFO][#000054] Scanning for images with enhanced validation...
+[  0:00:09.248][  INFO][#000055] Phase 1: Identifying valid and corrupt images...
+[  0:00:09.265][ DEBUG][#000056] Found image 0: /images/img_39767.jpg (939213 bytes)
+[  0:00:09.280][ DEBUG][#000057] Found image 1: /images/img_79907.jpg (1586123 bytes)
+[  0:00:09.295][ DEBUG][#000058] Found image 2: /images/img_32173_chicago skyline.jpg (1101785 bytes)
+[  0:00:09.310][ DEBUG][#000059] Found image 3: /images/img_11892.jpg (939213 bytes)
+[  0:00:09.325][ DEBUG][#000060] Found image 4: /images/img_11059.jpg (843783 bytes)
+[  0:00:09.339][  WARN][#000061] JPEG missing EOI marker - may be corrupted: /images/img_42344.jpg
+[  0:00:09.343][ DEBUG][#000062] Found image 5: /images/img_42344.jpg (14360 bytes)
+[  0:00:09.359][  WARN][#000063] JPEG missing EOI marker - may be corrupted: /images/img_22824_Eagles_Birds.jpg
+[  0:00:09.360][ DEBUG][#000064] Found image 6: /images/img_22824_Eagles_Birds.jpg (16308 bytes)
+[  0:00:09.361][  INFO][#000065] Found 7 valid images, removed 0 corrupted files
+[  0:00:09.362][  INFO][#000066] Found 7 images
+[  0:00:09.363][  INFO][#000067] Loading first image
+[  0:00:09.364][  INFO][#000068] Displaying image 0: /images/img_39767.jpg
+[  0:00:09.845][ DEBUG][#000069] Screen cleared in 480 ms
+[  0:00:09.845][ DEBUG][#000070] Screen cleared in 480 ms
+[  0:00:09.863][  INFO][#000071] Starting JPEG decoding for /images/img_39767.jpg (939213 bytes)
+[  0:00:09.864][  INFO][#000072] Decoding image at full resolution
+[  0:00:12.354][  INFO][#000073] JPEG decoded successfully (rotated): 1280x800 -> 800x1280
+[  0:00:12.355][  INFO][#000074] JPEG decoding took 2507 ms, result: success
+[  0:00:12.356][  WARN][#000075] JPEG rendering took 2508 ms
+[  0:00:12.357][  INFO][#000076] Successfully displayed image 0
+[  0:00:12.358][  INFO][#000077] Successfully displayed image 0
+[  0:00:12.359][  INFO][#000078] Created task: Slideshow Task on core 0
+[  0:00:12.360][  INFO][#000080] Initialization complete, system status:
+[  0:00:12.361][  INFO][#000081] LCD: OK, Touch: OK, SD: OK
+[  0:00:12.362][  INFO][#000082] WiFi: OK, LVGL: OK, UI: OK, Server: OK
 =========== After Setup Start ============
 INTERNAL Memory Info:
 ------------------------------------------
-  Total Size        :   514840 B ( 502.8 KB)
-  Free Bytes        :   383340 B ( 374.4 KB)
-  Allocated Bytes   :   120772 B ( 117.9 KB)
-  Minimum Free Bytes:   382376 B ( 373.4 KB)
-  Largest Free Block:   335860 B ( 328.0 KB)
+  Total Size        :   514568 B ( 502.5 KB)
+  Free Bytes        :   378372 B ( 369.5 KB)
+  Allocated Bytes   :   125404 B ( 122.5 KB)
+  Minimum Free Bytes:   377324 B ( 368.5 KB)
+  Largest Free Block:   327668 B ( 320.0 KB)
 ------------------------------------------
 SPIRAM Memory Info:
 ------------------------------------------
@@ -232,20 +853,25 @@ GPIO Info:
     44 : SDMMC_CMD
     45 : SDMMC_POWER
 ============ After Setup End =============
-[  0:00:12.799][ DEBUG][#000083] WiFi AP running but no clients connected
-[  0:00:22.800][ DEBUG][#000084] WiFi AP running but no clients connected
-[  0:00:32.002][  WARN][#000085] 404 Not Found: /204
-[  0:00:32.011][  WARN][#000086] 404 Not Found: /connecttest.txt
-[  0:00:32.607][  WARN][#000087] 404 Not Found: /ipv6check
-[ 34298][D][NetworkClient.cpp:576] connected(): Disconnected: RES: 0, ERR: 128
-[ 34353][D][NetworkClient.cpp:576] connected(): Disconnected: RES: 0, ERR: 128
-[ 36166][D][NetworkClient.cpp:576] connected(): Disconnected: RES: 0, ERR: 128
-[ 38309][D][NetworkClient.cpp:576] connected(): Disconnected: RES: 0, ERR: 128
-[  0:00:39.246][  WARN][#000088] 404 Not Found: /204
-[ 40466][D][NetworkClient.cpp:576] connected(): Disconnected: RES: 0, ERR: 128
+[  0:00:28.803][  WARN][#000083] 404 Not Found: /204
+[  0:00:28.812][  WARN][#000084] 404 Not Found: /ipv6check
+[  0:00:29.067][  WARN][#000085] 404 Not Found: /connecttest.txt
+[ 30587][D][NetworkClient.cpp:576] connected(): Disconnected: RES: 0, ERR: 128
+[ 32659][D][NetworkClient.cpp:576] connected(): Disconnected: RES: 0, ERR: 128
+[ 32696][D][NetworkClient.cpp:576] connected(): Disconnected: RES: 0, ERR: 128
+[ 32745][D][NetworkClient.cpp:576] connected(): Disconnected: RES: 0, ERR: 128
+[  0:00:34.308][  WARN][#000086] 404 Not Found: /204
+[ 34712][D][NetworkClient.cpp:576] connected(): Disconnected: RES: 0, ERR: 128
+[ 36783][D][NetworkClient.cpp:576] connected(): Disconnected: RES: 0, ERR: 128
+[ 36796][D][NetworkClient.cpp:576] connected(): Disconnected: RES: 0, ERR: 128
+[ 37757][D][NetworkClient.cpp:576] connected(): Disconnected: RES: 0, ERR: 128
+[ 37872][D][NetworkClient.cpp:576] connected(): Disconnected: RES: 0, ERR: 128
+[ 37880][D][NetworkClient.cpp:576] connected(): Disconnected: RES: 0, ERR: 128
+[ 37952][D][NetworkClient.cpp:576] connected(): Disconnected: RES: 0, ERR: 128
+[ 38763][D][NetworkClient.cpp:576] connected(): Disconnected: RES: 0, ERR: 128
 Core  1 register dump:
-MEPC    : 0x4ff046e8  RA      : 0x4ff0b16c  SP      : 0x4ff319b0  GP      : 0x4ff11e00  
-TP      : 0x4ff31a00  T0      : 0x00000000  T1      : 0x4ff04d00  T2      : 0x00000000  
+MEPC    : 0x4ff046e8  RA      : 0x4ff0b16c  SP      : 0x4ff318e0  GP      : 0x4ff11f00  
+TP      : 0x4ff31930  T0      : 0x00000000  T1      : 0x4ff03ff2  T2      : 0x00000000  
 S0/FP   : 0x00000000  S1      : 0x4ff40000  A0      : 0x00000001  A1      : 0x00000000  
 A2      : 0x00000000  A3      : 0x00000000  A4      : 0x00000000  A5      : 0x00000000  
 A6      : 0x00000000  A7      : 0x00000000  S2      : 0x00000000  S3      : 0x4ff28000  
@@ -255,331 +881,584 @@ T3      : 0x00000000  T4      : 0x00000000  T5      : 0x00000000  T6      : 0x00
 MSTATUS : 0x00011888  MTVEC   : 0x4ff00003  MCAUSE  : 0xdeadc0de  MTVAL   : 0xdeadc0de  
 MHARTID : 0x00000001  esp_backtrace_print: Print CPU 1 (current core) registers
 
-[ 43427][D][NetworkClient.cpp:576] connected(): Disconnected: RES: 0, ERR: 128
-[ 44693][D][NetworkClient.cpp:576] connected(): Disconnected: RES: 0, ERR: 128
-[  0:00:46.086][  WARN][#000089] 404 Not Found: /204
-[ 46772][D][NetworkClient.cpp:576] connected(): Disconnected: RES: 0, ERR: 128
-[ 48849][D][NetworkClient.cpp:576] connected(): Disconnected: RES: 0, ERR: 128
-[ 52968][D][NetworkClient.cpp:576] connected(): Disconnected: RES: 0, ERR: 128
-[ 53004][D][NetworkClient.cpp:576] connected(): Disconnected: RES: 0, ERR: 128
-[  0:00:53.555][  WARN][#000090] 404 Not Found: /204
-[ 59227][D][NetworkClient.cpp:576] connected(): Disconnected: RES: 0, ERR: 128
-[ 59252][D][NetworkClient.cpp:576] connected(): Disconnected: RES: 0, ERR: 128
-[  0:01:02.452][  WARN][#000091] 404 Not Found: /204
-[  0:01:02.842][  INFO][#000092] WiFi status: 1 clients connected
-[  0:01:05.131][  WARN][#000093] 404 Not Found: /ipv6check
-[  0:01:05.727][  WARN][#000094] 404 Not Found: /time/1/current
-[  0:01:12.574][  WARN][#000095] 404 Not Found: /204
-Core  1 register dump:
-MEPC    : 0x4ff046e8  RA      : 0x4ff0b16c  SP      : 0x4ff319b0  GP      : 0x4ff11e00  
-TP      : 0x4ff31a00  T0      : 0x00000000  T1      : 0x4ff04d00  T2      : 0x00000000  
-S0/FP   : 0x00000000  S1      : 0x4ff40000  A0      : 0x00000001  A1      : 0x00000000  
-A2      : 0x00000000  A3      : 0x00000000  A4      : 0x00000000  A5      : 0x00000000  
-A6      : 0x00000000  A7      : 0x00000000  S2      : 0x00000000  S3      : 0x4ff28000  
-S4      : 0x4ff40000  S5      : 0x00000000  S6      : 0x00000000  S7      : 0x00000000  
-S8      : 0x00000000  S9      : 0x00000000  S10     : 0x00000000  S11     : 0x00000000  
-T3      : 0x00000000  T4      : 0x00000000  T5      : 0x00000000  T6      : 0x00000000  
-MSTATUS : 0x00011888  MTVEC   : 0x4ff00003  MCAUSE  : 0xdeadc0de  MTVAL   : 0xdeadc0de  
-MHARTID : 0x00000001  esp_backtrace_print: Print CPU 1 (current core) registers
-
-[  0:01:22.480][  WARN][#000096] 404 Not Found: /204
-[  0:01:24.671][  INFO][#000097] Serving main page
-[  0:01:24.687][  INFO][#000098] Main page served successfully
-[  0:01:26.600][  WARN][#000099] 404 Not Found: /favicon.ico
-[  0:01:30.929][  INFO][#000100] Displaying image 1: /images/img_79907.jpg
-[  0:01:31.411][ DEBUG][#000101] Screen cleared in 481 ms
-[  0:01:31.491][  INFO][#000102] Starting JPEG decoding for /images/img_79907.jpg (1586123 bytes)
-[  0:01:31.493][  INFO][#000103] Decoding image at full resolution
-[  0:01:34.394][  INFO][#000104] JPEG decoded successfully (rotated): 1280x800 -> 800x1280
-[  0:01:34.395][  INFO][#000105] JPEG decoding took 2919 ms, result: success
-[  0:01:34.396][  WARN][#000106] JPEG rendering took 2920 ms
-[  0:01:34.627][  INFO][#000107] Successfully displayed image 1
-[  0:01:34.628][  INFO][#000108] Successfully displayed image 1
-[  0:01:34.652][  INFO][#000109] Displaying image 2: /images/img_32173_chicago skyline.jpg
-[  0:01:35.135][ DEBUG][#000110] Screen cleared in 481 ms
-[  0:01:35.214][  INFO][#000111] Starting JPEG decoding for /images/img_32173_chicago skyline.jpg (1101785 bytes)
-[  0:01:35.215][  INFO][#000112] Decoding image at full resolution
-[  0:01:37.783][  INFO][#000113] JPEG decoded successfully (rotated): 1280x800 -> 800x1280
-[  0:01:37.784][  INFO][#000114] JPEG decoding took 2585 ms, result: success
-[  0:01:37.785][  WARN][#000115] JPEG rendering took 2586 ms
-[  0:01:38.016][  INFO][#000116] Successfully displayed image 2
-[  0:01:38.017][  INFO][#000117] Successfully displayed image 2
-[  0:01:38.026][  WARN][#000118] 404 Not Found: /204
-[  0:01:40.358][  WARN][#000119] 404 Not Found: /ipv6check
-Core  1 register dump:
-MEPC    : 0x4ff046e8  RA      : 0x4ff0b16c  SP      : 0x4ff319b0  GP      : 0x4ff11e00  
-TP      : 0x4ff31a00  T0      : 0x00000000  T1      : 0x4ff04d00  T2      : 0x00000000  
-S0/FP   : 0x00000000  S1      : 0x4ff40000  A0      : 0x00000001  A1      : 0x00000000  
-A2      : 0x00000000  A3      : 0x00000000  A4      : 0x00000000  A5      : 0x00000000  
-A6      : 0x00000000  A7      : 0x00000000  S2      : 0x00000000  S3      : 0x4ff28000  
-S4      : 0x4ff40000  S5      : 0x00000000  S6      : 0x00000000  S7      : 0x00000000  
-S8      : 0x00000000  S9      : 0x00000000  S10     : 0x00000000  S11     : 0x00000000  
-T3      : 0x00000000  T4      : 0x00000000  T5      : 0x00000000  T6      : 0x00000000  
-MSTATUS : 0x00011888  MTVEC   : 0x4ff00003  MCAUSE  : 0xdeadc0de  MTVAL   : 0xdeadc0de  
-MHARTID : 0x00000001  esp_backtrace_print: Print CPU 1 (current core) registers
-
-[  0:01:43.761][  INFO][#000120] Displaying image 0: /images/img_39767.jpg
-[  0:01:44.244][ DEBUG][#000121] Screen cleared in 481 ms
-[  0:01:44.322][  INFO][#000122] Starting JPEG decoding for /images/img_39767.jpg (939213 bytes)
-[  0:01:44.323][  INFO][#000123] Decoding image at full resolution
-[  0:01:46.795][  INFO][#000124] JPEG decoded successfully (rotated): 1280x800 -> 800x1280
-[  0:01:46.796][  INFO][#000125] JPEG decoding took 2489 ms, result: success
-[  0:01:46.797][  WARN][#000126] JPEG rendering took 2490 ms
-[  0:01:47.028][  INFO][#000127] Successfully displayed image 0
-[  0:01:47.029][  INFO][#000128] Successfully displayed image 0
-[  0:01:47.049][  INFO][#000129] Displaying image 1: /images/img_79907.jpg
-[  0:01:47.532][ DEBUG][#000130] Screen cleared in 481 ms
-[  0:01:47.611][  INFO][#000131] Starting JPEG decoding for /images/img_79907.jpg (1586123 bytes)
-[  0:01:47.613][  INFO][#000132] Decoding image at full resolution
-[  0:01:50.520][  INFO][#000133] JPEG decoded successfully (rotated): 1280x800 -> 800x1280
-[  0:01:50.521][  INFO][#000134] JPEG decoding took 2925 ms, result: success
-[  0:01:50.522][  WARN][#000135] JPEG rendering took 2926 ms
-[  0:01:50.753][  INFO][#000136] Successfully displayed image 1
-[  0:01:50.754][  INFO][#000137] Successfully displayed image 1
-[  0:01:50.764][  INFO][#000138] Displaying image 2: /images/img_32173_chicago skyline.jpg
-[  0:01:51.245][ DEBUG][#000139] Screen cleared in 480 ms
-[  0:01:51.324][  INFO][#000140] Starting JPEG decoding for /images/img_32173_chicago skyline.jpg (1101785 bytes)
-[  0:01:51.325][  INFO][#000141] Decoding image at full resolution
-[  0:01:53.894][  INFO][#000142] JPEG decoded successfully (rotated): 1280x800 -> 800x1280
-[  0:01:53.895][  INFO][#000143] JPEG decoding took 2586 ms, result: success
-[  0:01:53.896][  WARN][#000144] JPEG rendering took 2587 ms
-[  0:01:54.127][  INFO][#000145] Successfully displayed image 2
-[  0:01:54.128][  INFO][#000146] Successfully displayed image 2
-[  0:01:54.137][  WARN][#000147] 404 Not Found: /204
-[  0:01:54.145][  INFO][#000148] Displaying image 4: /images/img_11059.jpg
-[  0:01:54.627][ DEBUG][#000149] Screen cleared in 480 ms
-[  0:01:54.705][  INFO][#000150] Starting JPEG decoding for /images/img_11059.jpg (843783 bytes)
-[  0:01:54.706][  INFO][#000151] Decoding image at full resolution
-[  0:01:57.083][  INFO][#000152] JPEG decoded successfully (rotated): 1280x800 -> 800x1280
-[  0:01:57.084][  INFO][#000153] JPEG decoding took 2394 ms, result: success
-[  0:01:57.085][  WARN][#000154] JPEG rendering took 2395 ms
-[  0:01:57.316][  INFO][#000155] Successfully displayed image 4
-[  0:01:57.317][  INFO][#000156] Successfully displayed image 4
-[  0:01:57.358][  INFO][#000157] Displaying image 4: /images/img_11059.jpg
-[  0:01:57.840][ DEBUG][#000158] Screen cleared in 481 ms
-[  0:01:57.919][  INFO][#000159] Starting JPEG decoding for /images/img_11059.jpg (843783 bytes)
-[  0:01:57.920][  INFO][#000160] Decoding image at full resolution
-[  0:02:00.297][  INFO][#000161] JPEG decoded successfully (rotated): 1280x800 -> 800x1280
-[  0:02:00.298][  INFO][#000162] JPEG decoding took 2394 ms, result: success
-[  0:02:00.299][  WARN][#000163] JPEG rendering took 2395 ms
-[  0:02:00.529][  INFO][#000164] Successfully displayed image 4
-[  0:02:00.530][  INFO][#000165] Successfully displayed image 4
-[  0:02:07.205][  WARN][#000166] 404 Not Found: /204
-[  0:02:07.339][  INFO][#000167] WiFi status: 1 clients connected
-[  0:02:08.218][  WARN][#000168] 404 Not Found: /service/update2/json
-[  0:02:10.346][  INFO][#000169] Slideshow control request: start
-[  0:02:10.347][  INFO][#000170] Starting slideshow with 5000 ms interval
-[  0:02:10.361][ DEBUG][#000171] Slideshow advancing to next image
-[  0:02:10.362][  INFO][#000172] Displaying image 5: /images/img_42344.jpg
-[  0:02:10.843][ DEBUG][#000173] Screen cleared in 479 ms
-[  0:02:10.858][  WARN][#000e corrupted: /images/img_42344.jpg
-[  0:02:10[#000175] JPEG missing EOI marker - may be corrupted: /images/img_42344.jpg
+[  0:00:40.613][  WARN][#000087] 404 Not Found: /204
+[ 44959][D][NetworkClient.cpp:576] connected(): Disconnected: RES: 0, ERR: 128
+[  0:00:47.045][  WARN][#000088] 404 Not Found: /204
+[ 49165][D][NetworkClient.cpp:576] connected(): Disconnected: RES: 0, ERR: 128
+[  0:00:53.153][  WARN][#000089] 404 Not Found: /ipv6check
+[ 53258][D][NetworkClient.cpp:576] connected(): Disconnected: RES: 0, ERR: 128
+[  0:00:54.080][  INFO][#000090] Serving main page
+[  0:00:54.094][  INFO][#000091] Main page served successfully
+[  0:00:58.018][  INFO][#000092] Slideshow control request: start
+[  0:00:58.019][  INFO][#000093] Starting slideshow with 5000 ms interval
+[  0:00:58.028][  WARN][#000094] 404 Not Found: /connecttest.txt
+[  0:00:58.037][  WARN][#000095] 404 Not Found: /204
+[  0:00:58.059][ DEBUG][#000096] Slideshow advancing to next image
+[  0:00:58.061][  INFO][#000097] Displaying image 1: /images/img_79907.jpg
+[  0:00:58.091][ DEBUG][#000098] Slideshow advancing to next image
+[  0:00:58.097][ skipping slideshow advance
+[  0:00:58.541][ DEBUG][#000100] Screen cleared in 480 ms
+[  0:00:58.542][ DEBUG][#000101] Screen cleared in 481 ms
+ge
+[  0: skipping slideshow advance
+[  0:00:59.105][ DEBUG][#000104] Slideshow advancing to next image
+[  0:00:59.111][  WARN][#000105] Couldn't safely get image path, skipping slideshow advance
+[  0:00:59.558][ ERROR][#000106] Failed to take SD mutex for JPEG loading
+[  0:00:59.559][  WARN][#000107] JPEG rendering took 1013 ms
+[  0:00:59.560][ ERROR][#000108] Failed to display image 1
+[  0:00:59.612][ DEBUG][#000109] Slideshow advancing to next image
+[  0:00:59.618][  WARN][#000110] Couldn't safely get image path, skipping slideshow advance
+[  0:00:59.641][ ERROR][#000111] Error displayed on screen: Image could not be displayed
+[  0:00:59.642][ ERROR][#000112] Failed to display image 1
+[  ge 1: /images/img_79907.jpg
+[  0:00:59.794][ DEBUG][#000114] Slideshow advancing to next image
+[  0:00:59.795][  INFO][#000115] Displaying image 2: /images/img_32173_chicago skyline.jpg
+[  0:01:00.119][ DEBUG][#000116] Slideshow advancing to next image
+[  0:01:00.125][  WARN][#000117] Couldn't safely get image path, skipping slideshow advance
+[  0:01:00.277][ DEBUG][#000119] Screen cleared in 481 ms
+[ 60439][D][NetworkClient.cpp:576] connected(): Disconnected: RES: 0, ERR: 128
+[  0:01:00.626][ DEBUG][#000120] Slideshow advancing to next image
+[  0:01:00.632] skipping slideshow advance
+[  0:01:01.133][ DEBUG][#000122] Slideshow advancing to next image
+[  0:01:01.139][  WARN][#000123] Couldn't safely get image path, skipping slideshow advance
 [  G loading
-es/img_42344.jpg
-[  0:02:11.925][  WARN][#000178] JPEG rendering took 1016 ms
-[  0:02:12.006][ ERROR][#000179] Error displayed on screen: Image could not be displayed
-[  0:02:12.007][ ERROR][#000180] Failed to display image 5
-[  0:02:12.008][ ERROR][#000181] Failed to display image 5
-[  0:02:12.009][ DEBUG][#000182] Slideshow advanced to image 5
-Core  1 register dump:
-MEPC    : 0x4ff046e8  RA      : 0x4ff0b16c  SP      : 0x4ff319b0  GP      : 0x4ff11e00  
-TP      : 0x4ff31a00  T0      : 0x00000000  T1      : 0x4ff04d00  T2      : 0x00000000  
-S0/FP   : 0x00000000  S1      : 0x4ff40000  A0      : 0x00000001  A1      : 0x00000000  
-A2      : 0x00000000  A3      : 0x00000000  A4      : 0x00000000  A5      : 0x00000000  
-A6      : 0x00000000  A7      : 0x00000000  S2      : 0x00000000  S3      : 0x4ff28000  
-S4      : 0x4ff40000  S5      : 0x00000000  S6      : 0x00000000  S7      : 0x00000000  
+[  0:01:01.293][ ERROR][#000126] Failed to display image 2
+[  0:01:01.373][ ERROR][#000127] Error displayed on screen: Image could not be displayed
+[  0:01:01.374][ ERROR][#000128] Failed to display image 2
+[  0:01:01.375][  WARN][#000129] Slideshow failed to display image 2: /images/img_32173_chicago skyline.jpg
+[  ge
+[  0:01:01.526][  INFO][#000131] Displaying image 3: /images/img_11892.jpg
+[  0:01:01.640][ DEBUG][#000132] Slideshow advancing to next image
+[  0:01:01.646][  WARN][#000133] Couldn't safely get image path, skipping slideshow advance
+[  0:01:02.007][ DEBUG][#000134] Screen cleared in 479 ms
+[  0:01:02.008][ DEBUG][#000135] Screen cleared in 480 ms
+ge
+[  0:01:02.153][  WARN][#000137] Couldn't safely get image path, skipping slideshow advance
+[  0:01:02.654][ DEBUG][#000138] Slideshow advancing to next image
+[  0:01:02.660][  WARN][#000139] Couldn't safely get image path, skipping slideshow advance
+[  0:01:03.022][ ERROR][#000140] Failed to take SD mutex for JPEG loading
+[  0:01:03.023][  WARN][#000141] JPEG rendering took 1012 ms
+[  0:01:03.024][ ERROR][#000142] Failed to display image 3
+Image could not be displayed
+[  0:01:03.106][ ERROR][#000144] Failed to display image 3
+[  0:01:03.107][  WARN][#000145] Slideshow failed to display image 3: /images/img_11892.jpg
+[  0:01:03.161][ DEBUG][#000146] Slideshow advancing to next image
+01:03.162][  INFO][#000147] Displaying image 4: /images/img_11059.jpg
+[  0:01:03.258][ DEBUG][#000148] Slideshow advancing to next image
+ skipping slideshow advance
+[ #000150] Screen cleared in 480 ms
+[  0:01:03.644][ DEBUG][#000151] Screen cleared in 481 ms
+[  0:01:03.765][ DEBUG][#000152] Slideshow advancing to next image
+ skipping slideshow advance
+[  0:01:04.272][ DEBUG][#000154] Slideshow advancing to next image
+[  0:01:04.278][  WARN][#000155] Couldn't safely get image path, skipping slideshow advance
+[  0:01:04.659][ ERROR][#000156] Failed to take SD mutex for JPEG loading
+[  0:01:04.N][#000157] JPEG rendering took 1012 ms
+[  0:01:04.661][ ERROR][#000158] Failed to display image 4
+[  0:01:04.742][ ERROR][#000159] Error displayed on screen: Image could not be displayed
+[  0:01:04.743][ ERROR][#000160] Failed to display image 4
+[  0:01:04.744][  WARN][#000161] Slideshow failed to display image 4: /images/img_11059.jpg
+[  0:01:04.779][ DEBUG][#000162] Slideshow advancing to next image
+[  0:01:04.780][  INFO][#000163] Displaying image 5: /images/img_42344.jpg
+[  0:01:04.894][ DEBUG][#000164] Slideshow advancing to next image
+[  0:01:04.900][  WARN][#000165] Couldn't safely get image path, skipping slideshow advance
+[  0:01:05.261][ DEBUG][#000166] Screen cleared in 480 ms
+[  0:01:05.262][ DEBUG][#000167] Screen cleared in 481 ms
+[  0:01:05.266][  WARN][#000168] JPEG missing EOI marker - may be corrupted: /images/img_42344.jpg
+[  0:01:05.281][  WARN][#000169] JPEG missing EOI marker - may be corrupted: /images/img_42344.jpg
+[  0:01:05.401][ DEBUG][#000170] Slideshow advancing to next image
+[  0:01:05.407][  WARN][#000171] Couldn't safely get image path, skipping slideshow advance
+[  0:01ge
+[  0:01:05.9 skipping slideshow advance
+
+assert failed: vTaskPriorityDisinheritAfterTimeout tasks.c:5267 (pxTCB != pxCurrentTCBs[ xPortGetCoreID() ])
+Core  0 register dump:
+MEPC    : 0x4ff018d8  RA      : 0x4ff08790  SP      : 0x4ff4e150  GP      : 0x4ff11f00  
+TP      : 0x4ff4e520  T0      : 0x37363534  T1      : 0x7271706f  T2      : 0x33323130  
+S0/FP   : 0x00000001  S1      : 0x4ff4e2ec  A0      : 0x4ff4e1b4  A1      : 0x4ff143ed  
+A2      : 0x00000001  A3      : 0x00000029  A4      : 0x00000001  A5      : 0x4ff40000  
+A6      : 0x0000000c  A7      : 0x76757473  S2      : 0x0000005b  S3      : 0x4ff4e1a8  
+S4      : 0x4ff4e1a8  S5      : 0x4ff4e1b4  S6      : 0x00000000  S7      : 0x00000001  
+S8      : 0x00000000  S9      : 0x4ff40000  S10     : 0x400d3000  S11     : 0x4ff3076c  
+T3      : 0x6e6d6c6b  T4      : 0x6a696867  T5      : 0x66656463  T6      : 0x62613938  
+MSTATUS : 0x00011880  MTVEC   : 0x4ff00003  MCAUSE  : 0x00000002  MTVAL   : 0x00000000  
+MHARTID : 0x00000000  
+
+Stack memory:
+4ff4e150: 0x70757272 0x3a646574 0x4010695c 0x4ff1065c 0x676d692f 0x3332345f 0x6a2e3434 0x4ff143ec
+4ff4e170: 0x400d3000 0x4ff40000 0x00000000 0x37363235 0x00000000 0x4ff149b0 0x4010695c 0x4ff149c0
+4ff4e190: 0x400df2c2 0x4ff149c4 0x4ff4e17c 0x4ff149c8 0x400df5e4 0x4ff143ec 0x00000000 0x00000000
+4ff4e1b0: 0x00000000 0x65737361 0x66207472 0x656c6961 0x76203a64 0x6b736154 0x6f697250 0x79746972
+4ff4e1d0: 0x69736944 0x7265686e 0x66417469 0x54726574 0x6f656d69 0x74207475 0x736b7361 0x353a632e
+4ff4e1f0: 0x20373632 0x54787028 0x21204243 0x7870203d 0x72727543 0x54746e65 0x5b734243 0x6f507820
+4ff4e210: 0x65477472 0x726f4374 0x28444965 0x295d2029 0x00000000 0x00000000 0x4ff4e348 0x4745504a
+4ff4e230: 0x4ff09c24 0x4ff091cc 0x4ff4e2b0 0x4ff11f00 0x4ff4e520 0x4fc1a058 0x4ff1072a 0x3a7e8e71
+4ff4e250: 0x4ff3076c 0x00000001 0x4ff307c0 0x00000001 0x00000000 0x00000000 0x20800008 0x1f000000
+4ff4e270: 0x00000007 0x0000000a 0x4ff307c0 0x0d27f6e2 0x4ff30790 0x4ff40000 0x4ff30790 0x00000001
+4ff4e290: 0x4ff307c0 0x00000000 0x4ff4c710 0x4ff0c48e 0x4ff307c0 0x4ff4e2cc 0x4ff4e2d8 0x00000001
+4ff4e2b0: 0x4ff307c0 0x00000001 0x4ff3076c 0x4ff091e4 0x4821bc0c 0x00000320 0x00000064 0x00000000
+4ff4e2d0: 0x00002ee0 0x4ff1a000 0x00000000 0x0000fef9 0x00000000 0x4ff1a000 0x0000fef3 0x0000fef2
+4ff4e2f0: 0x4ff1a000 0x4ff34d7c 0x4ff34d7c 0x4000398a 0x00003818 0x00000000 0x00000000 0x00000000
+4ff4e310: 0x00000000 0x00000000 0x12cea62a 0x00000000 0x00000000 0x00000000 0x00000000 0x0d27f6e2
+4ff4e330: 0x4ff1a000 0x4ff40000 0x00000000 0x00000001 0x00000000 0x4ff1a000 0x4ff40000 0x0000fef2
+4ff4e350: 0x4ff1a000 0x4ff34d7c 0x00000005 0x40004500 0x4ff40000 0x4ff40000 0x00000000 0x4000469e
+4ff4e370: 0x00000000 0x4ff1a000 0x4ff40000 0x00000001 0x4ff40000 0x4ff40000 0x00000005 0x40004788
+4ff4e390: 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0x4ff150a8 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0x616d692f
+4ff4e3b0: 0x2f736567 0x5f676d69 0x34333234 0x706a2e34 0x00000067 0x00000000 0x00000000 0x00000000
+4ff4e3d0: 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000
+4ff4e3f0: 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000
+4ff4e410: 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000
+4ff4e430: 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000
+4ff4e450: 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000
+4ff4e470: 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000
+4ff4e490: 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x0d27f6e2
+4ff4e4b0: 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000
+4ff4e4d0: 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x4ff09802
+4ff4e4f0: 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000
+4ff4e510: 0x00000000 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0x00000000 0x4ff4d548 0x4ff4d548 0x00000000
+4ff4e530: 0x00000000 0x00000000 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xbaad5678 0x0a080a00
+
+
+
+ELF file SHA256: 8c4ae4b9a
+
+Rebooting...
+ESP-ROM:esp32p4-eco2-20240710
+Build:Jul 10 2024
+rst:0xc (SW_CPU_RESET),boot:0x30f (SPI_FAST_FLASH_BOOT)
+Core0 Saved PC:0x4ff022da
+Core1 Saved PC:0x4ff046e4
+SPI mode:DIO, clock div:1
+load:0x4ff33ce0,len:0x11c8
+load:0x4ff2abd0,len:0xc1c
+load:0x4ff2cbd0,len:0x32fc
+entry 0x4ff2abd0
+[    20][I][esp32-hal-psram.c:102] psramAddToHeap(): PSRAM added to the heap.
+=========== Before Setup Start ===========
+Chip Info:
+------------------------------------------
+  Model             : ESP32-P4
+  Package           : 0
+  Revision          : 1.00
+  Cores             : 2
+  CPU Frequency     : 360 MHz
+  XTAL Frequency    : 40 MHz
+  Features Bitfield : 0000000000
+  Embedded Flash    : No
+  Embedded PSRAM    : No
+  2.4GHz WiFi       : No
+  Classic BT        : No
+  BT Low Energy     : No
+  IEEE 802.15.4     : No
+------------------------------------------
+INTERNAL Memory Info:
+------------------------------------------
+  Total Size        :   514568 B ( 502.5 KB)
+  Free Bytes        :   476028 B ( 464.9 KB)
+  Allocated Bytes   :    32500 B (  31.7 KB)
+  Minimum Free Bytes:   471988 B ( 460.9 KB)
+  Largest Free Block:   385012 B ( 376.0 KB)
+------------------------------------------
+SPIRAM Memory Info:
+------------------------------------------
+  Total Size        : 33554432 B (32768.0 KB)
+  Free Bytes        : 33551856 B (32765.5 KB)
+  Allocated Bytes   :        0 B (   0.0 KB)
+  Minimum Free Bytes: 33551856 B (32765.5 KB)
+  Largest Free Block: 33030132 B (32256.0 KB)
+  Bus Mode          : QSPI
+------------------------------------------
+Flash Info:
+------------------------------------------
+  Chip Size         : 16777216 B (16 MB)
+  Block Size        :    65536 B (  64.0 KB)
+  Sector Size       :     4096 B (   4.0 KB)
+  Page Size         :      256 B (   0.2 KB)
+  Bus Speed         : 80 MHz
+  Bus Mode          : QIO
+------------------------------------------
+Partitions Info:
+------------------------------------------
+                nvs : addr: 0x00009000, size:    24.0 KB, type: DATA, subtype: NVS
+           phy_init : addr: 0x0000F000, size:     4.0 KB, type: DATA, subtype: PHY
+            factory : addr: 0x00010000, size:  4096.0 KB, type:  APP, subtype: FACTORY
+            storage : addr: 0x00410000, size:  8192.0 KB, type: DATA, subtype: SPIFFS
+           coredump : addr: 0x00C10000, size:  1024.0 KB, type: DATA, subtype: COREDUMP
+           log_dump : addr: 0x00D10000, size:  1024.0 KB, type: DATA, subtype: 0x08
+             config : addr: 0x00E10000, size:   128.0 KB, type: DATA, subtype: NVS
+           reserved : addr: 0x00E30000, size:  1856.0 KB, type: DATA, subtype: 0xFF
+------------------------------------------
+Software Info:
+------------------------------------------
+  Compile Date/Time : Jun 15 2025 21:37:55
+  Compile Host OS   : windows
+  ESP-IDF Version   : v5.4.1-1-g2f7dcd862a-dirty
+  Arduino Version   : 3.2.0
+------------------------------------------
+Board Info:
+------------------------------------------
+  Arduino Board     : ESP32P4_DEV
+  Arduino Variant   : esp32p4
+  Arduino FQBN      : esp32:esp32:esp32p4:UploadSpeed=921600,USBMode=hwcdc,CDCOnBoot=cdc,MSCOnBoot=default,DFUOnBoot=default,UploadMode=default,CPUFreq=360,FlashFreq=80,FlashMode=qio,FlashSize=16M,PartitionScheme=custom,DebugLevel=debug,PSRAM=enabled,EraseFlash=all,JTAGAdapter=default
+============ Before Setup End ============
+[   141][I][esp32-hal-periman.c:141] perimanSetPinBus(): Pin 24 already has type USB_DM (45) with bus 0x4ff277a8
+[   141][I][esp32-hal-periman.c:141] perimanSetPinBus(): Pin 25 already has type USB_DP (46) with bus 0x4ff277a8
+
+=== ESP32P4 Gallery Debug Output ===
+Starting initialization sequence with enhanced error handling...
+Initializing file system using LittleFS...
+ion "spiffs" could not be found
+E (1123) esp_littlefs: Failed to initialize LittleFS
+[  1143][E][LittleFS.cpp:79] begin(): Mounting LittleFS failed! Error: 261
+E (1123) esp_littlefs: partition "spiffs" could not be found
+E (1127) esp_littlefs: Failed to initialize LittleFS
+[  1152][E][LittleFS.cpp:79] begin(): Mounting LittleFS failed! Error: 261
+LittleFS mount failed, formatting...
+E (1132) task_wdt: esp_task_wdt_status(763): TWDT was never initialized
+[  1158][E][esp32-hal-misc.c:162] disableCore0WDT(): Failed to remove Core 0 IDLE task from WDT
+E (1138) esp_littlefs: partition "spiffs" could not be found
+E (1143) esp_littlefs: Failed to initialize to format.
+[  1168][E][LittleFS.cpp:104] format(): Formatting LittleFS failed! Error: 261
+LittleFS initialization failed - continuing without file system
+
+------- Logger Initialized -------
+[  0:00:01.169][  INFO][#000000] Logger initialized: level=1, serial=ON, flash=OFF
+[DEBUG] Log level set to 1
+[DEBUG] Serial debug output enabled
+[  0:00:01.172][  INFO][#000001] ====================================
+[  0:00:01.173][  INFO][#000002] ESP32P4 Image Gallery Starting
+[  0:00:01.174][  INFO][#000003] Date: 2025-06-17 10:56:36 UTC
+[  0:00:01.175][  INFO][#000004] User: Chamil1983
+[  0:00:01.176][  INFO][#000005] ====================================
+[  0:00:01.177][  INFO][#000006] System mutexes initialized
+[  0:00:01.178][  INFO][#000007] Initializing enhanced watchdog system
+Setting up watchdog with critical error protection...
+E (1159) task_wdt: esp_task_wdt_deinit(642): TWDT was never initialized
+Main task subscribed to watchdog
+Watchdog initialized with 30 second timeout, panic mode: OFF
+[  0:00:01.280][  INFO][#000008] Watchdog initialized successfully
+[  0:00:01.281][  INFO][#000009] Initializing LCD with up to 2 attempts...
+[  0:00:01.282][  INFO][#000010] Setting up LCD...
+[  1283][I][jd9365_lcd.cpp:50] example_bsp_enable_dsi_phy_power(): [example] MIPI DSI PHY Powered on
+[  1285][I][jd9365_lcd.cpp:83] begin(): [example] Install MIPI DSI LCD control panel
+[  0:00:01.571][  INFO][#000011] LCD initialized successfully with backlight ON
+[  0:00:01.572][  INFO][#000012] LCD initialized successfully on attempt 1
+[  0:00:01.573][  INFO][#000013] Initializing Touch with up to 2 attempts...
+[  0:00:01.574][  INFO][#000014] Setting up Touch...
+[  0:00:02.650][  INFO][#000015] Touch initialized successfully
+[  0:00:02.651][  INFO][#000016] Touch initialized successfully on attempt 1
+[  0:00:02.652][  INFO][#000017] Initializing SD Card with up to 3 attempts...
+[  0:00:02.653][  INFO][#000018] Setting up SD Card with robust initialization...
+[  0:00:02.654][  INFO][#000019] Waiting for power stabilization...
+[  0:00:04.655][  INFO][#000020] Resetting SD pins...
+[  0:00:04.756][  INFO][#000021] Ensuring SD_MMC is deinitialized...
+[  0:00:05.257][  INFO][#000022] Configuring SD pins...
+[  0:00:05.258][  INFO][#000023] SD init attempt 1: 1-bit mode at 125KHz (ultra conservative)
+[  0:00:05.924][  INFO][#000024] Validating SD card...
+[  0:00:05.924][  INFO][#000025] SD Card Type: SDHC
+[  0:00:05.925][  INFO][#000026] SD Card Size: 128000MB
+[  0:00:05.926][  INFO][#000027] SD card initialized successfully in ultra-conservative mode
+[  0:00:05.927][  INFO][#000028] SD Card initialized successfully on attempt 1
+[  0:00:05.928][  INFO][#000029] Initializing WiFi with up to 2 attempts...
+[  0:00:05.929][  INFO][#000030] Setting up WiFi in AP mode with maximum reliability...
+[  5930][E][STA.cpp:530] disconnect(): STA not started! You must call begin first.
+sdio_mempool_create free:31937196 min-free:31937196 lfb-def:31457268 lfb-8bit:31457268
+
+Name: 
+Type: SDIO
+Speed: 40.00 MHz (limit: 40.00 MHz)
+Size: 0MB
+CSD: ver=1, sector_size=0, capacity=0 read_bl_len=0
+SCR: sd_spec=0, bus_width=0
+TUPLE: DEVICE, size: 3: D9 01 FF 
+TUPLE: MANFID, size: 4
+  MANF: 0092, CARD: 6666
+TUPLE: FUNCID, size: 2: 0C 00 
+TUPLE: FUNCE, size: 4: 00 00 02 32 
+TUPLE: CONFIG, size: 5: 01 01 00 02 07 
+TUPLE: CFTABLE_ENTRY, size: 8
+  INDX: C1, Intface: 1, Default: 1, Conf-Entry-Num: 1
+  IF: 41
+  FS: 30, misc: 0, mem_space: 1, irq: 1, io_space: 0, timing: 0, power: 0
+  IR: 30, mask: 1,   IRQ: FF FF
+  LEN: FFFF
+TUPLE: END
+[  0:00:09.032][  INFO][#000031] Starting AP with SSID: ESP32P4-ImageViewer
+[  0:00:09.033][  INFO][#000032] AP start attempt 1...
+[  0:00:09.267][  INFO][#000033] WiFi AP Mode active with enhanced stability
+[  0:00:09.268][  INFO][#000034] AP SSID: ESP32P4-ImageViewer
+[  0:00:09.269][  INFO][#000035] AP IP Address: 192.168.4.1
+[  0:00:09.270][  INFO][#000036] AP Channel: 6
+[  0:00:09.271][  INFO][#000037] AP Max Clients: 4
+[  0:00:09.272][  INFO][#000038] AP Power: Maximum
+[  0:00:09.273][  INFO][#000039] WiFi initialized successfully on attempt 1
+[  0:00:09.274][  INFO][#000040] Initializing LVGL with up to 1 attempts...
+[  0:00:09.275][  INFO][#000041] Setting up LVGL...
+[  0:00:09.276][ DEBUG][#000042] Allocating LVGL buffers: 64000 bytes each
+[  0:00:09.278][  INFO][#000043] LVGL initialized successfully
+[  0:00:09.279][  INFO][#000044] LVGL initialized successfully on attempt 1
+[  0:00:09.280][  INFO][#000045] Initializing UI with up to 1 attempts...
+[  0:00:09.281][  INFO][#000046] Setting up UI...
+[  0:00:09.285][  INFO][#000047] UI initialized successfully
+[  0:00:09.286][  INFO][#000048] UI initialized successfully on attempt 1
+[  0:00:09.287][  INFO][#000049] Initializing WebServer with up to 2 attempts...
+[  0:00:09.288][  INFO][#000050] Setting up WebServer with enhanced connectivity...
+[  0:00:09.290][  INFO][#000051] WebServer started on port 80 with enhanced error handling
+[  0:00:09.291][  INFO][#000052] WebServer initialized successfully on attempt 1
+[  0
+[  0:00:09.334][  INFO][#000053] Scanning for images...
+
+assert failed: multi_heap_free multi_heap_poisoning.c:279 (head != NULL)
+Core  0 register dump:
+MEPC    : 0x4ff018d8  RA      : 0x4ff08790  SP      : 0x4ff4bb90  GP      : 0x4ff11f00  
+TP      : 0x4ff4c160  T0      : 0x37363534  T1      : 0x7271706f  T2      : 0x33323130  
+S0/FP   : 0x00000001  S1      : 0x4ff4bd08  A0      : 0x4ff4bbf4  A1      : 0x4ff143ed  
+A2      : 0x00000001  A3      : 0x00000029  A4      : 0x00000001  A5      : 0x4ff40000  
+A6      : 0x0000000c  A7      : 0x76757473  S2      : 0x0000007f  S3      : 0x4ff4bbe8  
+S4      : 0x4ff4bbe8  S5      : 0x4ff4bbf4  S6      : 0x00000000  S7      : 0x00000000  
 S8      : 0x00000000  S9      : 0x00000000  S10     : 0x00000000  S11     : 0x00000000  
-T3      : 0x00000000  T4      : 0x00000000  T5      : 0x00000000  T6      : 0x00000000  
-MSTATUS : 0x00011888  MTVEC   : 0x4ff00003  MCAUSE  : 0xdeadc0de  MTVAL   : 0xdeadc0de  
-MHARTID : 0x00000001  esp_backtrace_print: Print CPU 1 (current core) registers
+T3      : 0x6e6d6c6b  T4      : 0x6a696867  T5      : 0x66656463  T6      : 0x62613938  
+MSTATUS : 0x00011880  MTVEC   : 0x4ff00003  MCAUSE  : 0x00000002  MTVAL   : 0x00000000  
+MHARTID : 0x00000000  
 
-[  0:02:15.410][ DEBUG][#000183] Slideshow advancing to next image
-[  0:02:15.411][  INFO][#000184] Displaying image 6: /images/img_22824_Eagles_Birds.jpg
-[  0:02:15.892][ DEBUG][#000185] Screen cleared in 480 ms
-[  0:02:15.908][  WARN][#000186] JPEG missing EOI marker - may be corrupted: /images/img_22824_Eagles_Birds.jpg
-[  0:02:15.974][  WARN][#000187] JPEG missing EOI marker - may be corrupted: /images/img_22824_Eagles_Birds.jpg
-G loading
-[  0:02:16.975][ ERROR][#000189] Failed to render image 6: /images/img_22824_Eagles_Birds.jpg
-[  0:02:16.976][  WARN][#000190] JPEG rendering took 1017 ms
-[  0:02:17.057][ ERROR][#000191] Error displayed on screen: Image could not be displayed
-[  0:02:17.058][ ERROR][#000192] Failed to display image 6
-[  0:02:17.059][ ERROR][#000193] Failed to display image 6
-[  0:02:17.060][ DEBUG][#000194] Slideshow advanced to image 6
-[  0:02:20.460][ DEBUG][#000195] Slideshow advancing to next image
-[  0:02:20.461][  INFO][#000196] Displaying image 0: /images/img_39767.jpg
-[  0:02:20.942][ DEBUG][#000197] Screen cleared in 480 ms
-[  0:02:21.049][  WARN][#000198] 404 Not Found: /204
-[  0:02:22.017][ ERROR][#000199] Failed to take SD mutex for JPEG loading
-[  0:02:22.018][ ERROR][#000200] Failed to render image 0: /images/img_39767.jpg
-[  0:02:22.019][  WARN][#000201] JPEG rendering took 1014 ms
-[  0:02:22.100][ ERROR][#000202] Error displayed on screen: Image could not be displayed
-[  0:02:22.101][ ERROR][#000203] Failed to display image 0
-[  0:02:22.101][ ERROR][#000204] Failed to display image 0
-[  0:02:22.103][ DEBUG][#000205] Slideshow advanced to image 0
-[  0:02:25.503][ DEBUG][#000206] Slideshow advancing to next image
-[  0:02:25.504][ _79907.jpg
-[  0:02:25.985][ DEBUG][#000208] Screen cleared in 480 ms
-[  0:02:27.060][ ERROR][#000209] Failed to take SD mutex for JPEG loading
-[  0:02:27.061][ ERROR][#000210] Failed to render image 1: /images/img_79907.jpg
-[  0:02:27.143][ ERROR][#000212] Error displayed on screen: Image could not be displayed
-[  0:02:27.144][ ERROR][#000213] Failed to display image 1
-[  0:02:27.144][ ERROR][#000214] Failed to display image 1
-[  0:02:27.145][ DEBUG][#000215] Slideshow advanced to image 1
-[  0:02:30.545][ DEBUG][#000216] Slideshow advancing to next image
-[  0:02:3_32173_chicago skyline.jpg
-[  0:02:32.102][ ERROR][#000219] Failed to take SD mutex for JPEG loading
-[  0:02:32.103][ ERROR][#000220] Failed to render image 2: /images/img_32173_chicago skyline.jpg
-[  0:02:32.104][  WARN][#000221] JPEG rendering took 1014 ms
-[  0:02:32.185][ ERROR][#000222] Error displayed on screen: Image could not be displayed
-[  0:02:32.186][ ERROR][#000223] Failed to display image 2
-[  0:02:32.187][ ERROR][#000224] Failed to display image 2
-[  0:02:32.188][ DEBUG][#000225] Slideshow advanced to image 2
-[  0:02:32.647][  WARN][#000226] 404 Not Found: /ipv6check
-[  0:02:35.589][ DEBUG][#000227] Slideshow advancing to next image
-[  _11892.jpg
-[  0:02:36.071][ DEBUG][#000229] Screen cleared in 480 ms
-[  0:02:37.146][ ERROR][#000230] Failed to take SD mutex for JPEG loading
-[  0:02:37.147][ ERROR][#000231] Failed to render image 3: /images/img_11892.jpg
-[  0:02:37.148][  WARN][#000232] JPEG rendering took 1014 ms
-[  0:02:37.229][ ERROR][#000233] Error displayed on screen: Image could not be displayed
-[  0:02:37.230][ ERROR][#000234] Failed to display image 3
-[  0:02:37.231][ ERROR][#000235] Failed to display image 3
-[  0:02:37.232][ DEBUG][#000236] Slideshow advanced to image 3
-[  0:02:37.687][  WARN][#000237] 404 Not Found: /204
-[  0:02:40.633][ DEBUG][#000238] Slideshow advancing to next image
-[  0:02:40.634][  INFO][#000239] Displaying image 4: /images/img_11059.jpg
-[  0:02:41.115][ DEBUG][#000240] Screen cleared in 480 ms
-[  0:02:42.190][ ERROR][#000241] Failed to take SD mutex for JPEG loading
-[  0:02:42.191][ ERROR][#000242] Failed to render image 4: /images/img_11059.jpg
-[  0:02:42.192][  WARN][#000243] JPEG rendering took 1014 ms
-[  0:02:42.273][ ERROR][#000244] Error displayed on screen: Image could not be displayed
-[  0:02:42.274][ ERROR][#000245] Failed to display image 4
-[  0:02:42.276][ DEBUG][#000247] Slideshow advanced to image 4
-[  0:ge
-[  0:02:45.677][  INFO][#000249] Displaying image 5: /images/img_42344.jpg
-[  0:02:46.158][ DEBUG][#000250] Screen cleared in 480 ms
-[  0:02:46.173][  WARN][#000251] JPEG missing EOI marker - may be corrupted: /images/img_42344.jpg
-[  0:02:46.236][  WARN][#000252] JPEG missing EOI marker - may be corrupted: /images/img_42344.jpg
-G loading
-es/img_42344.jpg
-[  0:02:47.239][  WARN][#000255] JPEG rendering took 1016 ms
-[  0:02:47.320][ ERROR][#000256] Error displayed on screen: Image could not be displayed
-[  0:02:47.321][ ERROR][#000257] Failed to display image 5
+Stack memory:
+4ff4bb90: 0xa5a5a5a5 0xa5a5a5a5 0x40105a04 0x4ff1065c 0x00000000 0x4ff3067c 0x4ff4bca0 0x4ff143ec
+4ff4bbb0: 0xffffffff 0x00000046 0x4ff40000 0x00393732 0x400ddf84 0x4ff149b0 0x40105a04 0x4ff149c0
+4ff4bbd0: 0x400ddfae 0x4ff149c4 0x4ff4bbbc 0x4ff149c8 0x400ddf88 0x4ff143ec 0x00000000 0x00000000
+4ff4bbf0: 0xa5000000 0x65737361 0x66207472 0x656c6961 0x6d203a64 0x69746c75 0x6165685f 0x72665f70
+4ff4bc10: 0x6d206565 0x69746c75 0x6165685f 0x6f705f70 0x6e6f7369 0x2e676e69 0x37323a63 0x68282039
+4ff4bc30: 0x20646165 0x4e203d21 0x294c4c55 0x00000000 0x00000000 0x4ff1a000 0x00000000 0x4ff30218
+4ff4bc50: 0x4ff19a4c 0x00000001 0x4ff306b4 0x4fc0327c 0x00000000 0x00000000 0x20800008 0x1f000000
+4ff4bc70: 0x00000007 0x0000000a 0x4ff2fb7c 0x4ff4bc94 0x4ff2fb4c 0x4ff1a000 0x00000000 0x4ff0eeba
+4ff4bc90: 0x00000000 0x4ff306fc 0xbaad5678 0x4ff3067c 0x00000001 0x4ff3067c 0x00000007 0x0000000a
+4ff4bcb0: 0x4ff2fb7c 0x4ff2fb38 0x00000000 0x7cf431ab 0x00000000 0x4ff1a000 0x00000000 0x4ff30218
+4ff4bcd0: 0x4ff19a4c 0x4ff306bc 0x4ff2b570 0x4ff0ed12 0x00000000 0x4ff30208 0x4ff30218 0x4004ae7a
+4ff4bcf0: 0x4ff19a4c 0x4ff30208 0x4ff30208 0x4004b24c 0x00000000 0x4ff1a000 0x00000031 0x400072b4
+4ff4bd10: 0x00000000 0x4ff1a000 0x00000000 0x00000000 0x4ff27000 0x4ff40000 0x4ff19a4c 0x4000762c
+4ff4bd30: 0xa5a5a5a5 0xa5a5a5a5 0x4ff4be9c 0x400d3f38 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5
+4ff4bd50: 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0x3a302020 0x303a3030 0x33332e39 0xa5a50034 0xa5a5a5a5
+4ff4bd70: 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0x3020205b 0x3a30303a 0x332e3930 0x5b5d3433 0x4e492020
+4ff4bd90: 0x5b5d4f46 0x30303023 0x5d333530 0x696c5320 0x68736564 0x7420776f 0x206b7361 0x72617473
+4ff4bdb0: 0x00646574 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5
+4ff4bdd0: 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000
+4ff4bdf0: 0x00000000 0x4ff1a000 0x00000000 0x00000000 0xffffffff 0x4ff4c274 0x00000100 0x400b8330
+4ff4be10: 0xa5a5a5a5 0xa5a5a5a5 0x4ff4beb2 0xa5a5a5a5 0x000000e9 0xffff0208 0x4ff4be9c 0x000000ff
+4ff4be30: 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5
+4ff4be50: 0xa5a5a5a5 0xa5a5a5a5 0x4ff4be9c 0x4ff0ce26 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0x400b835e
+4ff4be70: 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0x7cf431ab 0x00000002 0x4ff40000 0x4ff199f8 0x4000777a
+4ff4be90: 0xa5a5a5a5 0xa5a5a5a5 0x4ff4bfb8 0x64696c53 0x6f687365 0x61742077 0x73206b73 0x74726174
+4ff4beb0: 0xa5006465 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5
+4ff4bed0: 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5
+4ff4bef0: 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5
+4ff4bf10: 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5
+4ff4bf30: 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5
+4ff4bf50: 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5
+4ff4bf70: 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5 0xa5a5a5a5
 
-[  0:02:47.322][ DEBUG][#000259] Slideshow advanced to image 5
-[  0:02:47.348][ DEBUG][#000260] WiFi AP running but no clients connected
-[  0:02:50.723][ DEBUG][#000261] Slideshow advancing to next image
-[  0:02:50.724][  INFO][#000262] Displaying image 6: /images/img_22824_Eagles_Birds.jpg
-][ DEBUG][#000263] Screen cleared in 480 ms
-[  e corrupted: /images/img_22824_Eagles_Birds.jpg
-[  0:02:51.287][  WARN][#000265] JPEG missing EOI marker - may be corrupted: /images/img_22824_Eagles_Birds.jpg
-[  0:02:52.287][ ERROR][#000266] Failed to take SD mutex for JPEG loading
-[  es/img_22824_Eagles_Birds.jpg
-[  0:02:52.289][  WARN][#000268] JPEG rendering took 1017 ms
-[  0:02:52.369][ ERROR][#000269] Error displayed on screen: Image could not be displayed
-[  0:02:52.370][ ERROR][#000270] Failed to display image 6
-[  0:02:52.370][ ERROR][#000271] Failed to display image 6
-[  0:02:52.371][ DEBUG][#000272] Slideshow advanced to image 6
-[  0:02:55.772][ DEBUG][#000273] Slideshow advancing to next image
-[  0:02:55.773][  INFO][#000274] Displaying image 0: /images/img_39767.jpg
-[  0:02:57.328][ ERROR][#000276] Failed to take SD mutex for JPEG loading
-[  0:02:57.329][ ERROR][#000277] Failed to render image 0: /images/img_39767.jpg
-[  0:02:57.330][  WARN][#000278] JPEG rendering took 1014 ms
-[  0:02:57.350][ DEBUG][#000279] WiFi AP running but no clients connected
-[  0:02:57.410][ ERROR][#000280] Error displayed on screen: Image could not be displayed
-[  0:02:57.411][ ERROR][#000281] Failed to display image 0
-[  0:02:57.411][ ERROR][#000282] Failed to display image 0
-[  0:02:57.412][ DEBUG][#000283] Slideshow advanced to image 0
-[  0:03:00.812][ DEBUG][#000284] Slideshow advancing to next image
-[ _79907.jpg
-[  0:03:01.294][ DEBUG][#000286] Screen cleared in 480 ms
-o take SD mutex for JPEG loading
-[  0:03:02.370][ ERROR][#000288] Failed to render image 1: /images/img_79907.jpg
-[  0:03:02.371][  WARN][#000289] JPEG rendering took 1014 ms
-[  0:03:02.452][ ERROR][#000290] Error displayed on screen: Image could not be displayed
-[  0:03:02.453][ ERROR][#000291] Failed to display image 1
-[  0:03:02.453][ ERROR][#000292] Failed to display image 1
-[  0:03:02.454][ DEBUG][#000293] Slideshow advanced to image 1
-[  0:03:05.855][ DEBUG][#000294] Slideshow advancing to next image
-[  _32173_chicago skyline.jpg
-[  0:03:07.351][ DEBUG][#000297] WiFi AP running but no clients connected
-[  0:03:07.411][ ERROR][#000298] Failed to take SD mutex for JPEG loading
-[  0:03:07.412][ ERROR][#000299] Failed to render image 2: /images/img_32173_chicago skyline.jpg
-[  0:03:07.413][  WARN][#000300] JPEG rendering took 1014 ms
-[  0:03:07.494][ ERROR][#000301] Error displayed on screen: Image could not be displayed
-[  0:03:07.495][ ERROR][#000302] Failed to display image 2
-[  0:03:07.495][ ERROR][#000303] Failed to display image 2
-[  0:03:07.496][ DEBUG][#000304] Slideshow advanced to image 2
-[  0:03:10.897][ DEBUG][#000305] Slideshow advancing to next image
-[  0:03:10.8_11892.jpg
-[  0:03:11.379][ DEBUG][#000307] Screen cleared in 480 ms
-[  0:03:12.454][ ERROR][#000308] Failed to take SD mutex for JPEG loading
-[  0:03:12.455][ ERROR][#000309] Failed to render image 3: /images/img_11892.jpg
-[  0:03:12.456][  WARN][#000310] JPEG rendering took 1014 ms
-[  0:03:12.537][ ERROR][#000311] Error displayed on screen: Image could not be displayed
-[  0:03:12.538][ ERROR][#000312] Failed to display image 3
-[  0:03:12.539][ ERROR][#000313] Failed to display image 3
-[  0:03:12.540][ DEBUG][#000314] Slideshow advanced to image 3
-[  0:03:15.941][ DEBUG][#000315] Slideshow advancing to next image
-[  0:03:15.942][  INFO][#000316] Displaying image 4: /images/img_11059.jpg
-[  0:03:16.423][ DEBUG][#000317] Screen cleared in 480 ms
-[  0:03:17.353][ DEBUG][#000318] WiFi AP running but no clients connected
-[  0:03:17.498][ ERROR][#000319] Failed to take SD mutex for JPEG loading
-[  0:03:17.499][ ERROR][#000320] Failed to render image 4: /images/img_11059.jpg
-[  0:03:17.500][  WARN][#000321] JPEG rendering took 1014 ms
-[  0:03:17.580][ ERROR][#000322] Error displayed on screen: Image could not be displayed
-[  0:03:17.581][ ERROR][#000323] Failed to display image 4
-[  0:03:17.582][ ERROR][#000324] Failed to display image 4
-[  0:03:17.583][ DEBUG][#000325] Slideshow advanced to image 4
-[  0:03:20.984][ DEBUG][#000326] Slideshow advancing to next image
-[  0:03:20.985][  INFO][#000327] Displaying image 5: /images/img_42344.jpg
-[  0:03:21.466][ DEBUG][#000328] Screen cleared in 480 ms
-[  0:03:21.481][  WARN][#000329] JPEG missing EOI marker - may be corrupted: /images/img_42344.jpg
-[  0:03:21.545][  WARN][#000330] JPEG missing EOI marker - may be corrupted: /images/img_42344.jpg
-[  0:03:22.545][ ERROR][#000331] Failed to take SD mutex for JPEG loading
-[  0:es/img_42344.jpg
-[  0:03:22.547][  WARN][#000333] JPEG rendering took 1016 ms
-[  0:03:22.628][ ERROR][#000334] Error displayed on screen: Image could not be displayed
-[  0:03:22.629][ ERROR][#000335] Failed to display image 5
-[  0:03:22.630][ ERROR][#000336] Failed to display image 5
-[  0:03:22.630][ DEBUG][#000337] Slideshow advanced to image 5
-[  0:03:26.031][ DEBUG][#000338] Slideshow advancing to next image
-[  0:03:26.032][  INFO][#000339] Displaying image 6: /images/img_22824_Eagles_Birds.jpg
-[  0:03:26.513][ DEBUG][#000340] Screen cleared in 480 ms
-[  0:03:26.529][  WARN][#000341] JPEG missing EOI marker - may be corrupted: /images/img_22824_Eagles_Birds.jpg
-[  0:03:26.595][  WARN][#000342] JPEG missing EOI marker - may be corrupted: /images/img_22824_Eagles_Birds.jpg
-[  0:03:27.355][ DEBUG][#000343] WiFi AP running but no clients connected
-[  0:03:27.595][ ERROR][#000344] Failed to take SD mutex for JPEG loading
-[  0:03:27.596][ ERROR][#000345] Failed to render image 6: /images/img_22824_Eagles_Birds.jpg
-[  0:03:27.597][  WARN][#000346] JPEG rendering took 1017 ms
-[  0:03:27.678][ ERROR][#000347] Error displayed on screen: Image could not be displayed
 
-[  0:03:27.680][ DEBUG][#000350] Slideshow advanced to image 6
-[  0:03:31.081][ DEBUG][#000351] Slideshow advancing to next image
-_39767.jpg
-[  0:03:31.563][ DEBUG][#000353] Screen cleared in 480 ms
-[  OR][#000354] Failed to take SD mutex for JPEG loading
-[  0:03:32.639][ ERROR][#000355] Failed to render image 0: /images/img_39767.jpg
-[  0:03:32.640][  WARN][#000356] JPEG rendering took 1014 ms
-[  0:03:32.721][ ERROR][#000357] Error displayed on screen: Image could not be displayed
-[  0:03:32.722][ ERROR][#000358] Failed to display image 0
-[  0:03:32.723][ ERROR][#000359] Failed to display image 0
-[  0:03:32.723][ DEBUG][#000360] Slideshow advanced to image 0
-[  0:03:36.124][ DEBUG][#000361] Slideshow advancing to next image
-_79907.jpg
-[  0:03:36.606][ DEBUG][#000363] Screen cleared in 480 ms
-[  0:03:37.357][ DEBUG][#000364] WiFi AP running but no clients connected
-[  0:03:37.681][ ERROR][#000365] Failed to take SD mutex for JPEG loading
-es/img_79907.jpg
-[  0:03:37.683][  WARN][#000367] JPEG rendering took 1014 ms
-[  0:03:37.764][ ERROR][#000368] Error displayed on screen: Image could not be displayed
-[  0:03:37.765][ ERROR][#000369] Failed to display image 1
-[  0:03:41.166][ DEBUG][#000372] Slideshow advancing to next image
-[  0:03:41.167][  INFO][#000373] Displaying image 2: /images/img_32173_chicago skyline.jpg
-[  0:03:41.648][ DEBUG][#000374] Screen cleared in 480 ms
-[  0:03:42.723][ ERROR][#000375] Failed to take SD mutex for JPEG loading
-[  0:03:42.724][ ERROR][#000376] Failed to render image 2: /images/img_32173_chicago skyline.jpg
-[  0:03:42.725][  WARN][#000377] JPEG rendering took 1014 ms
-[  0:03:42.806][ ERROR][#000378] Error displayed on screen: Image could not be displayed
-[  0:03:42.807][ ERROR][#000379] Failed to display image 2
-[  0:03:42.808][ ERROR][#000380] Failed to display image 2
+
+ELF file SHA256: 8c4ae4b9a
+
+Rebooting...
+ESP-ROM:esp32p4-eco2-20240710
+Build:Jul 10 2024
+rst:0xc (SW_CPU_RESET),boot:0x30f (SPI_FAST_FLASH_BOOT)
+Core0 Saved PC:0x4ff022da
+Core1 Saved PC:0x4ff09ac0
+SPI mode:DIO, clock div:1
+load:0x4ff33ce0,len:0x11c8
+load:0x4ff2abd0,len:0xc1c
+load:0x4ff2cbd0,len:0x32fc
+entry 0x4ff2abd0
+[    20][I][esp32-hal-psram.c:102] psramAddToHeap(): PSRAM added to the heap.
+=========== Before Setup Start ===========
+Chip Info:
+------------------------------------------
+  Model             : ESP32-P4
+  Package           : 0
+  Revision          : 1.00
+  Cores             : 2
+  CPU Frequency     : 360 MHz
+  XTAL Frequency    : 40 MHz
+  Features Bitfield : 0000000000
+  Embedded Flash    : No
+  Embedded PSRAM    : No
+  2.4GHz WiFi       : No
+  Classic BT        : No
+  BT Low Energy     : No
+  IEEE 802.15.4     : No
+------------------------------------------
+INTERNAL Memory Info:
+------------------------------------------
+  Total Size        :   514568 B ( 502.5 KB)
+  Free Bytes        :   476028 B ( 464.9 KB)
+  Allocated Bytes   :    32500 B (  31.7 KB)
+  Minimum Free Bytes:   471988 B ( 460.9 KB)
+  Largest Free Block:   385012 B ( 376.0 KB)
+------------------------------------------
+SPIRAM Memory Info:
+------------------------------------------
+  Total Size        : 33554432 B (32768.0 KB)
+  Free Bytes        : 33551856 B (32765.5 KB)
+  Allocated Bytes   :        0 B (   0.0 KB)
+  Minimum Free Bytes: 33551856 B (32765.5 KB)
+  Largest Free Block: 33030132 B (32256.0 KB)
+  Bus Mode          : QSPI
+------------------------------------------
+Flash Info:
+------------------------------------------
+  Chip Size         : 16777216 B (16 MB)
+  Block Size        :    65536 B (  64.0 KB)
+  Sector Size       :     4096 B (   4.0 KB)
+  Page Size         :      256 B (   0.2 KB)
+  Bus Speed         : 80 MHz
+  Bus Mode          : QIO
+------------------------------------------
+Partitions Info:
+------------------------------------------
+                nvs : addr: 0x00009000, size:    24.0 KB, type: DATA, subtype: NVS
+           phy_init : addr: 0x0000F000, size:     4.0 KB, type: DATA, subtype: PHY
+            factory : addr: 0x00010000, size:  4096.0 KB, type:  APP, subtype: FACTORY
+            storage : addr: 0x00410000, size:  8192.0 KB, type: DATA, subtype: SPIFFS
+           coredump : addr: 0x00C10000, size:  1024.0 KB, type: DATA, subtype: COREDUMP
+           log_dump : addr: 0x00D10000, size:  1024.0 KB, type: DATA, subtype: 0x08
+             config : addr: 0x00E10000, size:   128.0 KB, type: DATA, subtype: NVS
+           reserved : addr: 0x00E30000, size:  1856.0 KB, type: DATA, subtype: 0xFF
+------------------------------------------
+Software Info:
+------------------------------------------
+  Compile Date/Time : Jun 15 2025 21:37:55
+  Compile Host OS   : windows
+  ESP-IDF Version   : v5.4.1-1-g2f7dcd862a-dirty
+  Arduino Version   : 3.2.0
+------------------------------------------
+Board Info:
+------------------------------------------
+  Arduino Board     : ESP32P4_DEV
+  Arduino Variant   : esp32p4
+  Arduino FQBN      : esp32:esp32:esp32p4:UploadSpeed=921600,USBMode=hwcdc,CDCOnBoot=cdc,MSCOnBoot=default,DFUOnBoot=default,UploadMode=default,CPUFreq=360,FlashFreq=80,FlashMode=qio,FlashSize=16M,PartitionScheme=custom,DebugLevel=debug,PSRAM=enabled,EraseFlash=all,JTAGAdapter=default
+============ Before Setup End ============
+[   142][I][esp32-hal-periman.c:141] perimanSetPinBus(): Pin 24 already has type USB_DM (45) with bus 0x4ff277a8
+[   142][I][esp32-hal-periman.c:141] perimanSetPinBus(): Pin 25 already has type USB_DP (46) with bus 0x4ff277a8
+
+=== ESP32P4 Gallery Debug Output ===
+Starting initialization sequence with enhanced error handling...
+Initializing file system using LittleFS...
+E (1124) esp_littlefs: Failed to initialize LittleFS
+[  1144][E][LittleFS.cpp:79] begin(): Mounting LittleFS failed! Error: 261
+E (1124) esp_littlefs: partition "spiffs" could not be found
+E (1128) esp_littlefs: Failed to initialize LittleFS
+[  1153][E][LittleFS.cpp:79] begin(): Mounting LittleFS failed! Error: 261
+LittleFS mount failed, formatting...
+E (1133) task_wdt: esp_task_wdt_status(763): TWDT was never initialized
+[  1159][E][esp32-hal-misc.c:162] disableCore0WDT(): Failed to remove Core 0 IDLE task from WDT
+E (1139) esp_littlefs: partition "spiffs" could not be found
+E (1144) esp_littlefs: Failed to initialize to format.
+[  1169][E][LittleFS.cpp:104] format(): Formatting LittleFS failed! Error: 261
+LittleFS initialization failed - continuing without file system
+
+------- Logger Initialized -------
+[  0:00:01.170][  INFO][#000000] Logger initialized: level=1, serial=ON, flash=OFF
+[DEBUG] Log level set to 1
+[DEBUG] Serial debug output enabled
+[  0:00:01.173][  INFO][#000001] ====================================
+[  0:00:01.174][  INFO][#000002] ESP32P4 Image Gallery Starting
+[  0:00:01.175][  INFO][#000003] Date: 2025-06-17 10:56:36 UTC
+[  0:00:01.176][  INFO][#000004] User: Chamil1983
+[  0:00:01.177][  INFO][#000005] ====================================
+[  0:00:01.178][  INFO][#000006] System mutexes initialized
+[  0:00:01.179][  INFO][#000007] Initializing enhanced watchdog system
+Setting up watchdog with critical error protection...
+E (1160) task_wdt: esp_task_wdt_deinit(642): TWDT was never initialized
+Main task subscribed to watchdog
+Watchdog initialized with 30 second timeout, panic mode: OFF
+[  0:00:01.280][  INFO][#000008] Watchdog initialized successfully
+[  0:00:01.281][  INFO][#000009] Initializing LCD with up to 2 attempts...
+[  0:00:01.282][  INFO][#000010] Setting up LCD...
+[  1282][I][jd9365_lcd.cpp:50] example_bsp_enable_dsi_phy_power(): [example] MIPI DSI PHY Powered on
+[  1284][I][jd9365_lcd.cpp:83] begin(): [example] Install MIPI DSI LCD control panel
+[  0:00:01.570][  INFO][#000011] LCD initialized successfully with backlight ON
+[  0:00:01.571][  INFO][#000012] LCD initialized successfully on attempt 1
+[  0:00:01.572][  INFO][#000013] Initializing Touch with up to 2 attempts...
+[  0:00:01.573][  INFO][#000014] Setting up Touch...
+[  0:00:02.649][  INFO][#000015] Touch initialized successfully
+[  0:00:02.650][  INFO][#000016] Touch initialized successfully on attempt 1
+[  0:00:02.651][  INFO][#000017] Initializing SD Card with up to 3 attempts...
+[  0:00:02.652][  INFO][#000018] Setting up SD Card with robust initialization...
+[  0:00:02.653][  INFO][#000019] Waiting for power stabilization...
+[  0:00:04.654][  INFO][#000020] Resetting SD pins...
+[  0:00:04.755][  INFO][#000021] Ensuring SD_MMC is deinitialized...
+[  0:00:05.256][  INFO][#000022] Configuring SD pins...
+[  0:00:05.257][  INFO][#000023] SD init attempt 1: 1-bit mode at 125KHz (ultra conservative)
+[  0:00:05.923][  INFO][#000024] Validating SD card...
+[  0:00:05.923][  INFO][#000025] SD Card Type: SDHC
+[  0:00:05.924][  INFO][#000026] SD Card Size: 128000MB
+[  0:00:05.925][  INFO][#000027] SD card initialized successfully in ultra-conservative mode
+[  0:00:05.926][  INFO][#000028] SD Card initialized successfully on attempt 1
+[  0:00:05.927][  INFO][#000029] Initializing WiFi with up to 2 attempts...
+[  0:00:05.928][  INFO][#000030] Setting up WiFi in AP mode with maximum reliability...
+[  5929][E][STA.cpp:530] disconnect(): STA not started! You must call begin first.
+sdio_mempool_create free:31937196 min-free:31937196 lfb-def:31457268 lfb-8bit:31457268
+
+Name: 
+Type: SDIO
+Speed: 40.00 MHz (limit: 40.00 MHz)
+Size: 0MB
+CSD: ver=1, sector_size=0, capacity=0 read_bl_len=0
+SCR: sd_spec=0, bus_width=0
+TUPLE: DEVICE, size: 3: D9 01 FF 
+TUPLE: MANFID, size: 4
+  MANF: 0092, CARD: 6666
+TUPLE: FUNCID, size: 2: 0C 00 
+TUPLE: FUNCE, size: 4: 00 00 02 32 
+TUPLE: CONFIG, size: 5: 01 01 00 02 07 
+TUPLE: CFTABLE_ENTRY, size: 8
+  INDX: C1, Intface: 1, Default: 1, Conf-Entry-Num: 1
+  IF: 41
+  FS: 30, misc: 0, mem_space: 1, irq: 1, io_space: 0, timing: 0, power: 0
+  IR: 30, mask: 1,   IRQ: FF FF
+  LEN: FFFF
+TUPLE: END
+[  0:00:08.975][  INFO][#000031] Starting AP with SSID: ESP32P4-ImageViewer
+[  0:00:08.976][  INFO][#000032] AP start attempt 1...
+[  0:00:09.185][  INFO][#000033] WiFi AP Mode active with enhanced stability
+[  0:00:09.186][  INFO][#000034] AP SSID: ESP32P4-ImageViewer
+[  0:00:09.187][  INFO][#000035] AP IP Address: 192.168.4.1
+[  0:00:09.188][  INFO][#000036] AP Channel: 6
+[  0:00:09.188][  INFO][#000037] AP Max Clients: 4
+[  0:00:09.189][  INFO][#000038] AP Power: Maximum
+[  0:00:09.189][  INFO][#000039] WiFi initialized successfully on attempt 1
+[  0:00:09.190][  INFO][#000040] Initializing LVGL with up to 1 attempts...
+[  0:00:09.191][  INFO][#000041] Setting up LVGL...
+[  0:00:09.192][ DEBUG][#000042] Allocating LVGL buffers: 64000 bytes each
+[  0:00:09.194][  INFO][#000043] LVGL initialized successfully
+[  0:00:09.195][  INFO][#000044] LVGL initialized successfully on attempt 1
+[  0:00:09.196][  INFO][#000045] Initializing UI with up to 1 attempts...
+[  0:00:09.197][  INFO][#000046] Setting up UI...
+[  0:00:09.201][  INFO][#000047] UI initialized successfully
+[  0:00:09.202][  INFO][#000048] UI initialized successfully on attempt 1
+[  0:00:09.203][  INFO][#000049] Initializing WebServer with up to 2 attempts...
+[  0:00:09.204][  INFO][#000050] Setting up WebServer with enhanced connectivity...
+[  0:00:09.206][  INFO][#000051] WebServer started on port 80 with enhanced error handling
+[  0:00:09.207][  INFO][#000052] WebServer initialized successfully on attempt 1
+[  0:00:09.250][  IN
+[  0:00:09.250][  INFO][#000054] Scanning for images...
+[  0:00:09.253][  INFO][#000055] Scanning for images with enhanced validation...
+[  0:00:09.258][  INFO][#000056] Phase 1: Identifying valid and corrupt images...
+[  0:00:09.275][ DEBUG][#000057] Found image 0: /images/img_39767.jpg (939213 bytes)
+[  0:00:09.290][ DEBUG][#000058] Found image 1: /images/img_79907.jpg (1586123 bytes)
+[  0:00:09.305][ DEBUG][#000059] Found image 2: /images/img_32173_chicago skyline.jpg (1101785 bytes)
+[  0:00:09.320][ DEBUG][#000060] Found image 3: /images/img_11892.jpg (939213 bytes)
+[  0:00:09.335][ DEBUG][#000061] Found image 4: /images/img_11059.jpg (843783 bytes)
+[  0:00:09.350][  WARN][#000062] JPEG missing EOI marker - may be corrupted: /images/img_42344.jpg
+[  0:00:09.353][ DEBUG][#000063] Found image 5: /images/img_42344.jpg (14360 bytes)
+[  0:00:09.369][  WARN][#000064] JPEG missing EOI marker - may be corrupted: /images/img_22824_Eagles_Birds.jpg
+[  0:00:09.370][ DEBUG][#000065] Found image 6: /images/img_22824_Eagles_Birds.jpg (16308 bytes)
+[  0:00:09.371][  INFO][#000066] Found 7 valid images, removed 0 corrupted files
+[  0:00:09.372][  INFO][#000067] Found 7 images
+[  0:00:09.373][  INFO][#000068] Loading first image
+[  0:00:09.374][  INFO][#000069] Displaying image 0: /images/img_39767.jpg
+[  0:00:09.855][ DEBUG][#000070] Screen cleared in 480 ms
+[  0:00:09.856][ DEBUG][#000071] Screen cleared in 481 ms
+[  0:00:09.874][  INFO][#000072] Starting JPEG decoding for /images/img_39767.jpg (939213 bytes)
+[  0:00:09.875][  INFO][#000073] Decoding image at full resolution
