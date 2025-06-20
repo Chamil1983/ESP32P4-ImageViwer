@@ -1,68 +1,134 @@
-[     2][I][esp32-hal-psram.c:102] psramAddToHeap(): PSRAM addedfore Setup End ============
-[  2133][I][esp32-hal-periman.c:141] perimanSetPinBus(): Pin 24 already has type USB_DM (45) with bus 0x4ff27428
-[  2133][I][esp32-hal-periman.c:141] perimanSetPinBus(): Pin 25 already has type USB_DP (46) with bus 0x4ff27428
+[     2][I][esp32-hal-psram.c:102] psramAddToHeap(): PSRAM added to the heap.
+=========== Before Setup Start ===========
+Chip Info:
+------------------------------------------
+  Model             : ESP32-P4
+  Package           : 0
+  Revision          : 1.00
+  Cores             : 2
+  CPU Frequency     : 360 MHz
+  XTAL Frequency    : 40 MHz
+  Features Bitfield : 0000000000
+  Embedded Flash    : No
+  Embedded PSRAM    : No
+  2.4GHz WiFi       : No
+  Classic BT        : No
+  BT Low Energy     : No
+  IEEE 802.15.4     : No
+------------------------------------------
+INTERNAL Memory Info:
+------------------------------------------
+  Total Size        :   515448 B ( 503.4 KB)
+  Free Bytes        :   476908 B ( 465.7 KB)
+  Allocated Bytes   :    32500 B (  31.7 KB)
+  Minimum Free Bytes:   472868 B ( 461.8 KB)
+  Largest Free Block:   385012 B ( 376.0 KB)
+------------------------------------------
+SPIRAM Memory Info:
+------------------------------------------
+  Total Size        : 33554432 B (32768.0 KB)
+  Free Bytes        : 33551856 B (32765.5 KB)
+  Allocated Bytes   :        0 B (   0.0 KB)
+  Minimum Free Bytes: 33551856 B (32765.5 KB)
+  Largest Free Block: 33030132 B (32256.0 KB)
+  Bus Mode          : QSPI
+------------------------------------------
+Flash Info:
+------------------------------------------
+  Chip Size         : 16777216 B (16 MB)
+  Block Size        :    65536 B (  64.0 KB)
+  Sector Size       :     4096 B (   4.0 KB)
+  Page Size         :      256 B (   0.2 KB)
+  Bus Speed         : 80 MHz
+  Bus Mode          : QIO
+------------------------------------------
+Partitions Info:
+------------------------------------------
+                nvs : addr: 0x00009000, size:    24.0 KB, type: DATA, subtype: NVS
+           phy_init : addr: 0x0000F000, size:     4.0 KB, type: DATA, subtype: PHY
+            factory : addr: 0x00010000, size:  4096.0 KB, type:  APP, subtype: FACTORY
+            storage : addr: 0x00410000, size:  8192.0 KB, type: DATA, subtype: SPIFFS
+           coredump : addr: 0x00C10000, size:  1024.0 KB, type: DATA, subtype: COREDUMP
+           log_dump : addr: 0x00D10000, size:  1024.0 KB, type: DATA, subtype: 0x08
+             config : addr: 0x00E10000, size:   128.0 KB, type: DATA, subtype: NVS
+           reserved : addr: 0x00E30000, size:  1856.0 KB, type: DATA, subtype: 0xFF
+------------------------------------------
+Software Info:
+------------------------------------------
+  Compile Date/Time : Jun 19 2025 23:03:08
+  Compile Host OS   : windows
+  ESP-IDF Version   : v5.4.1-1-g2f7dcd862a-dirty
+  Arduino Version   : 3.2.0
+------------------------------------------
+Board Info:
+------------------------------------------
+  Arduino Board     : ESP32P4_DEV
+  Arduino Variant   : esp32p4
+  Arduino FQBN      : esp32:esp32:esp32p4:UploadSpeed=921600,USBMode=hwcdc,CDCOnBoot=cdc,MSCOnBoot=default,DFUOnBoot=default,UploadMode=default,CPUFreq=360,FlashFreq=80,FlashMode=qio,FlashSize=16M,PartitionScheme=custom,DebugLevel=debug,PSRAM=enabled,EraseFlash=none,JTAGAdapter=default
+============ Before Setup End ============
+[   134][I][esp32-hal-periman.c:141] perimanSetPinBus(): Pin 24 already has type USB_DM (45) with bus 0x4ff27428
+[   134][I][esp32-hal-periman.c:141] perimanSetPinBus(): Pin 25 already has type USB_DP (46) with bus 0x4ff27428
 
 === ESP32P4 Gallery Debug Output ===
 Starting initialization sequence with enhanced error handling...
 Initializing file system using LittleFS...
-E (3132) esp_littlefs: partition "spiffs" could not be found
-E (3133) esp_littlefs: Failed to initialize LittleFS
-[  3134][E][LittleFS.cpp:79] begin(): Mounting LittleFS failed! Error: 261
-E (3133) esp_littlefs: partition "spiffs" could not be found
-E (3137) esp_littlefs: Failed to initialize LittleFS
-[  3143][E][LittleFS.cpp:79] begin(): Mounting LittleFS failed! Error: 261
+[  1135][E][LittleFS.cpp:79] begin(): Mounting LittleFS failed! Error: 261
+E (1134) esp_littlefs: partition "spiffs" could not be found
+E (1138) esp_littlefs: Failed to initialize LittleFS
+[  1144][E][LittleFS.cpp:79] begin(): Mounting LittleFS failed! Error: 261
 LittleFS mount failed, formatting...
-E (3142) task_wdt: esp_task_wdt_status(763): TWDT was never initialized
-[  3150][E][esp32-hal-misc.c:162] disableCore0WDT(): Failed to remove Core 0 IDLE task from WDT
-E (3148) esp_littlefs: partition "spiffs" could not be found
-E (3153) esp_littlefs: Failed to initialize to format.
-[  3160][E][LittleFS.cpp:104] format(): Formatting LittleFS failed! Error: 261
+E (1143) task_wdt: esp_task_wdt_status(763): TWDT was never initialized
+[  1151][E][esp32-hal-misc.c:162] disableCore0WDT(): Failed to remove Core 0 IDLE task from WDT
+E (1149) esp_littlefs: partition "spiffs" could not be found
+E (1154) esp_littlefs: Failed to initialize to format.
+[  1161][E][LittleFS.cpp:104] format(): Formatting LittleFS failed! Error: 261
 LittleFS initialization failed - continuing without file system
 
 ------- Logger Initialized -------
-[  0:00:03.161][  INFO][#000000] Logger initialized: level=1, serial=ON, flash=OFF
-[  0:00:03.162][  INFO][#000001] ====================================
-[  0:00:03.163][  INFO][#000002] ESP32P4 Image Gallery Starting
-[  0:00:03.164][  INFO][#000003] Date: 2025-06-20 12:07:40 UTC
-[  0:00:03.165][  INFO][#000004] User: Chamil1983
-[  0:00:03.166][  INFO][#000005] ====================================
-[  0:00:03.167][  INFO][#000006] System mutexes initialized
-[  0:00:03.168][  INFO][#000007] Initializing enhanced watchdog system
+[  0:00:01.162][  INFO][#000000] Logger initialized: level=1, serial=ON, flash=OFF
+[  0:00:01.163][  INFO][#000001] ====================================
+[  0:00:01.164][  INFO][#000002] ESP32P4 Image Gallery Starting
+[  0:00:01.165][  INFO][#000003] Date: 2025-06-20 12:33:01
+[  0:00:01.166][  INFO][#000004] User: Chamil1983
+[  0:00:01.167][  INFO][#000005] ====================================
+[  0:00:01.168][  INFO][#000006] System mutexes initialized
+[  0:00:01.169][  INFO][#000007] Initializing enhanced watchdog system
 Setting up watchdog with critical error protection...
-E (3167) task_wdt: esp_task_wdt_deinit(642): TWDT was never initialized
+E (1168) task_wdt: esp_task_wdt_deinit(642): TWDT was never initialized
 Main task subscribed to watchdog
 Watchdog initialized with 30 second timeout, panic mode: OFF
-[  0:00:03.269][  INFO][#000008] Watchdog initialized successfully
-[  0:00:03.270][  INFO][#000009] Initializing LCD with up to 2 attempts...
-[  0:00:03.271][  INFO][#000010] Setting up LCD...
-[  0:00:03.272][  INFO][#000011] Setting up LCD...
-[  3273][I][jd9365_lcd.cpp:50] example_bsp_enable_dsi_phy_power(): [example] MIPI DSI PHY Powered on
-[  3275][I][jd9365_lcd.cpp:83] begin(): [example] Install MIPI DSI LCD control panel
-[  0:00:03.561][  INFO][#000012] LCD initialized successfully with backlight ON
-[  0:00:03.562][  INFO][#000013] LCD initialized successfully on attempt 1
-[  0:00:03.563][  INFO][#000014] Initializing Touch with up to 2 attempts...
-[  0:00:03.564][  INFO][#000015] Setting up Touch...
-[  0:00:03.565][  INFO][#000016] Setting up Touch...
-[  0:00:04.643][  INFO][#000017] Touch initialized successfully
-[  0:00:04.644][  INFO][#000018] Touch initialized successfully on attempt 1
-[  0:00:04.645][  INFO][#000019] Initializing SD Card with up to 3 attempts...
-[  0:00:04.646][  INFO][#000020] Setting up SD Card...
-[  0:00:04.646][  INFO][#000021] Setting up SD Card with robust initialization...
-[  0:00:04.647][  INFO][#000022] Waiting for power stabilization...
-[  0:00:06.648][  INFO][#000023] Resetting SD pins...
-[  0:00:06.749][  INFO][#000024] Ensuring SD_MMC is deinitialized...
-[  0:00:07.250][  INFO][#000025] Configuring SD pins...
-[  0:00:07.251][  INFO][#000026] SD init attempt 1: 1-bit mode at 125KHz (ultra conservative)
-[  0:00:07.917][  INFO][#000027] SD card initialized in 1-bit mode at 125KHz
-[  0:00:07.918][  INFO][#000028] Validating SD card...
-[  0:00:07.919][  INFO][#000029] SD Card Type: SDHC
-[  0:00:07.919][  INFO][#000030] SD Card Size: 128000MB
-[  0:00:07.943][  INFO][#000031] SD card initialized successfully in ultra-conservative mode
-[  0:00:07.945][  INFO][#000032] SD Card initialized successfully on attempt 1
-[  0:00:07.946][  INFO][#000033] Initializing WiFi with up to 2 attempts...
-[  0:00:07.947][  INFO][#000034] Setting up WiFi...
-[  7948][E][STA.cpp:530] disconnect(): STA not started! You must call begin first.
-sdio_mempool_create free:31937464 min-free:31936852 lfb-def:31457268 lfb-8bit:31457268
+[  0:00:01.270][  INFO][#000008] Watchdog initialized successfully
+[  0:00:01.271][  INFO][#000009] Initializing LCD with up to 2 attempts...
+[  0:00:01.272][  INFO][#000010] Setting up LCD...
+[  1273][I][jd9365_lcd.cpp:50] example_bsp_enable_dsi_phy_power(): [example] MIPI DSI PHY Powered on
+[  1275][I][jd9365_lcd.cpp:83] begin(): [example] Install MIPI DSI LCD control panel
+[  0:00:01.561][  INFO][#000011] LCD initialized successfully with backlight ON
+[  0:00:01.562][  INFO][#000012] LCD completed successfully in 289 ms
+[  0:00:01.563][  INFO][#000013] LCD initialized successfully on attempt 1
+[  0:00:01.564][  INFO][#000014] Initializing Touch with up to 2 attempts...
+[  0:00:01.565][  INFO][#000015] Setting up Touch...
+[  0:00:02.641][  INFO][#000016] Touch initialized successfully
+[  0:00:02.642][  INFO][#000017] Touch completed successfully in 1076 ms
+[  0:00:02.643][  INFO][#000018] Touch initialized successfully on attempt 1
+[  0:00:02.644][  INFO][#000019] Initializing SD Card with up to 3 attempts...
+[  0:00:02.645][  INFO][#000020] Setting up SD Card...
+[  0:00:02.646][  INFO][#000021] Setting up SD Card with robust initialization...
+[  0:00:02.647][  INFO][#000022] Waiting for power stabilization...
+[  0:00:04.648][  INFO][#000023] Resetting SD pins...
+[  0:00:04.748][  INFO][#000024] Ensuring SD_MMC is deinitialized...
+[  0:00:05.249][  INFO][#000025] Configuring SD pins...
+[  0:00:05.249][  INFO][#000026] SD init attempt 1: 1-bit mode at 125KHz (ultra conservative)
+[  0:00:05.915][  INFO][#000027] SD card initialized in 1-bit mode at 125KHz
+[  0:00:05.916][  INFO][#000028] Validating SD card...
+[  0:00:05.917][  INFO][#000029] SD Card Type: SDHC
+[  0:00:05.918][  INFO][#000030] SD Card Size: 128000MB
+[  0:00:05.942][  INFO][#000031] SD card initialized successfully in ultra-conservative mode
+[  0:00:05.944][  INFO][#000032] SD Card completed successfully in 3298 ms
+[  0:00:05.945][  INFO][#000033] SD Card initialized successfully on attempt 1
+[  0:00:05.946][  INFO][#000034] Initializing WiFi with up to 2 attempts...
+[  0:00:05.947][  INFO][#000035] Setting up WiFi...
+[  5948][E][STA.cpp:530] disconnect(): STA not started! You must call begin first.
+sdio_mempool_create free:31937204 min-free:31936592 lfb-def:31457268 lfb-8bit:31457268
 
 Name: 
 Type: SDIO
@@ -83,126 +149,133 @@ TUPLE: CFTABLE_ENTRY, size: 8
   IR: 30, mask: 1,   IRQ: FF FF
   LEN: FFFF
 TUPLE: END
-[  0:00:10.994][  INFO][#000035] Starting AP with SSID: ESP32P4-ImageViewer
-[  0:00:10.995][  INFO][#000036] AP start attempt 1...
-[  0:00:11.151][  INFO][#000037] WiFi AP Mode active with enhanced stability
-[  0:00:11.152][  INFO][#000038] AP SSID: ESP32P4-ImageViewer
-[  0:00:11.153][  INFO][#000039] AP IP Address: 192.168.4.1
-[  0:00:11.154][  INFO][#000040] AP Channel: 6
-[  0:00:11.155][  INFO][#000041] AP Max Clients: 4
-[  0:00:11.156][  INFO][#000042] AP Power: Maximum
-[  0:00:11.157][  INFO][#000043] WiFi initialized successfully on attempt 1
-[  0:00:11.158][  INFO][#000044] Initializing LVGL with up to 1 attempts...
-[  0:00:11.159][  INFO][#000045] Setting up LVGL...
-[  0:00:11.160][ DEBUG][#000046] Allocating LVGL buffers: 24000 bytes each
-[  0:00:11.162][  INFO][#000047] LVGL initialized successfully
-[  0:00:11.163][  INFO][#000048] LVGL initialized successfully on attempt 1
-[  0:00:11.164][  INFO][#000049] Initializing UI with up to 1 attempts...
-[  0:00:11.165][  INFO][#000050] Setting up UI...
-[  0:00:11.166][  INFO][#000051] Setting up UI...
-[  0:00:11.169][  INFO][#000052] UI initialized successfully
-[  0:00:11.170][  INFO][#000053] UI initialized successfully on attempt 1
-[  0:00:11.171][  INFO][#000054] Initializing WebServer with up to 2 attempts...
-[  0:00:11.172][  INFO][#000055] Setting up WebServer...
-[  0:00:11.173][  INFO][#000056] Setting up WebServer with enhanced connectivity...
-[  0:00:11.174][  INFO][#000057] WebServer started on port 80 with enhanced error handling
-[  0:00:11.176][  INFO][#000058] WebServer initialized successfully on attempt 1
-[  0:00:11.177][  INFO][#000059] Created task: LVGL Task on core 1
-[  0:00:11.178][  INFO][#000061] Scanning for images...
-[  0:00:11.178][  INFO][#000062] Scanning for images...
-[  0:00:11.177][  INFO][#000060] LVGL task started on core 1
-E (11177) task_wdt: esp_task_wdt_reset(705): task not found
-E (11187) lcd.dsi.dpi: dpi_panel_draw_bitmap(530): previous draw operation is not finished
-E (11188) lcd.dsi.dpi: dpi_panel_draw_bitmap(530): previous draw operation is not finished
-[  0:00:11.199][  INFO][#000063] Phase 1: Identifying valid and corrupt images...
-E (11192) lcd.dsi.dpi: dpi_panel_draw_bitmap(530): previous draw operation is not finished
-E (11200) lcd.dsi.dpi: dpi_panel_draw_bitmap(530): previous draw operation is not finished
-E (11208) lcd.dsi.dpi: dpi_panel_draw_bitmap(530): previous draw operation is not finished
-[  0:00:11.225][ DEBUG][#000064] Found image 0: /images/img_39767.jpg (939213 bytes)
-E (11216) lcd.dsi.dpi: dpi_panel_draw_bitmap(530): previous draw operation is not finished
-E (11224) lcd.dsi.dpi: dpi_panel_draw_bitmap(530): previous draw operation is not finished
-E (11232) lcd.dsi.dpi: dpi_panel_draw_bitmap(530): previous draw operation is not finished
-E (11240) lcd.dsi.dpi: dpi_panel_draw_bitmap(530): previous draw operation is not finished
-[  0:00:11.251][ DEBUG][#000065] Found image 1: /images/img_79907.jpg (1586123 bytes)
-E (11248) lcd.dsi.dpi: dpi_panel_draw_bitmap(530): previous draw operation is not finished
-E (11257) lcd.dsi.dpi: dpi_panel_draw_bitmap(530): previous draw operation is not finished
-E (11264) lcd.dsi.dpi: dpi_panel_draw_bitmap(530): previous draw operation is not finished
-[  0:00:11.277][ DEBUG][#000066] Found image 2: /images/img_32173_chicago skyline.jpg (1101785 bytes)
-E (11272) lcd.dsi.dpi: dpi_panel_draw_bitmap(530): previous draw operation is not finished
-E (11280) lcd.dsi.dpi: dpi_panel_draw_bitmap(530): previous draw operation is not finished
-E (11288) lcd.dsi.dpi: dpi_panel_draw_bitmap(530): previous draw operation is not finished
-[  0:00:11.303][ DEBUG][#000067] Found image 3: /images/img_11892.jpg (939213 bytes)
-E (11296) lcd.dsi.dpi: dpi_panel_draw_bitmap(530): previous draw operation is not finished
-E (11304) lcd.dsi.dpi: dpi_panel_draw_bitmap(530): previous draw operation is not finished
-E (11312) lcd.dsi.dpi: dpi_panel_draw_bitmap(530): previous draw operation is not finished
-[  0:00:11.329][ DEBUG][#000068] Found image 4: /images/img_11059.jpg (843783 bytes)
-E (11320) lcd.dsi.dpi: dpi_panel_draw_bitmap(530): previous draw operation is not finished
-E (11328) lcd.dsi.dpi: dpi_panel_draw_bitmap(530): previous draw operation is not finished
-E (11336) lcd.dsi.dpi: dpi_panel_draw_bitmap(530): previous draw operation is not finished
-E (11344) lcd.dsi.dpi: dpi_panel_draw_bitmap(530): previous draw operation is not finished
-[  0:00:11.359][ DEBUG][#000069] Found image 5: /images/img_42344.jpg (14360 bytes)
-E (11352) lcd.dsi.dpi: dpi_panel_draw_bitmap(530): previous draw operation is not finished
-E (11360) lcd.dsi.dpi: dpi_panel_draw_bitmap(530): previous draw operation is not finished
-E (11368) lcd.dsi.dpi: dpi_panel_draw_bitmap(530): previous draw operation is not finished
-E (11376) lcd.dsi.dpi: dpi_panel_draw_bitmap(530): previous draw operation is not finished
-[  0:00:11.391][ DEBUG][#000070] Found image 6: /images/img_22824_Eagles_Birds.jpg (16308 bytes)
-E (11384) lcd.dsi.dpi: dpi_panel_draw_bitmap(530): previous draw operation is not finished
-[  0:00:11.395][  INFO][#000071] Found 7 images
-[  0:00:11.397][  INFO][#000072] Found 7 images
-[  0:00:11.399][  INFO][#000073] Loading first image
-E (11392) lcd.dsi.dpi: dpi_panel_draw_bitmap(530): previous draw operation is not finished
-E (11400) lcd.dsi.dpi: dpi_panel_draw_bitmap(530): previous draw operation is not finished
-E (11408) lcd.dsi.dpi: dpi_panel_draw_bitmap(530): previous draw operation is not finished
-E (11416) lcd.dsi.dpi: dpi_panel_draw_bitmap(530): previous draw operation is not finished
-E (11424) lcd.dsi.dpi: dpi_panel_draw_bitmap(530): previous draw operation is not finished
-E (11432) lcd.dsi.dpi: dpi_panel_draw_bitmap(530): previous draw operation is not finished
-E (11440) lcd.dsi.dpi: dpi_panel_draw_bitmap(530): previous draw operation is not finished
-E (11455) lcd.dsi.dpi: dpi_panel_draw_bitmap(530): previous draw operation is not finished
-E (11455) lcd.dsi.dpi: dpi_panel_draw_bitmap(530): previous draw operation is not finished
-E (11464) lcd.dsi.dpi: dpi_panel_draw_bitmap(530): previous draw operation is not finished
-E (11471) lcd.dsi.dpi: dpi_panel_draw_bitmap(530): previous draw operation is not finished
-E (11480) lcd.dsi.dpi: dpi_panel_draw_bitmap(530): previous draw operation is not finished
-E (11487) lcd.dsi.dpi: dpi_panel_draw_bitmap(530): previous draw operation is not finished
-E (11496) lcd.dsi.dpi: dpi_panel_draw_bitmap(530): previous draw operation is not finished
-E (11503) lcd.dsi.dpi: dpi_panel_draw_bitmap(530): previous draw operation is not finished
-E (11512) lcd.dsi.dpi: dpi_panel_draw_bitmap(530): previous draw operation is not finished
-E (11519) lcd.dsi.dpi: dpi_panel_draw_bitmap(530): previous draw operation is not finished
-E (11528) lcd.dsi.dpi: dpi_panel_draw_bitmap(530): previous draw operation is not finished
-E (11535) lcd.dsi.dpi: dpi_panel_draw_bitmap(530): previous draw operation is not finished
-E (11544) lcd.dsi.dpi: dpi_panel_draw_bitmap(530): previous draw operation is not finished
-E (11551) lcd.dsi.dpi: dpi_panel_draw_bitmap(530): previous draw operation is not finished
-E (11560) lcd.dsi.dpi: dpi_panel_draw_bitmap(530): previous draw operation is not finished
-E (11567) lcd.dsi.dpi: dpi_panel_draw_bitmap(530): previous draw operation is not finished
-E (11576) lcd.dsi.dpi: dpi_panel_draw_bitmap(530): previous draw operation is not finished
-E (11583) lcd.dsi.dpi: dpi_panel_draw_bitmap(530): previous draw operation is not finished
-E (11592) lcd.dsi.dpi: dpi_panel_draw_bitmap(530): previous draw operation is not finished
-E (11599) lcd.dsi.dpi: dpi_panel_draw_bitmap(530): previous draw operation is not finished
-E (11608) lcd.dsi.dpi: dpi_panel_draw_bitmap(530): previous draw operation is not finished
-E (11615) lcd.dsi.dpi: dpi_panel_draw_bitmap(530): previous draw operation is not finished
-E (11624) lcd.dsi.dpi: dpi_panel_draw_bitmap(530): previous draw operation is not finished
-E (11631) lcd.dsi.dpi: dpi_panel_draw_bitmap(530): previous draw operation is not finished
-E (11640) lcd.dsi.dpi: dpi_panel_draw_bitmap(530): previous draw operation is not finished
-[  0:00:11.649][ DEBUG][#000074] Screen cleared in 194 ms
-[  0:00:11.653][  INFO][#000075] Starting JPEG decoding for /images/img_39767.jpg (939213 bytes)
-E (12184) task_wdt: esp_task_wdt_reset(705): task not found
-E (13187) task_wdt: esp_task_wdt_reset(705): task not found
-E (14188) task_wdt: esp_task_wdt_reset(705): task not found
-E (15196) task_wdt: esp_task_wdt_reset(705): task not found
-[  0:00:15.393][  INFO][#000076] JPEG decoded successfully (rotated): 1280x800 -> 800x1280
-[  0:00:15.394][  WARN][#000077] JPEG rendering took 3744 ms
-[  0:00:15.455][  INFO][#000078] Successfully displayed image 0
-[  0:00:15.456][  INFO][#000079] Created task: Slideshow Task on core 0
-[  0
-[  0:00:15.457][  INFO][#000081] Initialisk not found
-[  0:00:15.459][  INFO][#000082] LCD: OK, Touch: OK, SD: OK
-[  0:00:15.460][  INFO][#000083] WiFi: OK, LVGL: OK, UI: OK, Server: OK
+[  0:00:08.994][  INFO][#000036] Starting AP with SSID: ESP32P4-ImageViewer
+[  0:00:08.995][  INFO][#000037] AP start attempt 1...
+[  0:00:09.151][  INFO][#000038] WiFi AP Mode active with enhanced stability
+[  0:00:09.152][  INFO][#000039] AP SSID: ESP32P4-ImageViewer
+[  0:00:09.153][  INFO][#000040] AP IP Address: 192.168.4.1
+[  0:00:09.154][  INFO][#000041] AP Channel: 6
+[  0:00:09.155][  INFO][#000042] AP Max Clients: 4
+[  0:00:09.156][  INFO][#000043] AP Power: Maximum
+[  0:00:09.156][  INFO][#000044] WiFi completed successfully in 3208 ms
+[  0:00:09.157][  INFO][#000045] WiFi initialized successfully on attempt 1
+[  0:00:09.158][  INFO][#000046] Initializing LVGL with up to 1 attempts...
+[  0:00:09.159][  INFO][#000047] Setting up LVGL...
+[  0:00:09.160][ DEBUG][#000048] Allocating LVGL buffers: 24000 bytes each
+[  0:00:09.162][  INFO][#000049] LVGL initialized successfully
+[  0:00:09.163][  INFO][#000050] LVGL completed successfully in 3 ms
+[  0:00:09.164][  INFO][#000051] LVGL initialized successfully on attempt 1
+[  0:00:09.165][  INFO][#000052] Initializing UI with up to 1 attempts...
+[  0:00:09.166][  INFO][#000053] Setting up UI...
+[  0:00:09.167][  INFO][#000054] Setting up UI...
+[  0:00:09.170][  INFO][#000055] UI initialized successfully
+[  0:00:09.171][  INFO][#000056] UI completed successfully in 4 ms
+[  0:00:09.172][  INFO][#000057] UI initialized successfully on attempt 1
+[  0:00:09.173][  INFO][#000058] Initializing WebServer with up to 2 attempts...
+[  0:00:09.174][  INFO][#000059] Setting up WebServer...
+[  0:00:09.175][  INFO][#000060] Setting up WebServer with enhanced connectivity...
+[  0:00:09.176][  INFO][#000061] WebServer started on port 80 with enhanced error handling
+[  0:00:09.178][  INFO][#000062] WebServer completed successfully in 3 ms
+[  0:00:09.179][  INFO][#000063] WebServer initialized successfully on attempt 1
+[  0:00:09.180][  INFO][#000064] Created task: LVGL Task on core 1
+[  0:00:09.181][  INFO][#000066] Scanning for images...
+[  0:00:09.181][  INFO][#000067] Scanning for images...
+[  0:00:09.180][  INFO][#000065] LVGL task started on core 1
+E (9181) task_wdt: esp_task_wdt_reset(705): task not found
+E (9190) lcd.dsi.dpi: dpi_panel_draw_bitmap(530): previous draw operation is not finished
+E (9191) lcd.dsi.dpi: dpi_panel_draw_bitmap(530): previous draw operation is not finished
+[  0:00:09.201][  INFO][#000068] Phase 1: Identifying valid and corrupt images...
+E (9196) lcd.dsi.dpi: dpi_panel_draw_bitmap(530): previous draw operation is not finished
+E (9203) lcd.dsi.dpi: dpi_panel_draw_bitmap(530): previous draw operation is not finished
+E (9211) lcd.dsi.dpi: dpi_panel_draw_bitmap(530): previous draw operation is not finished
+[  0:00:09.228][ DEBUG][#000069] Found image 0: /images/img_39767.jpg (939213 bytes)
+E (9219) lcd.dsi.dpi: dpi_panel_draw_bitmap(530): previous draw operation is not finished
+E (9227) lcd.dsi.dpi: dpi_panel_draw_bitmap(530): previous draw operation is not finished
+E (9235) lcd.dsi.dpi: dpi_panel_draw_bitmap(530): previous draw operation is not finished
+E (9243) lcd.dsi.dpi: dpi_panel_draw_bitmap(530): previous draw operation is not finished
+[  0:00:09.254][ DEBUG][#000070] Found image 1: /images/img_79907.jpg (1586123 bytes)
+E (9251) lcd.dsi.dpi: dpi_panel_draw_bitmap(530): previous draw operation is not finished
+E (9259) lcd.dsi.dpi: dpi_panel_draw_bitmap(530): previous draw operation is not finished
+E (9267) lcd.dsi.dpi: dpi_panel_draw_bitmap(530): previous draw operation is not finished
+[  0:00:09.280][ DEBUG][#000071] Found image 2: /images/img_32173_chicago skyline.jpg (1101785 bytes)
+E (9274) lcd.dsi.dpi: dpi_panel_draw_bitmap(530): previous draw operation is not finished
+E (9282) lcd.dsi.dpi: dpi_panel_draw_bitmap(530): previous draw operation is not finished
+E (9290) lcd.dsi.dpi: dpi_panel_draw_bitmap(530): previous draw operation is not finished
+[  0:00:09.306][ DEBUG][#000072] Found image 3: /images/img_11892.jpg (939213 bytes)
+E (9298) lcd.dsi.dpi: dpi_panel_draw_bitmap(530): previous draw operation is not finished
+E (9307) lcd.dsi.dpi: dpi_panel_draw_bitmap(530): previous draw operation is not finished
+E (9315) lcd.dsi.dpi: dpi_panel_draw_bitmap(530): previous draw operation is not finished
+E (9322) lcd.dsi.dpi: dpi_panel_draw_bitmap(530): previous draw operation is not finished
+[  0:00:09.332][ DEBUG][#000073] Found image 4: /images/img_11059.jpg (843783 bytes)
+E (9330) lcd.dsi.dpi: dpi_panel_draw_bitmap(530): previous draw operation is not finished
+E (9338) lcd.dsi.dpi: dpi_panel_draw_bitmap(530): previous draw operation is not finished
+E (9346) lcd.dsi.dpi: dpi_panel_draw_bitmap(530): previous draw operation is not finished
+[  0:00:09.362][ DEBUG][#000074] Found image 5: /images/img_42344.jpg (14360 bytes)
+E (9353) lcd.dsi.dpi: dpi_panel_draw_bitmap(530): previous draw operation is not finished
+E (9361) lcd.dsi.dpi: dpi_panel_draw_bitmap(530): previous draw operation is not finished
+E (9369) lcd.dsi.dpi: dpi_panel_draw_bitmap(530): previous draw operation is not finished
+E (9377) lcd.dsi.dpi: dpi_panel_draw_bitmap(530): previous draw operation is not finished
+[  0:00:09.394][ DEBUG][#000075] Found image 6: /images/img_22824_Eagles_Birds.jpg (16308 bytes)
+E (9385) lcd.dsi.dpi: dpi_panel_draw_bitmap(530): previous draw operation is not finished
+[  0:00:09.398][  INFO][#000076] Found 7 images
+[  0:00:09.400][  INFO][#000077] Found 7 images
+[  0:00:09.400][  INFO][#000078] Loading first image
+E (9393) lcd.dsi.dpi: dpi_panel_draw_bitmap(530): previous draw operation is not finished
+E (9401) lcd.dsi.dpi: dpi_panel_draw_bitmap(530): previous draw operation is not finished
+E (9409) lcd.dsi.dpi: dpi_panel_draw_bitmap(530): previous draw operation is not finished
+E (9417) lcd.dsi.dpi: dpi_panel_draw_bitmap(530): previous draw operation is not finished
+E (9424) lcd.dsi.dpi: dpi_panel_draw_bitmap(530): previous draw operation is not finished
+E (9432) lcd.dsi.dpi: dpi_panel_draw_bitmap(530): previous draw operation is not finished
+E (9440) lcd.dsi.dpi: dpi_panel_draw_bitmap(530): previous draw operation is not finished
+E (9448) lcd.dsi.dpi: dpi_panel_draw_bitmap(530): previous draw operation is not finished
+E (9456) lcd.dsi.dpi: dpi_panel_draw_bitmap(530): previous draw operation is not finished
+E (9471) lcd.dsi.dpi: dpi_panel_draw_bitmap(530): previous draw operation is not finished
+E (9472) lcd.dsi.dpi: dpi_panel_draw_bitmap(530): previous draw operation is not finished
+E (9480) lcd.dsi.dpi: dpi_panel_draw_bitmap(530): previous draw operation is not finished
+E (9487) lcd.dsi.dpi: dpi_panel_draw_bitmap(530): previous draw operation is not finished
+E (9496) lcd.dsi.dpi: dpi_panel_draw_bitmap(530): previous draw operation is not finished
+E (9503) lcd.dsi.dpi: dpi_panel_draw_bitmap(530): previous draw operation is not finished
+E (9512) lcd.dsi.dpi: dpi_panel_draw_bitmap(530): previous draw operation is not finished
+E (9519) lcd.dsi.dpi: dpi_panel_draw_bitmap(530): previous draw operation is not finished
+E (9528) lcd.dsi.dpi: dpi_panel_draw_bitmap(530): previous draw operation is not finished
+E (9535) lcd.dsi.dpi: dpi_panel_draw_bitmap(530): previous draw operation is not finished
+E (9544) lcd.dsi.dpi: dpi_panel_draw_bitmap(530): previous draw operation is not finished
+E (9550) lcd.dsi.dpi: dpi_panel_draw_bitmap(530): previous draw operation is not finished
+E (9559) lcd.dsi.dpi: dpi_panel_draw_bitmap(530): previous draw operation is not finished
+E (9566) lcd.dsi.dpi: dpi_panel_draw_bitmap(530): previous draw operation is not finished
+E (9575) lcd.dsi.dpi: dpi_panel_draw_bitmap(530): previous draw operation is not finished
+E (9582) lcd.dsi.dpi: dpi_panel_draw_bitmap(530): previous draw operation is not finished
+E (9591) lcd.dsi.dpi: dpi_panel_draw_bitmap(530): previous draw operation is not finished
+E (9598) lcd.dsi.dpi: dpi_panel_draw_bitmap(530): previous draw operation is not finished
+E (9607) lcd.dsi.dpi: dpi_panel_draw_bitmap(530): previous draw operation is not finished
+E (9614) lcd.dsi.dpi: dpi_panel_draw_bitmap(530): previous draw operation is not finished
+E (9622) lcd.dsi.dpi: dpi_panel_draw_bitmap(530): previous draw operation is not finished
+E (9629) lcd.dsi.dpi: dpi_panel_draw_bitmap(530): previous draw operation is not finished
+E (9638) lcd.dsi.dpi: dpi_panel_draw_bitmap(530): previous draw operation is not finished
+E (9645) lcd.dsi.dpi: dpi_panel_draw_bitmap(530): previous draw operation is not finished
+E (9654) lcd.dsi.dpi: dpi_panel_draw_bitmap(530): previous draw operation is not finished
+[  0:00:09.663][ DEBUG][#000079] Screen cleared in 192 ms
+[  0:00:09.667][  INFO][#000080] Starting JPEG decoding for /images/img_39767.jpg (939213 bytes)
+E (10190) task_wdt: esp_task_wdt_reset(705): task not found
+E (11193) task_wdt: esp_task_wdt_reset(705): task not found
+E (12193) task_wdt: esp_task_wdt_reset(705): task not found
+E (13198) task_wdt: esp_task_wdt_reset(705): task not found
+[  0:00:13.415][  INFO][#000081] JPEG decoded successfully (rotated): 1280x800 -> 800x1280
+[  0:00:13.416][  WARN][#000082] JPEG rendering took 3752 ms
+[  0:00:13.477][  INFO][#000083] Successfully displayed image 0
+[  0:00:13.478][  INFO][#000084] Created task: Slideshow Task on core 0
+[  0:00:13.478][  INFO][#000085] Slideshow task started on core 0
+ status:
+E (16016) task_wdt: esp_task_wdt_reset(705): task not found
+[  0:00:13.481][  INFO][#000087] LCD: OK, Touch: OK, SD: OK
+[  0:00:13.482][  INFO][#000088] WiFi: OK, LVGL: OK, UI: OK, Server: OK
 =========== After Setup Start ============
 INTERNAL Memory Info:
 ------------------------------------------
-  Total Size        :   515464 B ( 503.4 KB)
-  Free Bytes        :   383604 B ( 374.6 KB)
-  Allocated Bytes   :   121116 B ( 118.3 KB)
-  Minimum Free Bytes:   378140 B ( 369.3 KB)
+  Total Size        :   515448 B ( 503.4 KB)
+  Free Bytes        :   383548 B ( 374.6 KB)
+  Allocated Bytes   :   121156 B ( 118.3 KB)
+  Minimum Free Bytes:   377888 B ( 369.0 KB)
   Largest Free Block:   335860 B ( 328.0 KB)
 ------------------------------------------
 SPIRAM Memory Info:
@@ -229,42 +302,44 @@ GPIO Info:
     44 : SDMMC_CMD
     45 : SDMMC_POWER
 ============ After Setup End =============
-E (20712) task_wdt: esp_task_wdt_reset(705): task not found
-E (21712) task_wdt: esp_task_wdt_reset(705): task not found
-E (21971) task_wdt: esp_task_wdt_reset(705): task not found
-E (22712) task_wdt: esp_task_wdt_reset(705): task not found
-E (23712) task_wdt: esp_task_wdt_reset(705): task not found
-3971) task_wdt: esp_task_wdt_reset(705): task not found
-E (24712) task_wdt: esp_task_wdt_reset(705): task not found
-E (25712) task_wdt: esp_task_wdt_reset(705): task not found
-eset(705): task not found
-E (26712) task_wdt: esp_task_wdt_reset(705): task not found
-E (27712) task_wdt: esp_task_wdt_reset(705): task not found
-task_wdt: esp_task_wdt_reset(705): task not found
-E (28712) task_wdt: esp_task_wdt_reset(705): task not found
-E (29712) task_wdt: esp_task_wdt_reset(705): task not found
-E (29971) task_wdt: esp_task_wdt_reset(705): task not found
-E (30712) task_wdt: esp_task_wdt_reset(705): task not found
-E (31712) task_wdt: esp_task_wdt_reset(705): task not found
+[  0:00:13.517][ DEBUG][#000089] WiFi AP running but no clients connected
+E (16736) task_wdt: esp_task_wdt_reset(705): task not found
+E (17736) task_wdt: esp_task_wdt_reset(705): task not found
+E (18016) task_wdt: esp_task_wdt_reset(705): task not found
+E (18736) task_wdt: esp_task_wdt_reset(705): task not found
+E (19736) task_wdt: esp_task_wdt_reset(705): task not found
+E (20016) task_wdt: esp_task_wdt_reset(705): task not found
+E (20736) task_wdt: esp_task_wdt_reset(705): task not found
+E (21736) task_wdt: esp_task_wdt_reset(705): task not found
+ask not found
+E (22736) task_wdt: esp_task_wdt_reset(705): task not found
+E (23736) task_wdt: esp_task_wdt_reset(705): task not found
+16) task_wdt: esp_task_wdt_reset(705): task not found
+E (24736) task_wdt: esp_task_wdt_reset(705): task not found
+E (25736) task_wdt: esp_task_wdt_reset(705): task not found
 wdt: esp_task_wdt_reset(705): task not found
-E (32712) task_wdt: esp_task_wdt_reset(705): task not found
-E (33712) task_wdt: esp_task_wdt_reset(705): task not found
-E (33971) task_wdt: esp_task_wdt_reset(705): task not found
-[  0:00:30.006][  INFO][#000084] Memory - Heap: 374 KB free, PSRAM: 30654 KB free
-[  0:00:30.007][  INFO][#000085] JPEG stats - Success: 1/1 (100.0%)
-E (34712) task_wdt: esp_task_wdt_reset(705): task not found
-E (35712) task_wdt: esp_task_wdt_reset(705): task not found
-E (35971) task_wdt: esp_task_wdt_reset(705): task not found
-E (36712) task_wdt: esp_task_wdt_reset(705): task not found
-E (37712) task_wdt: esp_task_wdt_reset(705): task not found
-und
-E (38712) task_wdt: esp_task_wdt_reset(705): task not found
-E (39712) task_wdt: esp_task_wdt_reset(705): task not found
-E (39971) task_wdt: esp_task_wdt_reset(705): task not found
-E (40712) task_wdt: esp_task_wdt_reset(705): task not found
-E (41712) task_wdt: esp_task_wdt_reset(705): task not found
-task_wdt: esp_task_wdt_reset(705): task not found
-E (42712) task_wdt: esp_task_wdt_reset(705): task not found
-E (43712) task_wdt: esp_task_wdt_reset(705): task not found
-1) task_wdt: esp_task_wdt_reset(705): task not found
-E (44712) task_wdt: esp_task_wdt_reset(705): task not found
+[  0:00:23.518][ DEBUG][#000090] WiFi AP running but no clients connected
+E (26736) task_wdt: esp_task_wdt_reset(705): task not found
+E (27736) task_wdt: esp_task_wdt_reset(705): task not found
+ask_wdt: esp_task_wdt_reset(705): task not found
+E (28736) task_wdt: esp_task_wdt_reset(705): task not found
+E (29736) task_wdt: esp_task_wdt_reset(705): task not found
+E (30016) task_wdt: esp_task_wdt_reset(705): task not found
+E (30736) task_wdt: esp_task_wdt_reset(705): task not found
+E (31736) task_wdt: esp_task_wdt_reset(705): task not found
+016) task_wdt: esp_task_wdt_reset(705): task not found
+[  0:00:30.006][  INFO][#000091] Memory - Heap: 374 KB free, PSRAM: 30654 KB free
+[  0:00:30.007][  INFO][#000092] JPEG stats - Success: 1/1 (100.0%)
+E (32736) task_wdt: esp_task_wdt_reset(705): task not found
+E (33736) task_wdt: esp_task_wdt_reset(705): task not found
+_task_wdt_reset(705): task not found
+E (34736) task_wdt: esp_task_wdt_reset(705): task not found
+E (35736) task_wdt: esp_task_wdt_reset(705): task not found
+ask_wdt: esp_task_wdt_reset(705): task not found
+[  0:00:33.521][ DEBUG][#000093] WiFi AP running but no clients connected
+E (36736) task_wdt: esp_task_wdt_reset(705): task not found
+E (37736) task_wdt: esp_task_wdt_reset(705): task not found
+et(705): task not found
+E (38736) task_wdt: esp_task_wdt_reset(705): task not found
+E (39736) task_wdt: esp_task_wdt_reset(705): task not found
+0016) task_wdt: esp_task_wdt_reset(705): task not found
