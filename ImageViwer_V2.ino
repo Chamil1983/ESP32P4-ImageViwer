@@ -15,11 +15,11 @@
 #include <DNSServer.h>
 #include <SPIFFS.h>
 #include "JPEGDEC.h"  // Using the specified library
-#include "lv_conf.h"  // File link (https://github.com/Chamil1983/ESP32P4_LCDJC8012P4A1C/blob/main/Image_ViwerV4/lv_conf.h)
-#include "pins_config.h" // Board pin configuration (https://github.com/Chamil1983/ESP32P4_LCDJC8012P4A1C/blob/main/Image_ViwerV4/pins_config.h)
-#include "debug_logger.h"  // Debug Library link (https://github.com/Chamil1983/ESP32P4_LCDJC8012P4A1C/blob/main/Image_ViwerV4/debug_logger.h) and (https://github.com/Chamil1983/ESP32P4_LCDJC8012P4A1C/blob/main/Image_ViwerV4/debug_logger.cpp)
-#include "src/lcd/jd9365_lcd.h" // Library for LCD (https://github.com/Chamil1983/ESP32P4_LCDJC8012P4A1C/tree/main/src/lcd)
-#include "src/touch/gsl3680_touch.h"  // Library for Touch (https://github.com/Chamil1983/ESP32P4_LCDJC8012P4A1C/tree/main/src/touch) 
+#include "lv_conf.h"  // LVGL configuration
+#include "pins_config.h" // Board pin configuration
+#include "debug_logger.h"  // Debug Library
+#include "src/lcd/jd9365_lcd.h" // Library for LCD
+#include "src/touch/gsl3680_touch.h"  // Library for Touch
 
 // JPEG decoder instance
 JPEGDEC jpeg;
@@ -50,8 +50,8 @@ WebServer server(80);
 DNSServer dnsServer;
 
 // Hardware objects
-jd9365_lcd lcd = jd9365_lcd(LCD_RST);
-gsl3680_touch touch = gsl3680_touch(TP_I2C_SDA, TP_I2C_SCL, TP_RST, TP_INT);
+jd9365_lcd lcd(LCD_RST);
+gsl3680_touch touch(TP_I2C_SDA, TP_I2C_SCL, TP_RST, TP_INT);
 
 // LVGL display buffers
 static lv_disp_draw_buf_t draw_buf;
@@ -125,9 +125,13 @@ volatile bool reset_requested = false;
 TaskHandle_t lvgl_task_handle = NULL;
 TaskHandle_t main_task_handle = NULL;
 
+// Statistics for JPEG decoding
+int jpeg_decode_total_count = 0;
+int jpeg_decode_success_count = 0;
+
 /**
  * ESP32P4 Image Gallery - Function Declarations
- * Updated: 2025-06-17 11:05:01
+ * Updated: 2025-06-20 11:49:44
  * User: Chamil1983
  */
 
@@ -198,6 +202,8 @@ String updateUploadForm();
 // ------ Helper Functions ------
 uint32_t max_u32(uint32_t a, uint32_t b);
 uint32_t min_u32(uint32_t a, uint32_t b);
+size_t safeSDWrite(File &file, const uint8_t *buf, size_t size);
+void add_test_page_handler();
 
 // ------ Main Program Functions ------
 void setup();
@@ -217,34 +223,51 @@ void loop();
     } \
   } while (0)
 
-#define DEBUG_INIT(tag) DEBUG_PRINT(tag, "Initializing...")
-#define DEBUG_SUCCESS(tag) DEBUG_PRINT(tag, "Initialization successful")
-#define DEBUG_FAIL(tag, reason) DEBUG_PRINT(tag, "Initialization failed: %s", reason)
+#define DEBUG_PRINTLN(text) do { if (DEBUG_ENABLED) { Serial.println(text); } } while (0)
+#define DEBUG_PRINTF(format, ...) do { if (DEBUG_ENABLED) { Serial.printf(format, ##__VA_ARGS__); } } while (0)
 
 // Template for safe execution with watchdog feeding
-template<typename F>
-bool safe_execute_with_watchdog(F&& func, const char* operation_name) {
-  unsigned long start_time = millis();
-  bool result = false;
-  
-  try {
-    result = func();
-  } catch (...) {
-    Logger.error("Exception in %s", operation_name);
-  }
-  
-  unsigned long duration = millis() - start_time;
-  
-  if (duration > 1000) {
-    Logger.warn("Operation %s took %lu ms", operation_name, duration);
-  }
-  
-  return result;
+template<typename Func>
+bool safe_execute_with_watchdog(Func function, const char* operation_name) {
+    unsigned long start_time = millis();
+    bool result = false;
+    
+    try {
+        // Feed watchdog before starting
+        if (wdt_enabled) {
+            feed_watchdog();
+        }
+        
+        // Execute operation
+        result = function();
+        
+        // Feed watchdog after completion
+        if (wdt_enabled) {
+            feed_watchdog();
+        }
+        
+        // Log result based on success
+        if (result) {
+            Logger.info("%s completed successfully in %u ms", operation_name, millis() - start_time);
+        } else {
+            Logger.error("%s failed after %u ms", operation_name, millis() - start_time);
+        }
+    }
+    catch (const std::exception& e) {
+        Logger.error("%s failed with exception: %s", operation_name, e.what());
+        result = false;
+    }
+    catch (...) {
+        Logger.error("%s failed with unknown exception", operation_name);
+        result = false;
+    }
+    
+    return result;
 }
 
 /**
  * Fixed LittleFS initialization with proper partition name
- * Updated: 2025-06-17 12:08:31
+ * Updated: 2025-06-20 11:49:44
  * User: Chamil1983
  */
 bool initializeFileSystem() {
@@ -265,7 +288,7 @@ bool initializeFileSystem() {
     // If still failed, try formatting (without partition name - it uses the default)
     Serial.println("LittleFS mount failed, formatting...");
     
-    // Format doesn't take a partition name parameter
+    // Format without partition name parameter
     if (LittleFS.format()) {
         // Try mounting again with storage partition name
         if (LittleFS.begin(false, "storage")) {
@@ -283,20 +306,17 @@ bool initializeFileSystem() {
     Serial.println("LittleFS initialization failed - continuing without file system");
     return false;
 }
+
 /**
  * Emergency SPIFFS recovery
- * Date: 2025-06-15 11:51:10
+ * Date: 2025-06-20 11:49:44
  * User: Chamil1983
- * 
- * Call this if SPIFFS operations fail during runtime
  */
 bool emergency_spiffs_recovery() {
     Logger.warn("Attempting emergency SPIFFS recovery");
     
-    // End the SPIFFS filesystem without checking if mounted
-    // Arduino ESP32 doesn't provide a direct way to check if SPIFFS is mounted
+    // Force unmount any previous instance
     SPIFFS.end();
-    Logger.info("SPIFFS ended for recovery");
     
     // Short delay to ensure cleanup
     delay(500);
@@ -304,7 +324,7 @@ bool emergency_spiffs_recovery() {
     // Format the partition
     bool format_result = SPIFFS.format();
     if (!format_result) {
-        Logger.error("SPIFFS format failed");
+        Logger.error("Emergency SPIFFS format failed");
         return false;
     }
     
@@ -317,17 +337,15 @@ bool emergency_spiffs_recovery() {
         return false;
     }
     
-    Logger.info("SPIFFS recovery successful");
+    Logger.info("Emergency SPIFFS recovery successful");
     return true;
 }
 
 /**
- * Enhanced slideshow task initialization with safe WDT registration
- * Updated: 2025-06-17 10:25:58
- * User: Chamil1983
+ * Enhanced slideshow task creation
  */
 void createSlideshowTask() {
-    // Create slideshow task on core 0 with lower priority to avoid resource conflicts
+    // Create slideshow task on core 0 with lower priority
     xTaskCreatePinnedToCore(
         slideshowTask,           // Function
         "Slideshow Task",        // Name
@@ -341,25 +359,13 @@ void createSlideshowTask() {
     // Wait for task to start up before adding to watchdog
     delay(100);
 
-    // Register slideshow task with watchdog ONLY if task creation succeeded
+    // Register slideshow task with watchdog if task creation succeeded
     if (slideshow_task_handle != NULL) {
-        // Try to add the task to the watchdog, but don't crash if it fails
-        esp_err_t err = ESP_OK;
-        for (int retry = 0; retry < 3; retry++) {
-            err = esp_task_wdt_add(slideshow_task_handle);
-            if (err == ESP_OK) {
-                Logger.info("Slideshow task added to watchdog successfully");
-                break;
-            } else {
-                Logger.warn("Failed to add slideshow task to watchdog (retry %d): %d", 
-                          retry + 1, err);
-                delay(50);
+        if (wdt_enabled) {
+            esp_err_t err = esp_task_wdt_add(slideshow_task_handle);
+            if (err != ESP_OK && err != ESP_ERR_NOT_FOUND) {
+                Logger.warn("Failed to add slideshow task to watchdog: %d", err);
             }
-        }
-        
-        if (err != ESP_OK) {
-            // Continue without watchdog for this task, it's not critical
-            Logger.warn("Will continue without watchdog for slideshow task");
         }
     } else {
         Logger.error("Failed to create slideshow task");
@@ -367,16 +373,24 @@ void createSlideshowTask() {
 }
 
 /**
- * Safe initialization function that retries critical components
- * Updated: 2025-06-17 10:25:58
- * User: Chamil1983
+ * Safer component initialization with retry
  */
-bool initializeWithRetry(const char* componentName, bool (*initFunction)(), int maxRetries = 3) {
+bool initializeWithRetry(const char* componentName, bool (*initFunction)(), int maxRetries) {
     Logger.info("Initializing %s with up to %d attempts...", componentName, maxRetries);
     
     bool success = false;
     for (int retry = 0; retry < maxRetries; retry++) {
-        success = initFunction();
+        Logger.info("Setting up %s...", componentName);
+        
+        // Call initialization function directly
+        try {
+            success = initFunction();
+        }
+        catch (...) {
+            Logger.error("Exception during %s initialization", componentName);
+            success = false;
+        }
+        
         if (success) {
             Logger.info("%s initialized successfully on attempt %d", componentName, retry + 1);
             break;
@@ -395,1564 +409,12 @@ bool initializeWithRetry(const char* componentName, bool (*initFunction)(), int 
 }
 
 /**
- * Completely reworked setup() function for maximum stability
- * Updated: 2025-06-17 10:56:36
- * User: Chamil1983
- */
-void setup() {
-    // Initialize serial communication immediately
-    Serial.begin(115200);
-    delay(1000);  // Give serial time to initialize
-    
-    Serial.println();
-    Serial.println("=== ESP32P4 Gallery Debug Output ===");
-    Serial.println("Starting initialization sequence with enhanced error handling...");
-    
-    // CRITICAL: Disable task watchdog immediately to prevent early crashes
-    esp_task_wdt_deinit();
-    
-    // Initialize file system - use LittleFS instead of SPIFFS
-    bool fsAvailable = initializeFileSystem();
-    
-    // Set up logger in a safe way
-    safeLoggerInit(fsAvailable);
-    
-    Logger.info("====================================");
-    Logger.info("ESP32P4 Image Gallery Starting");
-    Logger.info("Date: 2025-06-17 10:56:36 UTC");
-    Logger.info("User: Chamil1983");
-    Logger.info("====================================");
-    
-    // Create mutexes
-    sd_mutex = xSemaphoreCreateMutex();
-    jpeg_mutex = xSemaphoreCreateMutex();
-    ui_mutex = xSemaphoreCreateMutex();
-    Logger.info("System mutexes initialized");
-    
-    // Setup watchdog with much safer implementation
-    Logger.info("Initializing enhanced watchdog system");
-    if (setup_watchdog()) {
-        Logger.info("Watchdog initialized successfully");
-    } else {
-        Logger.warn("Watchdog initialization failed - continuing without WDT");
-    }
-    
-    // Reset ESP-IDF log levels to minimize spam
-    esp_log_level_set("*", ESP_LOG_NONE);
-    
-    // Initialize components in sequence with proper error handling
-    initializeWithRetry("LCD", setup_lcd, 2);
-    initializeWithRetry("Touch", setup_touch, 2);
-    initializeWithRetry("SD Card", setup_sd_card_reliable, 3);
-    initializeWithRetry("WiFi", setup_wifi_ap, 2);
-    initializeWithRetry("LVGL", setup_lvgl, 1);
-    initializeWithRetry("UI", setup_ui, 1);
-    initializeWithRetry("WebServer", setup_webserver, 2);
-    
-    // Create LVGL task with safety
-    lvgl_task_handle = createTaskSafely(
-        lvgl_task,           // Function
-        "LVGL Task",         // Name
-        8192,                // Stack size
-        NULL,                // Parameters
-        1,                   // Priority
-        1                    // Core ID
-    );
-    
-    // Scan images if SD card is working
-    if (sd_ready) {
-        Logger.info("Scanning for images...");
-        scan_images();
-        Logger.info("Found %d images", image_count);
-        
-        if (image_count > 0 && lvgl_ready && ui_ready) {
-            Logger.info("Loading first image");
-            display_image(0);
-        }
-    } else {
-        Logger.warn("SD card not ready, skipping image scan");
-    }
-    
-    // Create slideshow task if we have functioning components
-    if (lvgl_ready && ui_ready) {
-        slideshow_task_handle = createTaskSafely(
-            slideshowTask,       // Function
-            "Slideshow Task",    // Name
-            4096,                // Stack size
-            NULL,                // Parameters
-            1,                   // Priority
-            0                    // Core ID
-        );
-    }
-    
-    Logger.info("Initialization complete, system status:");
-    Logger.info("LCD: %s, Touch: %s, SD: %s", 
-               lcd_ready ? "OK" : "FAIL",
-               touch_ready ? "OK" : "FAIL", 
-               sd_ready ? "OK" : "FAIL");
-    Logger.info("WiFi: %s, LVGL: %s, UI: %s, Server: %s",
-               wifi_ready ? "OK" : "FAIL",
-               lvgl_ready ? "OK" : "FAIL",
-               ui_ready ? "OK" : "FAIL",
-               server_ready ? "OK" : "FAIL");
-}
-
-/**
- * Enhanced main loop with more robust connection handling
- * Updated: 2025-06-17 11:58:18
- * User: Chamil1983
- */
-void loop() {
-    static uint32_t last_wdt_feed = 0;
-    static uint32_t last_status_update = 0;
-    static uint32_t last_dns_process = 0;
-    static uint32_t last_wifi_check = 0;
-    static uint32_t last_connection_report = 0;
-    uint32_t now = millis();
-    
-    // Feed watchdog occasionally
-    if (now - last_wdt_feed >= 2000) {
-        feed_watchdog();
-        last_wdt_feed = now;
-    }
-    
-    // Process DNS requests more frequently for better captive portal
-    if (dnsServerActive && now - last_dns_process >= 30) {
-        try {
-            dnsServer.processNextRequest();
-        } catch (...) {
-            // Catch any DNS processing errors
-        }
-        last_dns_process = now;
-    }
-    
-    // Check WiFi status periodically 
-    if (now - last_wifi_check >= 10000) {
-        if (wifi_ready && WiFi.softAPgetStationNum() > 0) {
-            if (now - last_connection_report >= 60000) { // Report every minute
-                Logger.info("WiFi status: %d clients connected", WiFi.softAPgetStationNum());
-                last_connection_report = now;
-            }
-        } else if (wifi_ready && WiFi.softAPgetStationNum() == 0) {
-            Logger.debug("WiFi AP running but no clients connected");
-        }
-        last_wifi_check = now;
-    }
-    
-    // Handle web server clients - CRITICAL for connectivity
-    if (server_ready) {
-        try {
-            server.handleClient();
-        } catch (...) {
-            Logger.warn("Exception in server.handleClient() - continuing");
-        }
-    }
-    
-    // Check if system reset is requested
-    if (reset_requested) {
-        Logger.info("System reset requested");
-        delay(200);
-        ESP.restart();
-    }
-    
-    // Short delay to prevent CPU hogging
-    delay(5);
-}
-
-/**
- * Enhanced SD card writing function to replace direct File.write
- * Updated: 2025-06-17 11:58:18
- * User: Chamil1983
- */
-size_t safeSDWrite(File &file, const uint8_t *buf, size_t size) {
-    if (!file || !buf || size == 0) {
-        return 0;
-    }
-    
-    size_t totalWritten = 0;
-    size_t chunkSize = 512; // Small chunks to prevent watchdog issues
-    const uint8_t maxRetries = 3;
-    
-    for (size_t offset = 0; offset < size; offset += chunkSize) {
-        // Calculate current chunk size
-        size_t currentChunk = min(chunkSize, size - offset);
-        uint8_t retries = 0;
-        size_t written = 0;
-        
-        // Try to write with retries
-        while (retries < maxRetries && written < currentChunk) {
-            written = file.write(buf + offset, currentChunk);
-            
-            if (written == currentChunk) {
-                break; // Success
-            }
-            
-            // If write failed or was partial, retry
-            retries++;
-            if (retries < maxRetries) {
-                delay(10); // Short delay before retry
-            }
-        }
-        
-        // Update total bytes written
-        totalWritten += written;
-        
-        // If write failed after all retries, abort
-        if (written < currentChunk) {
-            Logger.error("SD write failed after %d retries (%d/%d bytes written)", 
-                        maxRetries, totalWritten, size);
-            break;
-        }
-        
-        // Periodically call yield() to prevent watchdog triggers
-        if (offset % (chunkSize * 4) == 0) {
-            yield();
-        }
-    }
-    
-    return totalWritten;
-}
-
-/**
- * Add a special test page for diagnosing connectivity issues
- * Updated: 2025-06-17 11:22:17
- * User: Chamil1983
- */
-void add_test_page_handler() {
-    server.on("/test", HTTP_GET, []() {
-        Logger.info("Connection test page requested");
-        
-        String response = "<!DOCTYPE html><html><head>";
-        response += "<title>ESP32P4 Connection Test</title>";
-        response += "<meta name='viewport' content='width=device-width, initial-scale=1.0'>";
-        response += "<style>body {font-family: sans-serif; padding: 20px; max-width: 800px; margin: 0 auto; line-height: 1.6;}";
-        response += "h1 {color: #0066cc;} .success {color: green;} .error {color: red;}</style>";
-        response += "</head><body>";
-        response += "<h1>ESP32P4 Connection Test</h1>";
-        response += "<p class='success'>✅ Connection successful!</p>";
-        response += "<h2>Server Information:</h2>";
-        response += "<ul>";
-        response += "<li><strong>ESP32P4 IP:</strong> " + WiFi.softAPIP().toString() + "</li>";
-        response += "<li><strong>Connected Clients:</strong> " + String(WiFi.softAPgetStationNum()) + "</li>";
-        response += "<li><strong>Free Memory:</strong> " + String(ESP.getFreeHeap() / 1024) + " KB</li>";
-        response += "<li><strong>Free PSRAM:</strong> " + String(ESP.getFreePsram() / 1024) + " KB</li>";
-        response += "<li><strong>WiFi Channel:</strong> 1</li>";
-        response += "<li><strong>Server Uptime:</strong> " + String(millis() / 1000) + " seconds</li>";
-        response += "<li><strong>Image Count:</strong> " + String(image_count) + "</li>";
-        response += "</ul>";
-        response += "<p><a href='/'>Go to Gallery</a></p>";
-        
-        // Add ping test
-        response += "<h2>Connection Test:</h2>";
-        response += "<div id='pingResult'>Testing connection speed...</div>";
-        response += "<script>";
-        response += "let startTime = Date.now();";
-        response += "fetch('/ping').then(r => r.text()).then(data => {";
-        response += "  let pingTime = Date.now() - startTime;";
-        response += "  document.getElementById('pingResult').innerHTML = ";
-        response += "    `<p>Ping time: <strong>${pingTime}ms</strong></p>`;";
-        response += "});";
-        response += "</script>";
-        response += "</body></html>";
-        
-        server.send(200, "text/html", response);
-        Logger.info("Connection test page served successfully");
-    });
-    
-    // Simple ping endpoint for testing connection speed
-    server.on("/ping", HTTP_GET, []() {
-        server.send(200, "text/plain", "pong");
-    });
-}
-
-
-/**
- * Custom task watchdog reset function that doesn't fail on task not found
- * Updated: 2025-06-17 10:56:36
- * User: Chamil1983
- */
-esp_err_t esp_task_wdt_reset_user(TaskHandle_t handle) {
-    esp_err_t ret = esp_task_wdt_reset();
-    
-    // If task not found error, don't treat as critical
-    if (ret == ESP_ERR_NOT_FOUND) {
-        return ESP_OK; // Pretend it worked
-    }
-    
-    return ret;
-}
-
-/**
- * Function to check and update buttons on touch input
- * Updated: 2025-06-17 10:42:10
- * User: Chamil1983
- */
-void check_buttons() {
-    if (!touch_ready) return;
-    
-    // Check for touch events
-    uint16_t x, y;
-    bool touched = touch.getTouch(&x, &y);
-    
-    if (touched) {
-        // Process the touch event
-        handle_touch_event(x, y);
-    }
-}
-
-/**
- * Enhanced system health check function with better error handling
- * Updated: 2025-06-17 10:56:36
- * User: Chamil1983
- */
-void performSystemHealthCheck() {
-    // Always use try/catch for safety
-    try {
-        Logger.debug("Performing system health check");
-        
-        // Check SD card - use timeout for semaphore
-        if (!sd_ready) {
-            // Use shorter timeout and don't block if can't get mutex
-            if (xSemaphoreTake(sd_mutex, pdMS_TO_TICKS(100)) == pdTRUE) {
-                try {
-                    Logger.warn("SD card not ready, attempting recovery");
-                    emergency_sd_recovery();
-                } catch (...) {
-                    Logger.error("Exception during SD recovery");
-                }
-                xSemaphoreGive(sd_mutex);
-            }
-        }
-        
-        // Check WiFi - don't retry too aggressively
-        static uint32_t last_wifi_retry = 0;
-        if (!wifi_ready && millis() - last_wifi_retry > 60000) {  // Once per minute
-            last_wifi_retry = millis();
-            Logger.warn("WiFi not ready, attempting recovery");
-            try {
-                setup_wifi_ap();
-            } catch (...) {
-                Logger.error("Exception during WiFi recovery");
-            }
-        }
-        
-        // Report memory status
-        Logger.debug("Memory - Heap: %u KB free, PSRAM: %u KB free", 
-                   ESP.getFreeHeap() / 1024, 
-                   ESP.getFreePsram() / 1024);
-    } catch (...) {
-        // Catch any exceptions to prevent crashes
-        Serial.println("Exception in health check - continuing");
-    }
-}
-
-/**
- * Safe logger initialization that can operate without SPIFFS
- * Updated: 2025-06-17 10:56:36
- * User: Chamil1983
- */
-void safeLoggerInit(bool spiffsAvailable) {
-    // First try normal initialization
-    try {
-        if (spiffsAvailable) {
-            Logger.init(true, true, LOG_LEVEL_DEBUG);
-        } else {
-            Logger.init(true, false, LOG_LEVEL_DEBUG);
-        }
-        
-        // Force output level for better debugging
-        Logger.setLogLevel(LOG_LEVEL_DEBUG);
-        Logger.enableSerialOutput(true);
-    } catch (...) {
-        // If logger initialization fails, set up a minimal fallback
-        Serial.println("Logger initialization failed, using serial-only logging");
-        
-        // Try again with minimal settings
-        try {
-            Logger.init(true, false, LOG_LEVEL_DEBUG);
-            Logger.setLogLevel(LOG_LEVEL_DEBUG);
-            Logger.enableSerialOutput(true);
-        } catch (...) {
-            // If that still fails, we'll just have to use Serial directly
-            Serial.println("CRITICAL: Logger completely failed to initialize");
-        }
-    }
-}
-
-
-/**
- * Safe task creation that handles errors gracefully
- * Updated: 2025-06-17 10:56:36
- * User: Chamil1983
- */
-TaskHandle_t createTaskSafely(TaskFunction_t taskFunction, const char* name, 
-                             uint32_t stackSize, void *param, UBaseType_t priority, 
-                             BaseType_t coreID) {
-    TaskHandle_t handle = NULL;
-    
-    // Try to create the task
-    BaseType_t result = xTaskCreatePinnedToCore(
-        taskFunction,
-        name,
-        stackSize,
-        param,
-        priority,
-        &handle,
-        coreID
-    );
-    
-    if (result != pdPASS || handle == NULL) {
-        Logger.error("Failed to create task: %s", name);
-        return NULL;
-    }
-    
-    Logger.info("Created task: %s on core %d", name, coreID);
-    return handle;
-}
-
-/**
- * Safe task deletion helper function
- * Updated: 2025-06-17 10:25:58
- * User: Chamil1983
- */
-void safeDeleteTask(TaskHandle_t taskHandle, const char* taskName) {
-    if (taskHandle != NULL) {
-        Logger.info("Safely deleting task: %s", taskName);
-        
-        // First remove from watchdog to prevent errors
-        esp_err_t err = esp_task_wdt_delete(taskHandle);
-        if (err != ESP_OK && err != ESP_ERR_NOT_FOUND) {
-            Logger.warn("Could not remove %s from watchdog: %d", taskName, err);
-        }
-        
-        // Then delete the task
-        vTaskDelete(taskHandle);
-        
-        // Log completion
-        Logger.info("Task %s deleted", taskName);
-    }
-}
-
-/**
- * Handle touch events on the screen with better debouncing
- * Updated: 2025-06-17 10:03:45
- * User: Chamil1983
- */
-void handle_touch_event(uint16_t x, uint16_t y) {
-    // Static variables for debouncing
-    static uint32_t last_touch_time = 0;
-    static uint16_t last_touch_x = 0;
-    static uint16_t last_touch_y = 0;
-    static bool touch_processed = false;
-    
-    uint32_t now = millis();
-    
-    // Enforce minimum time between touch events (500ms)
-    if (now - last_touch_time < 500) {
-        // Check if this is the same touch point (within small radius)
-        int dx = abs(x - last_touch_x);
-        int dy = abs(y - last_touch_y);
-        if (dx < 50 && dy < 50 && touch_processed) {
-            // Ignore this touch - it's likely the same touch event
-            return;
-        }
-    } else {
-        // Reset processed flag for new touch
-        touch_processed = false;
-    }
-    
-    // Store current touch information
-    last_touch_time = now;
-    last_touch_x = x;
-    last_touch_y = y;
-    
-    // Screen dimensions
-    int screenHeight = lcd.height();
-    int screenWidth = lcd.width();
-    
-    Logger.debug("Touch at x=%d, y=%d (screen: %dx%d)", x, y, screenWidth, screenHeight);
-    
-    // Check touch zones - left third, right third, middle third, or top status bar
-    if (y < screenHeight / 10) {
-        // Top status bar - toggle slideshow status
-        if (!touch_processed) {
-            if (slideshow_active) {
-                stopSlideshow();
-            } else {
-                startSlideshow(5000); // 5 seconds interval
-            }
-            touch_processed = true;
-        }
-    }
-    // Left third of screen - previous image
-    else if (x < screenWidth / 3) {
-        if (!touch_processed) {
-            if (image_count > 0) {
-                int prevImage = (current_image > 0) ? (current_image - 1) : (image_count - 1);
-                display_image(prevImage);
-            }
-            touch_processed = true;
-        }
-    }
-    // Right third of screen - next image
-    else if (x > (screenWidth * 2) / 3) {
-        if (!touch_processed) {
-            if (image_count > 0) {
-                int nextImage = (current_image < image_count - 1) ? (current_image + 1) : 0;
-                display_image(nextImage);
-            }
-            touch_processed = true;
-        }
-    }
-    // Middle of screen - toggle slideshow with longer interval
-    else {
-        if (!touch_processed) {
-            Logger.info("Touch detected in middle zone - toggling slideshow with longer interval");
-            if (slideshow_active) {
-                stopSlideshow();
-            } else {
-                startSlideshow(10000); // 10 second interval
-            }
-            touch_processed = true;
-        }
-    }
-}
-
-/**
- * Fixed slideshowTask implementation with enhanced error handling
- * Updated: 2025-06-17 11:58:18
- * User: Chamil1983
- */
-void slideshowTask(void *parameter) {
-    Logger.info("Slideshow task started");
-    
-    // Initialize variables
-    uint32_t last_image_change = 0;
-    uint32_t slideshow_interval = 5000; // Default 5 seconds
-    
-    while (true) {
-        uint32_t now = millis();
-        
-        // Process slideshow logic only if slideshow is active
-        if (slideshow_active && now - last_image_change >= slideshow_interval) {
-            Logger.debug("Slideshow advancing to next image");
-            
-            // Only proceed if we have images
-            if (image_count > 0) {
-                // Calculate next image index with wrap-around
-                int next_image = (current_image + 1) % image_count;
-                
-                // Try to safely display the next image
-                try {
-                    // Get SD mutex with timeout to avoid deadlocks
-                    if (xSemaphoreTake(sd_mutex, pdMS_TO_TICKS(2000)) == pdTRUE) {
-                        // Display next image
-                        display_image(next_image);
-                        
-                        // Release SD mutex
-                        xSemaphoreGive(sd_mutex);
-                        
-                        Logger.debug("Slideshow advanced to image %d", next_image);
-                    } else {
-                        Logger.warn("Slideshow couldn't acquire SD mutex, skipping cycle");
-                    }
-                } catch (...) {
-                    Logger.error("Exception in slideshow task - continuing");
-                    
-                    // Make sure to release mutex in case of exception
-                    xSemaphoreGive(sd_mutex);
-                }
-            }
-            
-            // Update last image change time
-            last_image_change = now;
-        }
-        
-        // Feed watchdog to keep the task alive
-        feed_watchdog();
-        
-        // Delay to prevent CPU hogging
-        delay(100);
-    }
-}
-
-/**
- * Helper function to find the next valid image for slideshow
- * Updated: 2025-06-17 10:03:45
- * User: Chamil1983
- */
-int findNextValidImage(int currentIndex) {
-    // Safety check
-    if (image_count <= 0) return -1;
-    
-    // Start with next image index
-    int nextIndex = (currentIndex + 1) % image_count;
-    int startIndex = nextIndex; // Remember where we started to avoid infinite loop
-    
-    // Try each image until we find a valid one or tried them all
-    do {
-        // Check if the image at this index is valid
-        if (image_list[nextIndex] && SD_MMC.exists(image_list[nextIndex])) {
-            bool isValid = isValidJPEG(image_list[nextIndex]);
-            if (isValid) {
-                return nextIndex; // Found a valid image
-            } else {
-                Logger.warn("Skipping invalid image at index %d: %s", 
-                          nextIndex, image_list[nextIndex]);
-            }
-        }
-        
-        // Move to next image
-        nextIndex = (nextIndex + 1) % image_count;
-    } while (nextIndex != startIndex); // Continue until we've checked all images
-    
-    // If we get here, no valid image was found
-    return -1;
-}
-
-
-/**
- * Enhanced slideshow control functions with better error handling
- * Updated: 2025-06-17 11:58:18
- * User: Chamil1983
- */
-void startSlideshow(uint32_t interval_ms) {
-    if (interval_ms < 2000) interval_ms = 2000; // Minimum 2 seconds for stability
-    
-    Logger.info("Starting slideshow with %d ms interval", interval_ms);
-    
-    // Set slideshow interval
-    slideshow_interval = interval_ms;
-    
-    // Enable slideshow
-    slideshow_active = true;
-}
-
-void stopSlideshow() {
-    Logger.info("Stopping slideshow");
-    
-    // Disable slideshow
-    slideshow_active = false;
-}
-
-void toggleSlideshow(uint32_t interval_ms) {
-    if (slideshow_active) {
-        stopSlideshow();
-    } else {
-        startSlideshow(interval_ms);
-    }
-}
-
-/**
- * Check if image needs rotation
- * Return true if rotation is needed, false otherwise
- */
-bool check_image_needs_rotation(int img_width, int img_height) {
-    // Screen is 800x1280 (portrait orientation)
-    // Only rotate if image is in landscape (width > height)
-    return (img_width > img_height);
-}
-
-/**
- * LVGL task function 
- */
-void lvgl_task(void *pvParameters) {
-  while (true) {
-    // Protect with mutex
-    if (xSemaphoreTake(ui_mutex, pdMS_TO_TICKS(10)) == pdTRUE) {
-      lv_timer_handler(); // Handle LVGL tasks
-      xSemaphoreGive(ui_mutex);
-    }
-    
-    vTaskDelay(pdMS_TO_TICKS(10)); // Run at ~100Hz
-  }
-}
-
-/**
- * Enhanced JPEG rendering with better error handling
- * Updated: 2025-06-16 10:32:38
- * User: Chamil1983
- */
-bool render_jpeg_file(const char* filename) {
-    if (!sd_ready || !filename) {
-        Logger.error("SD card not ready or invalid filename");
-        return false;
-    }
-    
-    uint32_t startTime = millis();
-    bool success = false;
-    
-    // Perform robust validation before attempting decode
-    if (!isValidJPEG(filename)) {
-        Logger.error("JPEG validation failed: %s", filename);
-        return false;
-    }
-    
-    // Take SD card mutex to ensure exclusive access
-    if (xSemaphoreTake(sd_mutex, pdMS_TO_TICKS(1000)) != pdTRUE) {
-        Logger.error("Failed to take SD mutex for JPEG loading");
-        return false;
-    }
-    
-    File jpegFile = SD_MMC.open(filename, FILE_READ);
-    if (!jpegFile) {
-        Logger.error("Failed to open JPEG file: %s", filename);
-        xSemaphoreGive(sd_mutex);
-        return false;
-    }
-    
-    size_t fileSize = jpegFile.size();
-    if (fileSize < 1024) {
-        Logger.error("File too small: %s (%d bytes)", filename, fileSize);
-        jpegFile.close();
-        xSemaphoreGive(sd_mutex);
-        return false;
-    }
-    
-    Logger.info("Starting JPEG decoding for %s (%u bytes)", filename, fileSize);
-    
-    // Initialize flags for image orientation
-    image_needs_rotation = false; // Default to no rotation
-    
-    // Try decoding at full resolution first
-    Logger.info("Decoding image at full resolution");
-    
-    // Store any JPEG decoding errors
-    const char* errorMsg = nullptr;
-    
-    // Set up error recovery
-    bool decodeFailed = false;
-    
-    // Try to decode the image with progressively lower quality if needed
-    if (jpeg.open(jpegFile, jpeg_draw_callback)) {
-        // Get image dimensions to determine if rotation is needed
-        int imgWidth = jpeg.getWidth();
-        int imgHeight = jpeg.getHeight();
-        
-        if (imgWidth <= 0 || imgHeight <= 0) {
-            Logger.error("Invalid image dimensions: %dx%d", imgWidth, imgHeight);
-            jpeg.close();
-            jpegFile.seek(0);
-            decodeFailed = true;
-        } else {
-            // Set rotation flag based on image orientation
-            // For a portrait screen (800x1280), rotate if image is landscape
-            image_needs_rotation = (imgWidth > imgHeight);
-            
-            // Attempt full resolution decode
-            if (jpeg.decode(0, 0, 0)) {
-                if (image_needs_rotation) {
-                    Logger.info("JPEG decoded successfully (rotated): %dx%d -> %dx%d",
-                                imgWidth, imgHeight, imgHeight, imgWidth);
-                } else {
-                    Logger.info("JPEG decoded successfully: %dx%d", imgWidth, imgHeight);
-                }
-                success = true;
-            } else {
-                Logger.warn("Full resolution decode failed, trying half resolution");
-                decodeFailed = true;
-                errorMsg = "Full resolution decode failed";
-            }
-        }
-    } else {
-        Logger.error("Failed to open JPEG for decoding");
-        decodeFailed = true;
-        errorMsg = "Failed to open JPEG decoder";
-    }
-    
-    // Try at half resolution if full resolution failed
-    if (decodeFailed) {
-        jpeg.close();
-        jpegFile.seek(0);
-        decodeFailed = false;
-        
-        if (jpeg.open(jpegFile, jpeg_draw_callback)) {
-            // Try with half resolution scaling
-            if (jpeg.decode(0, 0, JPEG_SCALE_HALF)) {
-                Logger.info("JPEG decoded successfully at half resolution");
-                success = true;
-            } else {
-                Logger.warn("Half resolution decode failed, trying quarter resolution");
-                decodeFailed = true;
-                errorMsg = "Half resolution decode failed";
-            }
-        }
-    }
-    
-    // Try at quarter resolution as last resort
-    if (decodeFailed) {
-        jpeg.close();
-        jpegFile.seek(0);
-        
-        if (jpeg.open(jpegFile, jpeg_draw_callback)) {
-            if (jpeg.decode(0, 0, JPEG_SCALE_QUARTER)) {
-                Logger.info("JPEG decoded successfully at quarter resolution");
-                success = true;
-            } else {
-                Logger.error("JPEG decode failed at all resolutions");
-                errorMsg = "All resolution attempts failed";
-            }
-        }
-    }
-    
-    // Always close the JPEG object
-    jpeg.close();
-    
-    // Close the file and release SD mutex
-    jpegFile.close();
-    xSemaphoreGive(sd_mutex);
-    
-    // Log the time taken to decode
-    uint32_t decodeTime = millis() - startTime;
-    Logger.info("JPEG decoding took %lu ms, result: %s", 
-               decodeTime, success ? "success" : "failed");
-    
-    // If decode failed, capture error details
-    if (!success && errorMsg) {
-        Logger.error("JPEG decode error: %s for file: %s", errorMsg, filename);
-    }
-    
-    return success;
-}
-
-/**
- * Enhanced JPEG draw callback with guaranteed memory safety
- * Updated: 2025-06-17 10:03:45
- * User: Chamil1983
- */
-int jpeg_draw_callback(JPEGDRAW *pDraw) {
-    if (!lcd_ready || !pDraw || !pDraw->pPixels) {
-        // Safety check - don't proceed if pointers are invalid
-        return 0;
-    }
-    
-    // Static timing control to prevent LCD driver overload
-    static uint32_t lastDrawTime = 0;
-    uint32_t currentTime = millis();
-    
-    // Add small delay between draw operations to prevent LCD driver errors
-    if (currentTime - lastDrawTime < 5) {
-        delay(5);
-    }
-    
-    // Verify draw dimensions are realistic
-    if (pDraw->iWidth <= 0 || pDraw->iHeight <= 0 ||
-        pDraw->iWidth > 1280 || pDraw->iHeight > 1280) {
-        Logger.error("Invalid JPEG draw dimensions: %dx%d", pDraw->iWidth, pDraw->iHeight);
-        return 0;
-    }
-    
-    // Make local copies of key variables to prevent race conditions
-    int imgWidth = jpeg.getWidth();
-    int imgHeight = jpeg.getHeight();
-    
-    // Skip drawing if invalid dimensions
-    if (imgWidth <= 0 || imgHeight <= 0 || imgWidth > 5000 || imgHeight > 5000) {
-        Logger.error("Invalid JPEG dimensions: %dx%d", imgWidth, imgHeight);
-        return 0;
-    }
-    
-    // Make local copy of rotation flag to prevent race condition
-    bool needsRotation = image_needs_rotation;
-    
-    // Create a local failure flag we can use throughout the function
-    bool drawFailed = false;
-    
-    // When not rotating, simpler direct drawing path
-    if (!needsRotation) {
-        // Calculate centering offsets
-        int centerX = (lcd.width() - imgWidth) / 2;
-        int centerY = (lcd.height() - imgHeight) / 2;
-        
-        // Ensure non-negative values
-        centerX = max(0, centerX);
-        centerY = max(0, centerY);
-        
-        // Calculate final drawing coordinates with bounds checking
-        int x = pDraw->x + centerX;
-        int y = pDraw->y + centerY;
-        
-        // Safety check - ensure we're drawing within screen boundaries
-        if (x >= 0 && y >= 0 && 
-            x + pDraw->iWidth <= lcd.width() && 
-            y + pDraw->iHeight <= lcd.height()) {
-            
-            // Try to draw with error handling
-            try {
-                lcd.lcd_draw_bitmap(x, y, 
-                                   x + pDraw->iWidth, 
-                                   y + pDraw->iHeight, 
-                                   (uint16_t*)pDraw->pPixels);
-            } catch (...) {
-                Logger.error("Exception in direct LCD drawing");
-                drawFailed = true;
-            }
-        } else {
-            Logger.warn("Draw coordinates out of bounds: x=%d, y=%d, w=%d, h=%d", 
-                      x, y, pDraw->iWidth, pDraw->iHeight);
-            drawFailed = true;
-        }
-    } else {
-        // Handling rotation - more complex with additional memory allocation
-        int rotatedWidth = imgHeight;
-        int rotatedHeight = imgWidth;
-        
-        // Center the rotated image
-        int centerX = (lcd.width() - rotatedWidth) / 2;
-        int centerY = (lcd.height() - rotatedHeight) / 2;
-        
-        // Ensure non-negative values
-        centerX = max(0, centerX);
-        centerY = max(0, centerY);
-        
-        // Calculate position in rotated space
-        int rotX = centerX + pDraw->y;
-        int rotY = centerY + (imgWidth - pDraw->x - pDraw->iWidth);
-        
-        // Calculate dimensions of rotated block with sanity check
-        int rotWidth = pDraw->iHeight;
-        int rotHeight = pDraw->iWidth;
-        
-        // Safety check - verify rotation dimensions
-        if (rotWidth <= 0 || rotHeight <= 0 || rotWidth * rotHeight > 100000) {
-            Logger.error("Invalid rotation dimensions: %dx%d", rotWidth, rotHeight);
-            return 0;
-        }
-        
-        // Try to allocate rotation buffer - stack for small, heap for large
-        uint16_t* rotatedBlock = nullptr;
-        bool useStack = false;
-        uint16_t stackBuffer[64]; // 128-byte stack buffer for small blocks
-        
-        if (rotWidth * rotHeight <= 64) {
-            // Use stack buffer for tiny blocks
-            rotatedBlock = stackBuffer;
-            useStack = true;
-        } else {
-            // Try PSRAM first
-            rotatedBlock = (uint16_t*)ps_calloc(rotWidth * rotHeight, sizeof(uint16_t));
-            
-            // If PSRAM fails, try regular heap
-            if (!rotatedBlock) {
-                rotatedBlock = (uint16_t*)calloc(rotWidth * rotHeight, sizeof(uint16_t));
-                
-                // If allocation failed, report error and skip drawing
-                if (!rotatedBlock) {
-                    Logger.error("Failed to allocate rotation buffer (%d bytes)",
-                              rotWidth * rotHeight * sizeof(uint16_t));
-                    return 0;
-                }
-            }
-        }
-        
-        // Safety check - verify our buffer allocation
-        if (!rotatedBlock) {
-            Logger.error("Rotation buffer is null despite checks");
-            return 0;
-        }
-        
-        // Rotate the block with safety bounds checking
-        uint16_t* pixels = (uint16_t*)pDraw->pPixels;
-        for (int y = 0; y < pDraw->iHeight; y++) {
-            for (int x = 0; x < pDraw->iWidth; x++) {
-                // For 90° rotation: new_x = y, new_y = width - 1 - x
-                int newX = y;
-                int newY = pDraw->iWidth - 1 - x;
-                
-                // Strict bounds checking to prevent buffer overflow
-                if (newX >= 0 && newX < rotWidth && 
-                    newY >= 0 && newY < rotHeight &&
-                    y < pDraw->iHeight && x < pDraw->iWidth &&
-                    y * pDraw->iWidth + x < pDraw->iWidth * pDraw->iHeight) {
-                    
-                    rotatedBlock[newY * rotWidth + newX] = pixels[y * pDraw->iWidth + x];
-                }
-            }
-        }
-        
-        // Draw if coordinates are within screen boundaries
-        if (rotX >= 0 && rotY >= 0 && 
-            rotX + rotWidth <= lcd.width() && 
-            rotY + rotHeight <= lcd.height()) {
-                
-            // Try to draw with error handling
-            try {
-                lcd.lcd_draw_bitmap(rotX, rotY, 
-                                  rotX + rotWidth, 
-                                  rotY + rotHeight, 
-                                  rotatedBlock);
-            } catch (...) {
-                Logger.error("Exception in rotated LCD drawing");
-                drawFailed = true;
-            }
-        } else {
-            Logger.warn("Rotated draw coordinates out of bounds: x=%d, y=%d, w=%d, h=%d", 
-                      rotX, rotY, rotWidth, rotHeight);
-            drawFailed = true;
-        }
-        
-        // Clean up memory if we used heap allocation
-        if (!useStack && rotatedBlock) {
-            free(rotatedBlock);
-            rotatedBlock = nullptr;
-        }
-    }
-    
-    // Update timing tracker
-    lastDrawTime = currentTime;
-    
-    // Return 0 (failure) on drawing errors, otherwise 1 (success)
-    return drawFailed ? 0 : 1;
-}
-
-/**
- * Enhanced display_image function with better error recovery
- * Updated: 2025-06-17 10:03:45
- * User: Chamil1983
- */
-void display_image(int index) {
-    if (!sd_ready || index < 0 || index >= image_count) {
-        Logger.error("Cannot display image - invalid index %d or SD not ready", index);
-        return;
-    }
-    
-    // Prevent concurrent image loading
-    static SemaphoreHandle_t displaySemaphore = NULL;
-    if (displaySemaphore == NULL) {
-        displaySemaphore = xSemaphoreCreateMutex();
-    }
-    
-    // Try to take the display semaphore with timeout
-    if (xSemaphoreTake(displaySemaphore, pdMS_TO_TICKS(100)) != pdTRUE) {
-        Logger.warn("Image loading already in progress - ignoring request");
-        return;
-    }
-    
-    // Feed watchdog before starting image display process
-    feed_watchdog();
-    
-    // Set flag to indicate we're loading an image
-    image_loading = true;
-    
-    // Store current backlight level
-    uint8_t originalBrightness = 255; // Default to full brightness
-    
-    // Update current image index and UI
-    current_image = index;
-    
-    // Log display attempt
-    Logger.info("Displaying image %d: %s", index, image_list[index]);
-    updateImageCounter(index);
-    
-    // Dim backlight during transition
-    lcd.example_bsp_set_lcd_backlight(50); // Dim to 50/255
-    
-    // Clear the screen completely with enhanced clearing function
-    clearLCDScreen();
-    
-    // Make a local copy of the filename for safety
-    char localFilename[128] = {0};
-    strncpy(localFilename, image_list[index], sizeof(localFilename) - 1);
-    
-    // Revalidate the file before loading
-    bool isValid = isValidJPEG(localFilename);
-    if (!isValid) {
-        Logger.error("Image file failed validation check: %s", localFilename);
-        // Display error message
-        displayErrorMessage("Image failed validation");
-        
-        // Restore backlight
-        lcd.example_bsp_set_lcd_backlight(originalBrightness);
-        
-        // Update UI status
-        updateStatusAfterImageLoad(index, false);
-        
-        // Release resources
-        image_loading = false;
-        xSemaphoreGive(displaySemaphore);
-        return;
-    }
-    
-    // Add a short delay to ensure screen clearing is complete
-    delay(50);
-    
-    // Try to acquire JPEG mutex with a reasonable timeout
-    if (xSemaphoreTake(jpeg_mutex, pdMS_TO_TICKS(2000)) != pdTRUE) {
-        Logger.error("Failed to take JPEG mutex for display");
-        displayErrorMessage("Resource contention error");
-        
-        // Restore backlight
-        lcd.example_bsp_set_lcd_backlight(originalBrightness);
-        
-        // Update UI status
-        updateStatusAfterImageLoad(index, false);
-        
-        // Release resources
-        image_loading = false;
-        xSemaphoreGive(displaySemaphore);
-        return;
-    }
-    
-    // Track timing
-    uint32_t startTime = millis();
-    bool success = false;
-    
-    // Safely decode and render JPEG
-    try {
-        success = render_jpeg_file(localFilename);
-        
-        if (!success) {
-            Logger.error("Failed to render image %d: %s", index, localFilename);
-        }
-    } catch (...) {
-        Logger.error("Exception during JPEG rendering");
-        success = false;
-    }
-    
-    // Always release the mutex
-    xSemaphoreGive(jpeg_mutex);
-    
-    // Log timing information
-    uint32_t renderTime = millis() - startTime;
-    if (renderTime > 500) {
-        Logger.warn("JPEG rendering took %lu ms", renderTime);
-    } else {
-        Logger.debug("JPEG rendering took %lu ms", renderTime);
-    }
-    
-    // Fade the backlight back in if image rendering was successful
-    if (success) {
-        // Wait for any pending operations to complete
-        delay(20);
-        
-        // Gradually restore backlight with smooth fade-in effect
-        const int fadeStep = 10;
-        const int fadeDelay = 10; // ms between steps
-        
-        for (int brightness = 50; brightness <= originalBrightness; brightness += fadeStep) {
-            lcd.example_bsp_set_lcd_backlight(brightness);
-            delay(fadeDelay);
-        }
-        
-        // Ensure we're at the target brightness
-        lcd.example_bsp_set_lcd_backlight(originalBrightness);
-        
-        Logger.info("Successfully displayed image %d", index);
-    } else {
-        // Immediately restore backlight on failure
-        lcd.example_bsp_set_lcd_backlight(originalBrightness);
-        
-        // Display a "broken image" icon or message on screen
-        displayErrorMessage("Image could not be displayed");
-        
-        Logger.error("Failed to display image %d", index);
-    }
-    
-    // Update status in UI
-    updateStatusAfterImageLoad(index, success);
-    
-    // Done loading
-    image_loading = false;
-    
-    // Release the display semaphore
-    xSemaphoreGive(displaySemaphore);
-    
-    // Feed watchdog after completion
-    feed_watchdog();
-}
-
-
-/**
- * Display an error message on the LCD when image loading fails
- * Updated: 2025-06-16 10:45:51
- * User: Chamil1983
- */
-void displayErrorMessage(const char* message) {
-    if (!lcd_ready || !message) return;
-    
-    // Define colors
-    uint16_t textColor = 0xFFFF;   // White
-    uint16_t bgColor = 0x0000;     // Black
-    uint16_t borderColor = 0xF800; // Red
-    
-    // Create a buffer for the error message backdrop
-    int boxWidth = min((int)lcd.width() - 40, 320);
-    int boxHeight = 60;
-    int boxX = (lcd.width() - boxWidth) / 2;
-    int boxY = (lcd.height() - boxHeight) / 2;
-    
-    // The LCD class doesn't support text rendering or pixel drawing directly
-    // So we'll create a simple box by filling it with color using lcd_draw_bitmap
-    
-    // Create a buffer for a small part of the box
-    const int stripHeight = 10;
-    uint16_t* boxBuffer = (uint16_t*)malloc(boxWidth * stripHeight * sizeof(uint16_t));
-    if (!boxBuffer) {
-        Logger.error("Failed to allocate memory for error display");
-        return;
-    }
-    
-    // Draw the error box in strips
-    for (int strip = 0; strip < boxHeight; strip += stripHeight) {
-        int currentHeight = min(stripHeight, boxHeight - strip);
-        
-        // Fill the buffer with appropriate colors
-        for (int y = 0; y < currentHeight; y++) {
-            for (int x = 0; x < boxWidth; x++) {
-                // Calculate actual y position in the box
-                int actualY = strip + y;
-                
-                // Determine if this pixel is on the border (4px thick)
-                bool isBorder = (actualY < 4 || actualY >= boxHeight - 4 ||
-                                x < 4 || x >= boxWidth - 4);
-                
-                // Default to background color
-                uint16_t pixelColor = bgColor;
-                
-                // If on border, use border color
-                if (isBorder) {
-                    pixelColor = borderColor;
-                }
-                // Otherwise check if we should draw error pattern
-                else {
-                    // Draw simple text in center - diagonal cross pattern to show error
-                    int centerY = boxHeight / 2;
-                    int centerX = boxWidth / 2;
-                    
-                    // Create a simple X pattern in the middle
-                    if (actualY > centerY - 15 && actualY < centerY + 15) {
-                        // First diagonal line (\)
-                        if (abs((actualY - centerY) - (x - centerX)) < 3) {
-                            pixelColor = textColor;
-                        }
-                        // Second diagonal line (/)
-                        else if (abs((actualY - centerY) + (x - centerX)) < 3) {
-                            pixelColor = textColor;
-                        }
-                    }
-                }
-                
-                // Set the pixel color in the buffer
-                boxBuffer[y * boxWidth + x] = pixelColor;
-            }
-        }
-        
-        // Draw this strip to the LCD
-        lcd.lcd_draw_bitmap(boxX, boxY + strip, 
-                          boxX + boxWidth, boxY + strip + currentHeight, 
-                          boxBuffer);
-        
-        // Small delay between drawing operations
-        delay(5);
-    }
-    
-    // Free the buffer
-    free(boxBuffer);
-    
-    // Wait a moment to ensure drawing completes
-    delay(50);
-    
-    // Since text rendering isn't available, the message is shown as an X pattern
-    // Log the error message instead
-    Logger.error("Error displayed on screen: %s", message);
-}
-
-/**
- * Enhanced screen clearing function with better error handling
- * Updated: 2025-06-17 10:03:45
- * User: Chamil1983
- */
-void clearLCDScreen() {
-    if (!lcd_ready) return;
-    
-    // Track timing
-    uint32_t startTime = millis();
-    
-    // Set LCD backlight to dim during transition
-    lcd.example_bsp_set_lcd_backlight(50); // Dim during transition
-    
-    // Create a black buffer using PSRAM if available
-    uint32_t bufferWidth = lcd.width();
-    uint32_t bufferHeight = 15; // Process 15 rows at a time
-    size_t bufferSize = bufferWidth * bufferHeight;
-    
-    // Try to allocate from PSRAM first
-    uint16_t* blackBuffer = (uint16_t*)ps_malloc(bufferSize * sizeof(uint16_t));
-    
-    // Fallback to smaller heap buffer if needed
-    if (!blackBuffer) {
-        bufferHeight = 5; // Smaller height
-        bufferSize = bufferWidth * bufferHeight;
-        blackBuffer = (uint16_t*)malloc(bufferSize * sizeof(uint16_t));
-        
-        // Create a tiny buffer on stack if all else fails
-        if (!blackBuffer) {
-            static uint16_t stackBuffer[320]; // Static buffer as last resort
-            blackBuffer = stackBuffer;
-            bufferSize = 320;
-            bufferHeight = bufferSize / bufferWidth;
-            if (bufferHeight == 0) bufferHeight = 1;
-        }
-    }
-    
-    // Fill buffer with black (0x0000)
-    for (size_t i = 0; i < bufferSize; i++) {
-        blackBuffer[i] = 0x0000; // Pure black
-    }
-    
-    // Clear screen in strips with proper error handling
-    for (uint32_t y = 0; y < lcd.height(); y += bufferHeight) {
-        uint32_t stripHeight = ((y + bufferHeight) > lcd.height()) ? 
-                            (lcd.height() - y) : bufferHeight;
-        
-        // Safety check
-        if (stripHeight == 0) continue;
-        
-        // Draw with exception handling
-        try {
-            lcd.lcd_draw_bitmap(0, y, bufferWidth, y + stripHeight, blackBuffer);
-        } catch (...) {
-            Logger.error("Exception during screen clearing at y=%lu", y);
-        }
-        
-        // Critical: Wait for LCD operation to complete before next strip
-        delay(5);
-        
-        // Feed watchdog periodically
-        if (y % 100 == 0) {
-            feed_watchdog();
-        }
-    }
-    
-    // Free buffer if allocated from heap
-    if (blackBuffer != nullptr && 
-        blackBuffer != (uint16_t*)0x3FFC0000 && // PSRAM address check
-        bufferSize > 320) { // Not using stack buffer
-        free(blackBuffer);
-    }
-    
-    // Add final delay to ensure all LCD operations are complete
-    delay(50);
-    
-    // Log timing information
-    Logger.debug("Screen cleared in %lu ms", millis() - startTime);
-}
-
-
-/**
- * Enhanced JPEG file validation with comprehensive checks
- * Updated: 2025-06-17 10:03:45
- * User: Chamil1983
- */
-bool isValidJPEG(const char* filename) {
-    if (!sd_ready || !filename) {
-        Logger.error("SD card not ready or null filename");
-        return false;
-    }
-    
-    // Check if file exists
-    if (!SD_MMC.exists(filename)) {
-        Logger.error("File not found: %s", filename);
-        return false;
-    }
-    
-    File jpegFile = SD_MMC.open(filename, FILE_READ);
-    if (!jpegFile) {
-        Logger.error("Failed to open file: %s", filename);
-        return false;
-    }
-    
-    // Check file size - reject if too small or suspiciously large
-    size_t fileSize = jpegFile.size();
-    if (fileSize < 1024) { // Minimum 1KB for a valid JPEG
-        Logger.error("File too small to be valid JPEG: %s (%d bytes)", filename, fileSize);
-        jpegFile.close();
-        return false;
-    }
-    
-    if (fileSize > 5000000) { // 5MB max
-        Logger.warn("File too large for reliable display: %s (%d bytes)", filename, fileSize);
-        jpegFile.close();
-        return false;
-    }
-    
-    // Check JPEG header (SOI marker)
-    uint8_t header[4];
-    size_t bytesRead = jpegFile.readBytes((char*)header, 4);
-    if (bytesRead != 4) {
-        Logger.error("Couldn't read header from: %s", filename);
-        jpegFile.close();
-        return false;
-    }
-    
-    if (header[0] != 0xFF || header[1] != 0xD8) {
-        Logger.error("Invalid JPEG header (not FF D8): %s", filename);
-        jpegFile.close();
-        return false;
-    }
-    
-    // Check for APP0/APP1 marker (should be 0xFF 0xE0 or 0xFF 0xE1)
-    if (header[2] != 0xFF) {
-        Logger.warn("Suspicious JPEG structure in: %s", filename);
-        jpegFile.close();
-        return false;
-    }
-    
-    // Scan for key JPEG markers to validate file integrity
-    const size_t MAX_SCAN_SIZE = 2048; // Scan first 2KB for markers
-    const size_t scanSize = min((int)fileSize, (int)MAX_SCAN_SIZE);
-    
-    // Reset file position
-    jpegFile.seek(0);
-    
-    // Read chunk for scanning - use stack buffer for small files, heap for larger ones
-    uint8_t* buffer = nullptr;
-    uint8_t stackBuffer[512];
-    
-    if (scanSize <= sizeof(stackBuffer)) {
-        buffer = stackBuffer;
-    } else {
-        // Try PSRAM first, then heap
-        buffer = (uint8_t*)ps_malloc(scanSize);
-        if (!buffer) {
-            buffer = (uint8_t*)malloc(scanSize);
-            if (!buffer) {
-                Logger.error("Failed to allocate scan buffer");
-                jpegFile.close();
-                return false;
-            }
-        }
-    }
-    
-    bytesRead = jpegFile.readBytes((char*)buffer, scanSize);
-    if (bytesRead != scanSize) {
-        Logger.error("Failed to read scan data from: %s", filename);
-        if (buffer != stackBuffer && buffer != nullptr) {
-            free(buffer);
-        }
-        jpegFile.close();
-        return false;
-    }
-    
-    // Look for common JPEG markers
-    bool foundAppMarker = false;  // APP0-APP15 (0xE0-0xEF)
-    bool foundDQT = false;        // Define Quantization Table (0xDB)
-    bool foundSOF = false;        // Start of Frame (0xC0-0xCF, except 0xC4, 0xC8, 0xCC)
-    
-    for (size_t i = 0; i < scanSize - 1; i++) {
-        // Valid marker should start with 0xFF followed by non-zero code
-        if (buffer[i] == 0xFF && buffer[i+1] != 0x00 && buffer[i+1] != 0xFF) {
-            uint8_t markerType = buffer[i+1];
-            
-            // APP0-APP15 markers (0xE0-0xEF)
-            if (markerType >= 0xE0 && markerType <= 0xEF) {
-                foundAppMarker = true;
-            }
-            
-            // Define Quantization Table (0xDB)
-            if (markerType == 0xDB) {
-                foundDQT = true;
-            }
-            
-            // Start of Frame markers
-            if ((markerType >= 0xC0 && markerType <= 0xCF) && 
-                markerType != 0xC4 && markerType != 0xC8 && markerType != 0xCC) {
-                foundSOF = true;
-            }
-            
-            // If we found all required markers, we can stop scanning
-            if (foundAppMarker && foundDQT && foundSOF) {
-                break;
-            }
-        }
-    }
-    
-    if (buffer != stackBuffer && buffer != nullptr) {
-        free(buffer);
-    }
-    
-    // A valid JPEG should have at least APP marker and DQT
-    bool isValid = foundAppMarker && foundDQT;
-    
-    // Check for EOI marker (0xFF 0xD9) at end of file
-    bool hasValidEnd = false;
-    if (fileSize > 2) {
-        uint8_t footer[2];
-        jpegFile.seek(fileSize - 2);
-        if (jpegFile.readBytes((char*)footer, 2) == 2) {
-            hasValidEnd = (footer[0] == 0xFF && footer[1] == 0xD9);
-            
-            if (!hasValidEnd) {
-                Logger.warn("JPEG missing EOI marker - may be corrupted: %s", filename);
-            }
-        }
-    }
-    
-    jpegFile.close();
-    
-    if (!isValid) {
-        Logger.error("File failed JPEG structure validation: %s", filename);
-    }
-    
-    // If file has serious structural issues, return false
-    return isValid && (hasValidEnd || fileSize < 50000); // Be more strict with larger files
-}
-
-/**
- * LCD setup function
- */
-// Fixed setup_lcd function
-bool setup_lcd() {
-  Logger.info("Setting up LCD...");
-  
-  lcd_ready = false;
-  
-  try {
-    // Initialize LCD
-    lcd.begin(); 
-    
-    // Set LCD backlight using the correct method from your driver
-    lcd.example_bsp_set_lcd_backlight(255); // Full brightness
-    
-    Logger.info("LCD initialized successfully with backlight ON");
-    lcd_ready = true;
-  } catch (...) {
-    Logger.error("Exception during LCD initialization");
-    lcd_ready = false;
-  }
-  
-  return lcd_ready;
-}
-
-// Fixed setup_touch function
-// Fixed setup_touch function
-bool setup_touch() {
-  Logger.info("Setting up Touch...");
-  
-  touch_ready = false;
-  
-  try {
-    // Initialize touch controller using begin() as defined in header
-    touch.begin();
-    Logger.info("Touch initialized successfully");
-    touch_ready = true;
-  } catch (...) {
-    Logger.error("Exception during touch initialization");
-    touch_ready = false;
-  }
-  
-  return touch_ready;
-}
-
-/**
- * Completely new watchdog implementation that ignores task not found errors
- * Updated: 2025-06-17 10:56:36
- * User: Chamil1983
+ * Setup watchdog timer with configurable timeout
  */
 bool setup_watchdog() {
     Serial.println("Setting up watchdog with critical error protection...");
     
-    // Force disable any existing watchdog timer to start clean
+    // Force disable any existing watchdog timer to prevent early crashes
     esp_task_wdt_deinit();
     delay(100);
     
@@ -1993,15 +455,11 @@ bool setup_watchdog() {
     return (err == ESP_OK);
 }
 
-
 /**
- * Critical watchdog feed implementation that handles "task not found" errors
- * Updated: 2025-06-17 10:56:36
- * User: Chamil1983
+ * Feed watchdog timer to prevent resets
  */
 void feed_watchdog() {
     static uint32_t last_feed = 0;
-    static uint32_t last_error_report = 0;
     uint32_t now = millis();
     
     // Don't feed too often
@@ -2018,592 +476,706 @@ void feed_watchdog() {
     
     // Always use direct task handle approach
     if (main_task_handle != NULL) {
-        esp_err_t err = esp_task_wdt_reset_user(main_task_handle);
-        
-        // Only log errors occasionally to avoid flooding
-        if (err != ESP_OK && now - last_error_report > 10000) {
-            // If task not found, try to re-add
-            if (err == ESP_ERR_NOT_FOUND) {
-                esp_task_wdt_add(main_task_handle);
-            }
-            
-            last_error_report = now;
-        }
+        esp_task_wdt_reset();
     }
-    
-    // Also use the generic approach as a backup
-    esp_task_wdt_reset();
 }
 
 /**
- * Complete SPIFFS replacement with failsafe operation
- * Updated: 2025-06-17 10:56:36
- * User: Chamil1983
+ * Custom task watchdog reset function that doesn't fail on task not found
  */
-bool initializeSpiffs() {
-    Serial.println("Initializing SPIFFS with critical error bypass...");
+esp_err_t esp_task_wdt_reset_user(TaskHandle_t handle) {
+    esp_err_t ret = esp_task_wdt_reset();
     
-    // CRITICAL FIX: First, check if we're already getting the SPIFFS error
-    bool spiffsWorking = false;
-    
-    // Completely disable SPIFFS if we've seen critical errors
-    static bool spiffsDisabled = false;
-    if (spiffsDisabled) {
-        Serial.println("SPIFFS is permanently disabled due to persistent errors");
-        return false;
+    // If task not found error, don't treat as critical
+    if (ret == ESP_ERR_NOT_FOUND) {
+        return ESP_OK; // Pretend it worked
     }
     
-    // First attempt - try to mount without formatting
-    if (SPIFFS.begin(false)) {
-        Serial.println("SPIFFS mounted successfully without formatting");
-        
-        // Verify we can write to SPIFFS with a test
-        File testFile = SPIFFS.open("/test.txt", "w");
-        if (testFile) {
-            testFile.println("Test data");
-            testFile.close();
-            
-            // Verify we can read it back
-            testFile = SPIFFS.open("/test.txt", "r");
-            if (testFile) {
-                String content = testFile.readString();
-                testFile.close();
-                SPIFFS.remove("/test.txt");
-                
-                if (content.indexOf("Test data") >= 0) {
-                    Serial.println("SPIFFS read/write test successful");
-                    return true;
-                }
-            }
-        }
-        
-        // If we got here, the read/write test failed
-        Serial.println("SPIFFS mounted but failed read/write test");
-        SPIFFS.end();
-    }
-    
-    // Second attempt - try with formatting
-    Serial.println("First mount failed, trying with formatting...");
-    if (SPIFFS.begin(true)) {
-        Serial.println("SPIFFS mounted successfully after formatting");
-        
-        // Try write test again
-        File testFile = SPIFFS.open("/test.txt", "w");
-        if (testFile) {
-            testFile.println("Test data");
-            testFile.close();
-            testFile = SPIFFS.open("/test.txt", "r");
-            if (testFile) {
-                String content = testFile.readString();
-                testFile.close();
-                SPIFFS.remove("/test.txt");
-                
-                if (content.indexOf("Test data") >= 0) {
-                    Serial.println("SPIFFS read/write test successful after format");
-                    return true;
-                }
-            }
-        }
-    }
-    
-    // If we got here, SPIFFS is not working even after formatting
-    Serial.println("CRITICAL: SPIFFS failed to mount even after formatting");
-    Serial.println("Disabling SPIFFS and continuing without file system");
-    
-    // Set flag to permanently disable SPIFFS
-    spiffsDisabled = true;
-    return false;
+    return ret;
 }
 
 /**
- * Check flash partitions and print information
+ * Safe logger initialization
+ */
+void safeLoggerInit(bool spiffsAvailable) {
+    // Initialize with basic configuration
+    Logger.init(true, false, LOG_LEVEL_DEBUG);
+    
+    // Enable enhanced features if file system is available
+    if (spiffsAvailable) {
+        Logger.enableFlashOutput(true, &SPIFFS, "/debug_log.txt");
+        Logger.setMaxLogFileSize(32 * 1024);  // 32KB max log file
+    }
+}
+
+/**
+ * Create task safely with error checking
+ */
+TaskHandle_t createTaskSafely(TaskFunction_t taskFunction, const char* name, 
+                             uint32_t stackSize, void *param, UBaseType_t priority, 
+                             BaseType_t coreID) {
+    // Input validation
+    if (taskFunction == nullptr || name == nullptr) {
+        Logger.error("Invalid parameters for task creation");
+        return NULL;
+    }
+    
+    // Create the task
+    TaskHandle_t taskHandle = NULL;
+    BaseType_t result = xTaskCreatePinnedToCore(
+        taskFunction,
+        name,
+        stackSize,
+        param,
+        priority,
+        &taskHandle,
+        coreID
+    );
+    
+    // Check result
+    if (result != pdPASS || taskHandle == NULL) {
+        Logger.error("Failed to create task: %s", name);
+        return NULL;
+    }
+    
+    Logger.info("Created task: %s on core %d", name, coreID);
+    return taskHandle;
+}
+
+/**
+ * Safely delete a task with error checking
+ */
+void safeDeleteTask(TaskHandle_t taskHandle, const char* taskName) {
+    if (taskHandle == NULL) {
+        return;  // Task doesn't exist
+    }
+    
+    // Check if task is still running first
+    eTaskState state = eTaskGetState(taskHandle);
+    
+    // Only delete if task is still valid
+    if (state != eDeleted) {
+        Logger.info("Deleting task: %s", taskName);
+        vTaskDelete(taskHandle);
+    }
+}
+
+/**
+ * Check system partitions
  */
 void checkPartitions() {
-  Serial.println("Checking partition information:");
-  Serial.printf("Flash size: %d bytes\n", ESP.getFlashChipSize());
-  
-  Serial.println("\nPartition table:");
-  Serial.println("Type | Subtype | Address | Size | Label");
-  Serial.println("-----|---------|---------|------|-------");
-  
-  esp_partition_iterator_t it = esp_partition_find(ESP_PARTITION_TYPE_ANY, ESP_PARTITION_SUBTYPE_ANY, NULL);
-  while (it != NULL) {
-    const esp_partition_t* part = esp_partition_get(it);
-    Serial.printf("%4d | %7d | %08x | %6dK | %s\n", 
-                  part->type, part->subtype, part->address, 
-                  part->size / 1024, part->label);
-    it = esp_partition_next(it);
-  }
-  esp_partition_iterator_release(it);
-  
-  Serial.println();
+    Logger.debug("Flash chip size: %d MB", ESP.getFlashChipSize() / (1024 * 1024));
+    Logger.debug("PSRAM size: %d MB", ESP.getPsramSize() / (1024 * 1024));
+    Logger.debug("Free heap: %d KB", ESP.getFreeHeap() / 1024);
+    Logger.debug("Free PSRAM: %d KB", ESP.getFreePsram() / 1024);
+    
+    // Check partition table
+    esp_partition_iterator_t it = esp_partition_find(ESP_PARTITION_TYPE_ANY, ESP_PARTITION_SUBTYPE_ANY, NULL);
+    
+    while (it != NULL) {
+        const esp_partition_t* part = esp_partition_get(it);
+        Logger.debug("Partition: %s, Type: %d, Subtype: %d, Address: 0x%08x, Size: %d KB",
+                   part->label, part->type, part->subtype, part->address, part->size / 1024);
+        it = esp_partition_next(it);
+    }
+    
+    esp_partition_iterator_release(it);
 }
 
 /**
- * Enhanced WiFi setup with more reliable connection parameters
- * Updated: 2025-06-17 11:58:18
- * User: Chamil1983
+ * LCD Setup
  */
-bool setup_wifi_ap() {
-    Logger.info("Setting up WiFi in AP mode with maximum reliability...");
+bool setup_lcd() {
+    Logger.info("Setting up LCD...");
     
-    // Complete reset of WiFi subsystem
-    WiFi.disconnect(true, true);   // Disconnect and erase stored credentials
-    WiFi.mode(WIFI_OFF);           // Turn WiFi off completely
-    delay(500);                    // Allow WiFi hardware to reset
+    lcd_ready = false;
     
-    // Initialize WiFi with specific settings
-    WiFi.persistent(false);        // Don't save settings to flash
-    WiFi.setSleep(WIFI_PS_NONE);   // Disable power saving completely
-    
-    // Set AP mode with explicit configuration
-    WiFi.mode(WIFI_AP);
-    delay(200);
-    
-    // Configure static IP settings
-    IPAddress local_ip(192, 168, 4, 1);
-    IPAddress gateway(192, 168, 4, 1);
-    IPAddress subnet(255, 255, 255, 0);
-    
-    // Apply static IP configuration
-    if (!WiFi.softAPConfig(local_ip, gateway, subnet)) {
-        Logger.error("Failed to configure AP IP settings");
-        return false;
+    try {
+        // Initialize LCD
+        lcd.begin(); 
+        
+        // Set LCD backlight using the correct method from your driver
+        lcd.example_bsp_set_lcd_backlight(255); // Full brightness
+        
+        Logger.info("LCD initialized successfully with backlight ON");
+        lcd_ready = true;
+    } catch (...) {
+        Logger.error("Exception during LCD initialization");
+        lcd_ready = false;
     }
     
-    // Try multiple times to start AP with conservative settings
-    Logger.info("Starting AP with SSID: %s", WIFI_AP_SSID);
-    bool success = false;
+    return lcd_ready;
+}
+
+/**
+ * Touch Setup
+ */
+bool setup_touch() {
+    Logger.info("Setting up Touch...");
     
-    // Use more conservative settings for better stability
-    for (int attempt = 1; attempt <= 3; attempt++) {
-        Logger.info("AP start attempt %d...", attempt);
+    touch_ready = false;
+    
+    try {
+        // Initialize touch controller
+        touch.begin();
         
-        // More conservative settings:
-        // - Channel 6 (less interference than 1 in many environments)
-        // - Hidden: false (more visible)
-        // - Max connections: 4 (more than enough)
-        // - Beacon interval: more frequent (100ms)
-        success = WiFi.softAP(WIFI_AP_SSID, WIFI_AP_PASSWORD, 6, false, 4);
+        // Configure touch if needed
+        touch.set_rotation(1); // Match LCD orientation
+        
+        Logger.info("Touch initialized successfully");
+        touch_ready = true;
+    } catch (...) {
+        Logger.error("Exception during touch setup");
+        touch_ready = false;
+    }
+    
+    return touch_ready;
+}
+
+/**
+ * WiFi Access Point Setup with enhanced stability
+ */
+bool setup_wifi_ap() {
+    // Ensure WiFi is disconnected first
+    try {
+        WiFi.disconnect(true, true);   // Disconnect and erase stored credentials
+        WiFi.mode(WIFI_OFF);           // Turn WiFi off completely
+        delay(500);                    // Allow WiFi hardware to reset
+        
+        // Initialize WiFi with specific settings
+        WiFi.persistent(false);        // Don't save settings to flash
+        WiFi.setSleep(WIFI_PS_NONE);   // Disable power saving completely
+        
+        // Set AP mode with explicit configuration
+        WiFi.mode(WIFI_AP);
+        delay(200);
+        
+        // Configure static IP settings
+        IPAddress local_ip(192, 168, 4, 1);
+        IPAddress gateway(192, 168, 4, 1);
+        IPAddress subnet(255, 255, 255, 0);
+        
+        // Apply static IP configuration
+        if (!WiFi.softAPConfig(local_ip, gateway, subnet)) {
+            Logger.error("Failed to configure AP IP settings");
+            return false;
+        }
+        
+        // Try multiple times to start AP with conservative settings
+        Logger.info("Starting AP with SSID: %s", WIFI_AP_SSID);
+        bool success = false;
+        
+        // Use more conservative settings for better stability
+        for (int attempt = 1; attempt <= 3; attempt++) {
+            Logger.info("AP start attempt %d...", attempt);
+            
+            // More conservative settings:
+            // - Channel 6 (less interference than 1 in many environments)
+            // - Hidden: false (more visible)
+            // - Max connections: 4 (more than enough)
+            // - Beacon interval: more frequent (100ms)
+            success = WiFi.softAP(WIFI_AP_SSID, WIFI_AP_PASSWORD, 6, false, 4);
+            
+            if (success) {
+                // Configure more settings after AP is up
+                esp_wifi_set_ps(WIFI_PS_NONE);  // Ensure power save is disabled
+                
+                // Set up DNS for captive portal
+                if (dnsServerActive) {
+                    dnsServer.stop();
+                }
+                
+                dnsServer.start(53, "*", WiFi.softAPIP());
+                dnsServerActive = true;
+                
+                delay(100);  // Allow settings to apply
+                break;
+            } else {
+                delay(1000 * attempt); // Increasing delay between retries
+            }
+        }
         
         if (success) {
-            // Configure more settings after AP is up
-            esp_wifi_set_ps(WIFI_PS_NONE);  // Ensure power save is disabled
+            IPAddress apIP = WiFi.softAPIP();
+            Logger.info("WiFi AP Mode active with enhanced stability");
+            Logger.info("AP SSID: %s", WIFI_AP_SSID);
+            Logger.info("AP IP Address: %s", apIP.toString().c_str());
+            Logger.info("AP Channel: 6");
+            Logger.info("AP Max Clients: 4");
+            Logger.info("AP Power: Maximum");
             
-            // Set TX power to maximum for better range
-            int8_t power = 20;
-            esp_wifi_set_max_tx_power(power);
-            
-            // Set up DNS for captive portal
-            if (dnsServerActive) {
-                dnsServer.stop();
-            }
-            
-            dnsServer.start(53, "*", WiFi.softAPIP());
-            dnsServerActive = true;
-            
-            delay(100);  // Allow settings to apply
-            break;
+            wifi_ready = true;
         } else {
-            delay(1000 * attempt); // Increasing delay between retries
+            Logger.error("Failed to start WiFi AP after multiple attempts");
+            wifi_ready = false;
+        }
+        
+        return success;
+    }
+    catch (...) {
+        Logger.error("Exception during WiFi AP setup");
+        return false;
+    }
+}
+
+/**
+ * SD Card setup with enhanced reliability and error recovery
+ */
+bool setup_sd_card_reliable() {
+    Logger.info("Setting up SD Card with robust initialization...");
+    
+    // Create mutex if it doesn't exist
+    if (sd_mutex == NULL) {
+        sd_mutex = xSemaphoreCreateMutex();
+        if (sd_mutex == NULL) {
+            Logger.error("Failed to create SD card mutex");
+            return false;
         }
     }
     
-    if (success) {
-        IPAddress apIP = WiFi.softAPIP();
-        Logger.info("WiFi AP Mode active with enhanced stability");
-        Logger.info("AP SSID: %s", WIFI_AP_SSID);
-        Logger.info("AP IP Address: %s", apIP.toString().c_str());
-        Logger.info("AP Channel: 6");
-        Logger.info("AP Max Clients: 4");
-        Logger.info("AP Power: Maximum");
+    try {
+        // Make sure SD card is not already mounted
+        SD_MMC.end();
         
-        wifi_ready = true;
-    } else {
-        Logger.error("Failed to start WiFi AP after multiple attempts");
-        wifi_ready = false;
-    }
-    
-    return success;
-}
-
-/**
- * Setup SD card with robust error handling
- */
-bool setup_sd_card_reliable() {
-  Logger.info("Setting up SD Card with robust initialization...");
-  
-  sd_ready = false;
-  
-  try {
-    // Wait for power stabilization
-    Logger.info("Waiting for power stabilization...");
-    delay(SD_POWER_STABILIZE_DELAY);
-    
-    // Reset SD pins to ensure clean state
-    Logger.info("Resetting SD pins...");
-    pinMode(SDMMC_CLK_PIN, INPUT);
-    pinMode(SDMMC_CMD_PIN, INPUT);
-    pinMode(SDMMC_D0_PIN, INPUT);
-    pinMode(SDMMC_D1_PIN, INPUT);
-    pinMode(SDMMC_D2_PIN, INPUT);
-    pinMode(SDMMC_D3_PIN, INPUT);
-    delay(100);
-    
-    // Force SD deinitialization to ensure clean start
-    Logger.info("Ensuring SD_MMC is deinitialized...");
-    SD_MMC.end();
-    delay(500);
-    
-    // Set pins for SD card interface
-    Logger.info("Configuring SD pins...");
-    SD_MMC.setPins(SDMMC_CLK_PIN, SDMMC_CMD_PIN, SDMMC_D0_PIN, 
-                   SDMMC_D1_PIN, SDMMC_D2_PIN, SDMMC_D3_PIN);
-    
-    // Try ultra-conservative settings first (1-bit mode, very slow speed)
-    Logger.info("SD init attempt 1: 1-bit mode at 125KHz (ultra conservative)");
-    if (SD_MMC.begin("/sdcard", true, false, SDMMC_FREQ_PROBING)) {
-      // Successfully initialized with conservative settings
-      sd_ready = validateSDCard();
-      if (sd_ready) {
+        // Reset and stabilize SD card power if possible
+        Logger.info("Waiting for power stabilization...");
+        delay(SD_POWER_STABILIZE_DELAY);
+        
+        // Reset SD pins to clean state
+        Logger.info("Resetting SD pins...");
+        pinMode(SDMMC_CLK_PIN, INPUT);
+        pinMode(SDMMC_CMD_PIN, INPUT);
+        pinMode(SDMMC_D0_PIN, INPUT);
+        pinMode(SDMMC_D1_PIN, INPUT);
+        pinMode(SDMMC_D2_PIN, INPUT);
+        pinMode(SDMMC_D3_PIN, INPUT);
+        delay(100);
+        
+        // Ensure SD is not initialized
+        Logger.info("Ensuring SD_MMC is deinitialized...");
+        SD_MMC.end();
+        delay(500);  // Wait for any pending operations
+        
+        // Configure SD pins
+        Logger.info("Configuring SD pins...");
+        SD_MMC.setPins(SDMMC_CLK_PIN, SDMMC_CMD_PIN, SDMMC_D0_PIN, 
+                    SDMMC_D1_PIN, SDMMC_D2_PIN, SDMMC_D3_PIN);
+        
+        // Start with the most conservative settings - 1-bit mode at 125KHz
+        Logger.info("SD init attempt 1: 1-bit mode at 125KHz (ultra conservative)");
+        if (!SD_MMC.begin("/sdcard", true, false, SDMMC_FREQ_PROBING, 5)) {
+            Logger.error("SD init attempt 1 failed, retrying with modified settings...");
+            delay(500);
+            
+            // Second attempt - 1-bit mode at 400KHz (standard SD initialization speed)
+            Logger.info("SD init attempt 2: 1-bit mode at 400KHz (standard)");
+            if (!SD_MMC.begin("/sdcard", true, false, 400000, 5)) {
+                Logger.error("SD init attempt 2 failed, retrying with modified settings...");
+                delay(500);
+                
+                // Third attempt - 4-bit mode at 400KHz
+                Logger.info("SD init attempt 3: 4-bit mode at 400KHz");
+                if (!SD_MMC.begin("/sdcard", false, false, 400000, 5)) {
+                    Logger.error("All SD init attempts failed");
+                    return false;
+                } else {
+                    Logger.info("SD card initialized in 4-bit mode at 400KHz");
+                }
+            } else {
+                Logger.info("SD card initialized in 1-bit mode at 400KHz");
+            }
+        } else {
+            Logger.info("SD card initialized in 1-bit mode at 125KHz");
+        }
+        
+        // Validate the SD card
+        Logger.info("Validating SD card...");
+        
+        // Check card type
+        uint8_t cardType = SD_MMC.cardType();
+        if (cardType == CARD_NONE) {
+            Logger.error("No SD card detected");
+            return false;
+        }
+        
+        // Log card info
+        const char* typeStr = "UNKNOWN";
+        switch (cardType) {
+            case CARD_MMC: typeStr = "MMC"; break;
+            case CARD_SD: typeStr = "SD"; break;
+            case CARD_SDHC: typeStr = "SDHC"; break;
+            default: typeStr = "UNKNOWN"; break;
+        }
+        Logger.info("SD Card Type: %s", typeStr);
+        
+        // Calculate card size in MB for display
+        uint64_t cardSize = SD_MMC.cardSize() / (1024 * 1024);
+        Logger.info("SD Card Size: %lluMB", cardSize);
+        
+        // Make sure images directory exists
+        if (!SD_MMC.exists("/images")) {
+            Logger.info("Creating images directory on SD card");
+            if (!SD_MMC.mkdir("/images")) {
+                Logger.warn("Failed to create images directory, but continuing");
+            }
+        }
+        
+        // Test write capability
+        File testFile = SD_MMC.open("/sd_test.txt", FILE_WRITE);
+        if (testFile) {
+            testFile.println("SD Card Test");
+            testFile.close();
+            SD_MMC.remove("/sd_test.txt");  // Clean up after test
+        } else {
+            Logger.warn("Cannot write to SD card, might be read-only");
+        }
+        
         Logger.info("SD card initialized successfully in ultra-conservative mode");
+        sd_ready = true;
         return true;
-      }
+        
+    } catch (...) {
+        Logger.error("Exception during SD card setup");
+        return false;
     }
-    
-    // If conservative approach failed, try more normal settings
-    Logger.info("SD init attempt 2: 1-bit mode at default speed");
-    if (SD_MMC.begin("/sdcard", true)) {
-      sd_ready = validateSDCard();
-      if (sd_ready) {
-        Logger.info("SD card initialized successfully with 1-bit mode");
-        return true;
-      }
-    }
-    
-    // Last attempt with 4-bit mode (most compatible with good cards)
-    Logger.info("SD init attempt 3: 4-bit mode");
-    if (SD_MMC.begin()) {
-      sd_ready = validateSDCard();
-      if (sd_ready) {
-        Logger.info("SD card initialized successfully with 4-bit mode");
-        return true;
-      }
-    }
-    
-    // If all attempts failed, log error
-    Logger.error("All SD card initialization attempts failed");
-    sd_ready = false;
-    
-  } catch (...) {
-    Logger.error("Exception during SD card initialization");
-    sd_ready = false;
-  }
-  
-  return sd_ready;
 }
 
 /**
- * Validate SD card is working properly
+ * Validate SD card properties
  */
 bool validateSDCard() {
-  Logger.info("Validating SD card...");
-  
-  // Check if card is present
-  if (SD_MMC.cardType() == CARD_NONE) {
-    Logger.error("No SD card attached");
-    return false;
-  }
-  
-  // Log card type
-  uint8_t cardType = SD_MMC.cardType();
-  String cardTypeStr;
-  
-  switch (cardType) {
-    case CARD_MMC:  cardTypeStr = "MMC";   break;
-    case CARD_SD:   cardTypeStr = "SDSC";  break;
-    case CARD_SDHC: cardTypeStr = "SDHC";  break;
-    default:        cardTypeStr = "UNKNOWN"; break;
-  }
-  
-  Logger.info("SD Card Type: %s", cardTypeStr.c_str());
-  
-  // Calculate card size in MB
-  uint64_t cardSize = SD_MMC.cardSize() / (1024 * 1024);
-  Logger.info("SD Card Size: %lluMB", cardSize);
-  
-  // Return success if we got this far
-  return true;
+    // Check if card is present
+    if (SD_MMC.cardType() == CARD_NONE) {
+        Logger.error("No SD card attached");
+        return false;
+    }
+    
+    // Log card type
+    uint8_t cardType = SD_MMC.cardType();
+    String cardTypeStr;
+    
+    switch (cardType) {
+        case CARD_MMC:  cardTypeStr = "MMC";   break;
+        case CARD_SD:   cardTypeStr = "SDSC";  break;
+        case CARD_SDHC: cardTypeStr = "SDHC";  break;
+        default:        cardTypeStr = "UNKNOWN"; break;
+    }
+    
+    Logger.info("SD Card Type: %s", cardTypeStr.c_str());
+    
+    // Calculate card size in MB
+    uint64_t cardSize = SD_MMC.cardSize() / (1024 * 1024);
+    Logger.info("SD Card Size: %lluMB", cardSize);
+    
+    // Return success if we got this far
+    return true;
 }
 
 /**
  * Setup LVGL graphics library
  */
 bool setup_lvgl() {
-  Logger.info("Setting up LVGL...");
-  
-  lvgl_ready = false;
-  
-  // Initialize LVGL
-  lv_init();
-  
-  // Allocate display buffer
-  const uint32_t buf_size = LCD_H_RES * 40;  // Buffer for 40 rows
-  Logger.debug("Allocating LVGL buffers: %d bytes each", buf_size * sizeof(lv_color_t));
-  
-  buf = (lv_color_t *)ps_malloc(buf_size * sizeof(lv_color_t));
-  buf1 = (lv_color_t *)ps_malloc(buf_size * sizeof(lv_color_t));
-  
-  if (!buf || !buf1) {
-    Logger.error("Failed to allocate LVGL buffers");
-    return false;
-  }
-  
-  // Initialize the display buffer
-  lv_disp_draw_buf_init(&draw_buf, buf, buf1, buf_size);
-  
-  // Display driver initialization
-  static lv_disp_drv_t disp_drv;
-  lv_disp_drv_init(&disp_drv);
-  
-  // Set display driver properties
-  disp_drv.hor_res = LCD_H_RES;
-  disp_drv.ver_res = LCD_V_RES;
-  disp_drv.flush_cb = [](lv_disp_drv_t *disp, const lv_area_t *area, lv_color_t *color_p) {
+    try {
+        // Initialize LVGL
+        lv_init();
+        
+        // Allocate display buffers using PSRAM if available
+        size_t buf_size = LCD_H_RES * 15; // Buffer for 15 rows
+        
+        lv_color_t* buf1 = (lv_color_t*)ps_malloc(buf_size * sizeof(lv_color_t));
+        lv_color_t* buf2 = (lv_color_t*)ps_malloc(buf_size * sizeof(lv_color_t));
+        
+        if (!buf1 || !buf2) {
+            Logger.error("Failed to allocate LVGL buffers");
+            return false;
+        }
+        
+        Logger.debug("Allocating LVGL buffers: %d bytes each", buf_size * sizeof(lv_color_t));
+        
+        // Initialize the display buffer
+        static lv_disp_draw_buf_t draw_buf;
+        lv_disp_draw_buf_init(&draw_buf, buf1, buf2, buf_size);
+        
+        // Set up the display driver
+        static lv_disp_drv_t disp_drv;
+        lv_disp_drv_init(&disp_drv);
+        disp_drv.hor_res = LCD_H_RES;
+        disp_drv.ver_res = LCD_V_RES;
+        
+        // LCD flush callback
+// LVGL display driver callback function with correct LCD function name
+disp_drv.flush_cb = [](lv_disp_drv_t* disp, const lv_area_t* area, lv_color_t* color_p) {
     uint32_t w = (area->x2 - area->x1 + 1);
     uint32_t h = (area->y2 - area->y1 + 1);
     
-    // Convert LVGL color buffer to 16-bit RGB565 format
-    lcd.lcd_draw_bitmap(area->x1, area->y1, area->x2 + 1, area->y2 + 1, (uint16_t *)color_p);
+    // Draw to LCD using the correct function name: lcd_draw_bitmap instead of draw_bitmap
+    lcd.lcd_draw_bitmap(area->x1, area->y1, area->x2 + 1, area->y2 + 1, (uint16_t*)color_p);
     
     // Indicate to LVGL that the flush is done
     lv_disp_flush_ready(disp);
-  };
-  
-  disp_drv.draw_buf = &draw_buf;
-  lv_disp_drv_register(&disp_drv);
-  
-  // Input device driver initialization for touch
-if (touch_ready) {
-  static lv_indev_drv_t indev_drv;
-  lv_indev_drv_init(&indev_drv);
-  indev_drv.type = LV_INDEV_TYPE_POINTER;
-  
-  // Fix the read_cb function to use the correct function name and return type
-  indev_drv.read_cb = [](lv_indev_drv_t *drv, lv_indev_data_t *data) -> void {
-    static lv_coord_t last_x = 0;
-    static lv_coord_t last_y = 0;
-    
-    uint16_t touch_x, touch_y;
-    
-    // Use the correct function name
-    if (touch.getTouch(&touch_x, &touch_y)) {
-      // Convert touch coordinates to LVGL coordinates if needed
-      data->state = LV_INDEV_STATE_PR;
-      data->point.x = touch_x;
-      data->point.y = touch_y;
-      last_x = touch_x;
-      last_y = touch_y;
-    } else {
-      data->state = LV_INDEV_STATE_REL;
-      data->point.x = last_x;
-      data->point.y = last_y;
+};
+        
+        disp_drv.draw_buf = &draw_buf;
+        lv_disp_drv_register(&disp_drv);
+        
+        if (touch_ready) {
+            // Set up the touch driver for input
+            static lv_indev_drv_t indev_drv;
+            lv_indev_drv_init(&indev_drv);
+            indev_drv.type = LV_INDEV_TYPE_POINTER;
+            
+            // Read callback with improved error handling
+            indev_drv.read_cb = [](lv_indev_drv_t* drv, lv_indev_data_t* data) {
+                static lv_coord_t last_x = 0;
+                static lv_coord_t last_y = 0;
+                
+                uint16_t touch_x, touch_y;
+                bool touched = false;
+                
+                try {
+                    touched = touch.getTouch(&touch_x, &touch_y);
+                } catch (...) {
+                    // Suppress any exceptions in touch handler
+                    touched = false;
+                }
+                
+                if (touched) {
+                    data->state = LV_INDEV_STATE_PR;
+                    data->point.x = touch_x;
+                    data->point.y = touch_y;
+                    last_x = touch_x;
+                    last_y = touch_y;
+                } else {
+                    data->state = LV_INDEV_STATE_REL;
+                    data->point.x = last_x;
+                    data->point.y = last_y;
+                }
+            };
+            
+            lv_indev_drv_register(&indev_drv);
+        }
+        
+        // Create JPEG draw buffer using PSRAM if available
+        drawBuffer = (uint8_t*)ps_malloc(DRAW_BUFFER_SIZE);
+        if (!drawBuffer) {
+            drawBuffer = (uint8_t*)malloc(DRAW_BUFFER_SIZE);
+            if (!drawBuffer) {
+                Logger.error("Failed to allocate JPEG draw buffer");
+                return false;
+            }
+        }
+        
+        // Create mutex for JPEG decoding if it doesn't exist
+        if (jpeg_mutex == NULL) {
+            jpeg_mutex = xSemaphoreCreateMutex();
+        }
+        
+        // Create mutex for UI updates if it doesn't exist
+        if (ui_mutex == NULL) {
+            ui_mutex = xSemaphoreCreateMutex();
+        }
+        
+        Logger.info("LVGL initialized successfully");
+        lvgl_ready = true;
+        return true;
     }
-  };
-  
-  lv_indev_drv_register(&indev_drv);
-}
-  
-  Logger.info("LVGL initialized successfully");
-  lvgl_ready = true;
-  
-  return lvgl_ready;
+    catch (...) {
+        Logger.error("Exception during LVGL setup");
+        lvgl_ready = false;
+        return false;
+    }
 }
 
 /**
  * Setup UI elements
  */
 bool setup_ui() {
-  Logger.info("Setting up UI...");
-  
-  ui_ready = false;
-  
-  if (!lvgl_ready) {
-    Logger.error("Cannot setup UI - LVGL not initialized");
-    return false;
-  }
-  
-  // Create a main screen
-  main_screen = lv_obj_create(NULL);
-  lv_obj_set_style_bg_color(main_screen, lv_color_hex(0x000000), 0);
-  lv_disp_load_scr(main_screen);
-  
-  // Initialize styles for buttons
-  lv_style_init(&style_btn);
-  lv_style_set_radius(&style_btn, 5);
-  lv_style_set_bg_color(&style_btn, lv_color_hex(0x2980b9));
-  lv_style_set_bg_opa(&style_btn, LV_OPA_COVER);
-  lv_style_set_pad_all(&style_btn, 10);
-  lv_style_set_text_color(&style_btn, lv_color_white());
-  
-  lv_style_init(&style_btn_pressed);
-  lv_style_set_bg_color(&style_btn_pressed, lv_color_hex(0x1a5d8c));
-  
-  // Create status bar at the top
-  status_bar = lv_obj_create(main_screen);
-  lv_obj_set_size(status_bar, LCD_H_RES, 40);
-  lv_obj_set_pos(status_bar, 0, 0);
-  lv_obj_set_style_bg_color(status_bar, lv_color_hex(0x333333), 0);
-  lv_obj_set_style_pad_all(status_bar, 5, 0);
-  
-  // Status label on left side
-  status_label = lv_label_create(status_bar);
-  lv_label_set_text(status_label, "Slideshow: OFF");
-  lv_obj_align(status_label, LV_ALIGN_LEFT_MID, 10, 0);
-  
-  // Image counter on right side
-  image_counter = lv_label_create(status_bar);
-  lv_label_set_text(image_counter, "Image: 0/0");
-  lv_obj_align(image_counter, LV_ALIGN_RIGHT_MID, -10, 0);
-  
-  // Create image view area (this is where images will be displayed)
-  image_view = lv_obj_create(main_screen);
-  lv_obj_set_size(image_view, LCD_H_RES, LCD_V_RES - 80);
-  lv_obj_set_pos(image_view, 0, 40);
-  lv_obj_set_style_bg_color(image_view, lv_color_hex(0x000000), 0);
-  lv_obj_set_style_border_width(image_view, 0, 0);
-  lv_obj_set_style_pad_all(image_view, 0, 0);
-  
-  // Create control bar at the bottom
-  control_bar = lv_obj_create(main_screen);
-  lv_obj_set_size(control_bar, LCD_H_RES, 40);
-  lv_obj_set_pos(control_bar, 0, LCD_V_RES - 40);
-  lv_obj_set_style_bg_color(control_bar, lv_color_hex(0x333333), 0);
-  lv_obj_set_style_pad_all(control_bar, 5, 0);
-  
-  // Previous button
-  prev_btn = lv_btn_create(control_bar);
-  lv_obj_set_size(prev_btn, 100, 30);
-  lv_obj_add_style(prev_btn, &style_btn, 0);
-  lv_obj_add_style(prev_btn, &style_btn_pressed, LV_STATE_PRESSED);
-  lv_obj_align(prev_btn, LV_ALIGN_LEFT_MID, 10, 0);
-  
-  lv_obj_t *prev_label = lv_label_create(prev_btn);
-  lv_label_set_text(prev_label, "Previous");
-  lv_obj_center(prev_label);
-  
-  lv_obj_add_event_cb(prev_btn, [](lv_event_t *e) {
-    if (image_count > 0) {
-      int prev_img = (current_image > 0) ? (current_image - 1) : (image_count - 1);
-      display_image(prev_img);
+    try {
+        Logger.info("Setting up UI...");
+        
+        ui_ready = false;
+        
+        if (!lvgl_ready) {
+            Logger.error("Cannot setup UI - LVGL not initialized");
+            return false;
+        }
+        
+        // Create a main screen
+        main_screen = lv_obj_create(NULL);
+        lv_obj_set_style_bg_color(main_screen, lv_color_hex(0x000000), 0);
+        lv_disp_load_scr(main_screen);
+        
+        // Initialize styles for buttons
+        lv_style_init(&style_btn);
+        lv_style_set_radius(&style_btn, 5);
+        lv_style_set_bg_color(&style_btn, lv_color_hex(0x2980b9));
+        lv_style_set_bg_opa(&style_btn, LV_OPA_COVER);
+        lv_style_set_pad_all(&style_btn, 10);
+        lv_style_set_text_color(&style_btn, lv_color_white());
+        
+        lv_style_init(&style_btn_pressed);
+        lv_style_set_bg_color(&style_btn_pressed, lv_color_hex(0x1a5d8c));
+        
+        // Create status bar at the top
+        status_bar = lv_obj_create(main_screen);
+        lv_obj_set_size(status_bar, LCD_H_RES, 40);
+        lv_obj_set_pos(status_bar, 0, 0);
+        lv_obj_set_style_bg_color(status_bar, lv_color_hex(0x333333), 0);
+        lv_obj_set_style_pad_all(status_bar, 5, 0);
+        
+        // Status label on left side
+        status_label = lv_label_create(status_bar);
+        lv_label_set_text(status_label, "Slideshow: OFF");
+        lv_obj_align(status_label, LV_ALIGN_LEFT_MID, 10, 0);
+        
+        // Image counter on right side
+        image_counter = lv_label_create(status_bar);
+        lv_label_set_text(image_counter, "Image: 0/0");
+        lv_obj_align(image_counter, LV_ALIGN_RIGHT_MID, -10, 0);
+        
+        // Create image view area (this is where images will be displayed)
+        image_view = lv_obj_create(main_screen);
+        lv_obj_set_size(image_view, LCD_H_RES, LCD_V_RES - 80);
+        lv_obj_set_pos(image_view, 0, 40);
+        lv_obj_set_style_bg_color(image_view, lv_color_hex(0x000000), 0);
+        lv_obj_set_style_border_width(image_view, 0, 0);
+        lv_obj_set_style_pad_all(image_view, 0, 0);
+        
+        // Create control bar at the bottom
+        control_bar = lv_obj_create(main_screen);
+        lv_obj_set_size(control_bar, LCD_H_RES, 40);
+        lv_obj_set_pos(control_bar, 0, LCD_V_RES - 40);
+        lv_obj_set_style_bg_color(control_bar, lv_color_hex(0x333333), 0);
+        lv_obj_set_style_pad_all(control_bar, 5, 0);
+        
+        // Previous button
+        prev_btn = lv_btn_create(control_bar);
+        lv_obj_set_size(prev_btn, 100, 30);
+        lv_obj_add_style(prev_btn, &style_btn, 0);
+        lv_obj_add_style(prev_btn, &style_btn_pressed, LV_STATE_PRESSED);
+        lv_obj_align(prev_btn, LV_ALIGN_LEFT_MID, 10, 0);
+        
+        lv_obj_t *prev_label = lv_label_create(prev_btn);
+        lv_label_set_text(prev_label, "Previous");
+        lv_obj_center(prev_label);
+        
+        lv_obj_add_event_cb(prev_btn, [](lv_event_t *e) {
+            if (image_count > 0) {
+                int prev_img = (current_image > 0) ? (current_image - 1) : (image_count - 1);
+                display_image(prev_img);
+            }
+        }, LV_EVENT_CLICKED, NULL);
+        
+        // Next button
+        next_btn = lv_btn_create(control_bar);
+        lv_obj_set_size(next_btn, 100, 30);
+        lv_obj_add_style(next_btn, &style_btn, 0);
+        lv_obj_add_style(next_btn, &style_btn_pressed, LV_STATE_PRESSED);
+        lv_obj_align(next_btn, LV_ALIGN_RIGHT_MID, -10, 0);
+        
+        lv_obj_t *next_label = lv_label_create(next_btn);
+        lv_label_set_text(next_label, "Next");
+        lv_obj_center(next_label);
+        
+        lv_obj_add_event_cb(next_btn, [](lv_event_t *e) {
+            if (image_count > 0) {
+                int next_img = (current_image < image_count - 1) ? (current_image + 1) : 0;
+                display_image(next_img);
+            }
+        }, LV_EVENT_CLICKED, NULL);
+        
+        // Slideshow toggle button in the center
+        lv_obj_t *slideshow_btn = lv_btn_create(control_bar);
+        lv_obj_set_size(slideshow_btn, 120, 30);
+        lv_obj_add_style(slideshow_btn, &style_btn, 0);
+        lv_obj_add_style(slideshow_btn, &style_btn_pressed, LV_STATE_PRESSED);
+        lv_obj_align(slideshow_btn, LV_ALIGN_CENTER, 0, 0);
+        
+        lv_obj_t *slideshow_label = lv_label_create(slideshow_btn);
+        lv_label_set_text(slideshow_label, "Slideshow");
+        lv_obj_center(slideshow_label);
+        
+        lv_obj_add_event_cb(slideshow_btn, [](lv_event_t *e) {
+            toggleSlideshow();
+        }, LV_EVENT_CLICKED, NULL);
+        
+        Logger.info("UI initialized successfully");
+        ui_ready = true;
+        
+        return ui_ready;
     }
-  }, LV_EVENT_CLICKED, NULL);
-  
-  // Next button
-  next_btn = lv_btn_create(control_bar);
-  lv_obj_set_size(next_btn, 100, 30);
-  lv_obj_add_style(next_btn, &style_btn, 0);
-  lv_obj_add_style(next_btn, &style_btn_pressed, LV_STATE_PRESSED);
-  lv_obj_align(next_btn, LV_ALIGN_RIGHT_MID, -10, 0);
-  
-  lv_obj_t *next_label = lv_label_create(next_btn);
-  lv_label_set_text(next_label, "Next");
-  lv_obj_center(next_label);
-  
-  lv_obj_add_event_cb(next_btn, [](lv_event_t *e) {
-    if (image_count > 0) {
-      int next_img = (current_image < image_count - 1) ? (current_image + 1) : 0;
-      display_image(next_img);
+    catch (...) {
+        Logger.error("Exception during UI setup");
+        return false;
     }
-  }, LV_EVENT_CLICKED, NULL);
-  
-  // Slideshow toggle button in the center
-  lv_obj_t *slideshow_btn = lv_btn_create(control_bar);
-  lv_obj_set_size(slideshow_btn, 120, 30);
-  lv_obj_add_style(slideshow_btn, &style_btn, 0);
-  lv_obj_add_style(slideshow_btn, &style_btn_pressed, LV_STATE_PRESSED);
-  lv_obj_align(slideshow_btn, LV_ALIGN_CENTER, 0, 0);
-  
-  lv_obj_t *slideshow_label = lv_label_create(slideshow_btn);
-  lv_label_set_text(slideshow_label, "Slideshow");
-  lv_obj_center(slideshow_label);
-  
-  lv_obj_add_event_cb(slideshow_btn, [](lv_event_t *e) {
-    toggleSlideshow();
-  }, LV_EVENT_CLICKED, NULL);
-  
-  Logger.info("UI initialized successfully");
-  ui_ready = true;
-  
-  return ui_ready;
 }
 
 /**
  * Update the image counter display
  */
 void updateImageCounter(int index) {
-  if (!ui_ready || image_counter == nullptr) return;
-  
-  if (xSemaphoreTake(ui_mutex, pdMS_TO_TICKS(100)) == pdTRUE) {
-    char counter_text[32];
-    snprintf(counter_text, sizeof(counter_text), "Image: %d/%d", index + 1, image_count);
-    lv_label_set_text(image_counter, counter_text);
-    xSemaphoreGive(ui_mutex);
-  }
+    if (!ui_ready || image_counter == nullptr) return;
+    
+    if (xSemaphoreTake(ui_mutex, pdMS_TO_TICKS(100)) == pdTRUE) {
+        char counter_text[32];
+        snprintf(counter_text, sizeof(counter_text), "Image: %d/%d", index + 1, image_count);
+        lv_label_set_text(image_counter, counter_text);
+        xSemaphoreGive(ui_mutex);
+    }
 }
 
 /**
  * Update the status after loading an image
  */
 void updateStatusAfterImageLoad(int index, bool success) {
-  if (success) {
-    Logger.info("Successfully displayed image %d", index);
-  } else {
-    Logger.error("Failed to display image %d", index);
-  }
-  
-  // Update UI elements if needed
-  if (ui_ready && status_label != nullptr) {
-    if (xSemaphoreTake(ui_mutex, pdMS_TO_TICKS(100)) == pdTRUE) {
-      if (!success) {
-        lv_label_set_text(status_label, "Load Error");
-      } else if (slideshow_active) {
-        lv_label_set_text(status_label, "Slideshow: ON");
-      } else {
-        lv_label_set_text(status_label, "Slideshow: OFF");
-      }
-      
-      xSemaphoreGive(ui_mutex);
+    if (success) {
+        Logger.info("Successfully displayed image %d", index);
+    } else {
+        Logger.error("Failed to display image %d", index);
     }
-  }
+    
+    // Update UI elements if needed
+    if (ui_ready && status_label != nullptr) {
+        if (xSemaphoreTake(ui_mutex, pdMS_TO_TICKS(100)) == pdTRUE) {
+            if (!success) {
+                lv_label_set_text(status_label, "Load Error");
+            } else if (slideshow_active) {
+                lv_label_set_text(status_label, "Slideshow: ON");
+            } else {
+                lv_label_set_text(status_label, "Slideshow: OFF");
+            }
+            
+            xSemaphoreGive(ui_mutex);
+        }
+    }
 }
 
 /**
  * Process pending operations in the main loop
  */
 void process_pending_operations() {
-  // Handle WebServer
-  if (server_ready) {
-    server.handleClient();
-  }
-  
-  // Handle reset request
-  if (reset_requested) {
-    Logger.info("Reset requested. Restarting system...");
-    delay(1000);
-    ESP.restart();
-  }
+    // Handle WebServer
+    if (server_ready) {
+        server.handleClient();
+    }
+    
+    // Handle reset request
+    if (reset_requested) {
+        Logger.info("Reset requested. Restarting system...");
+        delay(1000);
+        ESP.restart();
+    }
 }
 
 /**
  * Enhanced web server setup with better error handling and diagnostics
- * Updated: 2025-06-17 11:42:54
+ * Updated: 2025-06-20 11:49:44
  * User: Chamil1983
  */
 bool setup_webserver() {
-    Logger.info("Setting up WebServer with enhanced connectivity...");
-    
     try {
+        Logger.info("Setting up WebServer with enhanced connectivity...");
+        
         // Basic server configuration
         server.enableCORS(true);        // Enable CORS for better browser compatibility
         server.enableCrossOrigin(true); // Another CORS setting
@@ -2787,30 +1359,30 @@ bool setup_webserver() {
             }
         });
         
-// Slideshow control handler with more reliable response handling
-server.on("/slideshow", HTTP_POST, []() {
-    String action = server.arg("action");
-    Logger.info("Slideshow control request: %s", action.c_str());
-    
-    if (action == "start") {
-        uint32_t interval = 5000; // Default 5 seconds
-        
-        // Check if interval was provided
-        if (server.hasArg("interval")) {
-            interval = server.arg("interval").toInt();
-        }
-        
-        startSlideshow(interval);
-        server.send(200, "text/plain", "Slideshow started with " + String(interval) + "ms interval");
-    } 
-    else if (action == "stop") {
-        stopSlideshow();
-        server.send(200, "text/plain", "Slideshow stopped");
-    }
-    else {
-        server.send(400, "text/plain", "Invalid action. Use 'start' or 'stop'");
-    }
-});
+        // Slideshow control handler with more reliable response handling
+        server.on("/slideshow", HTTP_POST, []() {
+            String action = server.arg("action");
+            Logger.info("Slideshow control request: %s", action.c_str());
+            
+            if (action == "start") {
+                uint32_t interval = 5000; // Default 5 seconds
+                
+                // Check if interval was provided
+                if (server.hasArg("interval")) {
+                    interval = server.arg("interval").toInt();
+                }
+                
+                startSlideshow(interval);
+                server.send(200, "text/plain", "Slideshow started with " + String(interval) + "ms interval");
+            } 
+            else if (action == "stop") {
+                stopSlideshow();
+                server.send(200, "text/plain", "Slideshow stopped");
+            }
+            else {
+                server.send(400, "text/plain", "Invalid action. Use 'start' or 'stop'");
+            }
+        });
         
         // Thumbnail handler
         server.on("/thumb", HTTP_GET, []() {
@@ -2856,145 +1428,17 @@ server.on("/slideshow", HTTP_POST, []() {
             file.close();
         });
         
+        // Add test page handler for connectivity diagnostics
+        add_test_page_handler();
+        
         // Handle file uploads
         server.on("/upload", HTTP_POST, []() {
             server.send(200, "text/plain", "Upload complete");
         }, handle_upload);
         
-        // System info page
-        server.on("/system", HTTP_GET, []() {
-            String response = "<!DOCTYPE html><html><head><title>ESP32P4 System Info</title>";
-            response += "<meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">";
-            response += "<style>";
-            response += "body {font-family: Arial, sans-serif; background: #1e293b; color: #f8fafc; padding: 20px;}";
-            response += "h1, h2 {color: #3b82f6;}";
-            response += ".card {background: #334155; padding: 15px; border-radius: 8px; margin-bottom: 20px;}";
-            response += ".btn {background: #3b82f6; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer;}";
-            response += "table {width: 100%; border-collapse: collapse;}";
-            response += "th, td {text-align: left; padding: 8px; border-bottom: 1px solid #3b82f6;}";
-            response += "th {color: #3b82f6;}";
-            response += "</style></head><body>";
-            
-            response += "<h1>ESP32P4 System Information</h1>";
-            response += "<div class='card'>";
-            response += "<h2>Memory</h2>";
-            response += "<table>";
-            response += "<tr><th>Type</th><th>Total (KB)</th><th>Free (KB)</th><th>Used (KB)</th></tr>";
-            response += "<tr><td>Heap</td><td>" + String(ESP.getHeapSize() / 1024) + "</td>";
-            response += "<td>" + String(ESP.getFreeHeap() / 1024) + "</td>";
-            response += "<td>" + String((ESP.getHeapSize() - ESP.getFreeHeap()) / 1024) + "</td></tr>";
-            response += "<tr><td>PSRAM</td><td>" + String(ESP.getPsramSize() / 1024) + "</td>";
-            response += "<td>" + String(ESP.getFreePsram() / 1024) + "</td>";
-            response += "<td>" + String((ESP.getPsramSize() - ESP.getFreePsram()) / 1024) + "</td></tr>";
-            response += "</table>";
-            response += "</div>";
-            
-            response += "<div class='card'>";
-            response += "<h2>CPU & System</h2>";
-            response += "<table>";
-            response += "<tr><th>Parameter</th><th>Value</th></tr>";
-            response += "<tr><td>CPU Frequency</td><td>" + String(ESP.getCpuFreqMHz()) + " MHz</td></tr>";
-            response += "<tr><td>Flash Size</td><td>" + String(ESP.getFlashChipSize() / 1024 / 1024) + " MB</td></tr>";
-            response += "<tr><td>Flash Speed</td><td>" + String(ESP.getFlashChipSpeed() / 1000000) + " MHz</td></tr>";
-            response += "<tr><td>Uptime</td><td>" + String(millis() / 1000) + " seconds</td></tr>";
-            response += "<tr><td>SDK Version</td><td>" + String(ESP.getSdkVersion()) + "</td></tr>";
-            response += "</table>";
-            response += "</div>";
-            
-            response += "<div class='card'>";
-            response += "<h2>Network</h2>";
-            response += "<table>";
-            response += "<tr><th>Parameter</th><th>Value</th></tr>";
-            response += "<tr><td>WiFi Mode</td><td>AP</td></tr>";
-            response += "<tr><td>SSID</td><td>" + String(WIFI_AP_SSID) + "</td></tr>";
-            response += "<tr><td>IP Address</td><td>" + WiFi.softAPIP().toString() + "</td></tr>";
-            response += "<tr><td>Connected Clients</td><td>" + String(WiFi.softAPgetStationNum()) + "</td></tr>";
-            response += "<tr><td>Channel</td><td>1</td></tr>";
-            response += "</table>";
-            response += "</div>";
-            
-            response += "<div class='card'>";
-            response += "<h2>Storage</h2>";
-            response += "<table>";
-            response += "<tr><th>Parameter</th><th>Value</th></tr>";
-            response += "<tr><td>SD Card</td><td>" + String(sd_ready ? "Connected" : "Not available") + "</td></tr>";
-            if (sd_ready) {
-                uint64_t cardSize = SD_MMC.cardSize() / 1024 / 1024;
-                response += "<tr><td>SD Card Size</td><td>" + String((uint32_t)cardSize) + " MB</td></tr>";
-                response += "<tr><td>Image Count</td><td>" + String(image_count) + "</td></tr>";
-            }
-            response += "</table>";
-            response += "</div>";
-            
-            response += "<div class='card'>";
-            response += "<h2>Component Status</h2>";
-            response += "<table>";
-            response += "<tr><th>Component</th><th>Status</th></tr>";
-            response += "<tr><td>LCD</td><td>" + String(lcd_ready ? "OK" : "Not Available") + "</td></tr>";
-            response += "<tr><td>Touch</td><td>" + String(touch_ready ? "OK" : "Not Available") + "</td></tr>";
-            response += "<tr><td>SD Card</td><td>" + String(sd_ready ? "OK" : "Not Available") + "</td></tr>";
-            response += "<tr><td>WiFi</td><td>" + String(wifi_ready ? "OK" : "Not Available") + "</td></tr>";
-            response += "<tr><td>LVGL</td><td>" + String(lvgl_ready ? "OK" : "Not Available") + "</td></tr>";
-            response += "<tr><td>UI</td><td>" + String(ui_ready ? "OK" : "Not Available") + "</td></tr>";
-            response += "<tr><td>Server</td><td>" + String(server_ready ? "OK" : "Not Available") + "</td></tr>";
-            response += "<tr><td>Slideshow</td><td>" + String(slideshow_active ? "Running" : "Stopped") + "</td></tr>";
-            response += "</table>";
-            response += "</div>";
-            
-            response += "<p><a href='/' class='btn'>Back to Gallery</a> <a href='/test' class='btn'>Connection Test</a></p>";
-            response += "</body></html>";
-            
-            server.send(200, "text/html", response);
-        });
-        
-        // Add test page handler for connectivity diagnostics
-        server.on("/test", HTTP_GET, []() {
-            Logger.info("Connection test page requested");
-            
-            String response = "<!DOCTYPE html><html><head>";
-            response += "<title>ESP32P4 Connection Test</title>";
-            response += "<meta name='viewport' content='width=device-width, initial-scale=1.0'>";
-            response += "<style>body {font-family: sans-serif; padding: 20px; max-width: 800px; margin: 0 auto; line-height: 1.6;}";
-            response += "h1 {color: #0066cc;} .success {color: green;} .error {color: red;}</style>";
-            response += "</head><body>";
-            response += "<h1>ESP32P4 Connection Test</h1>";
-            response += "<p class='success'>✅ Connection successful!</p>";
-            response += "<h2>Server Information:</h2>";
-            response += "<ul>";
-            response += "<li><strong>ESP32P4 IP:</strong> " + WiFi.softAPIP().toString() + "</li>";
-            response += "<li><strong>Connected Clients:</strong> " + String(WiFi.softAPgetStationNum()) + "</li>";
-            response += "<li><strong>Free Memory:</strong> " + String(ESP.getFreeHeap() / 1024) + " KB</li>";
-            response += "<li><strong>Free PSRAM:</strong> " + String(ESP.getFreePsram() / 1024) + " KB</li>";
-            response += "<li><strong>WiFi Channel:</strong> 1</li>";
-            response += "<li><strong>Server Uptime:</strong> " + String(millis() / 1000) + " seconds</li>";
-            response += "<li><strong>Image Count:</strong> " + String(image_count) + "</li>";
-            response += "</ul>";
-            response += "<p><a href='/'>Go to Gallery</a></p>";
-            
-            // Add ping test
-            response += "<h2>Connection Test:</h2>";
-            response += "<div id='pingResult'>Testing connection speed...</div>";
-            response += "<script>";
-            response += "let startTime = Date.now();";
-            response += "fetch('/ping').then(r => r.text()).then(data => {";
-            response += "  let pingTime = Date.now() - startTime;";
-            response += "  document.getElementById('pingResult').innerHTML = ";
-            response += "    `<p>Ping time: <strong>${pingTime}ms</strong></p>`;";
-            response += "});";
-            response += "</script>";
-            response += "</body></html>";
-            
-            server.send(200, "text/html", response);
-            Logger.info("Connection test page served successfully");
-        });
-        
-        // Simple ping endpoint for testing connection speed
-        server.on("/ping", HTTP_GET, []() {
-            server.send(200, "text/plain", "pong");
-        });
-        
-        // Start the web server
+        // Begin server
         server.begin();
+        
         Logger.info("WebServer started on port 80 with enhanced error handling");
         server_ready = true;
         
@@ -3011,176 +1455,58 @@ server.on("/slideshow", HTTP_POST, []() {
 }
 
 /**
- * Updates the upload form HTML with enhanced validation and error handling
- * Updated: 2025-06-16 10:45:51
- * User: Chamil1983
+ * Helper function to add test page handler
  */
-String updateUploadForm() {
-  String html = "<div class='card'>";
-  html += "<h2>Upload Image</h2>";
-  html += "<p><b>Important:</b> Upload only JPEG images smaller than 1MB for best results</p>";
-  html += "<form id='upload-form' class='upload-form' method='post' action='/upload' enctype='multipart/form-data'>";
-  html += "<div class='file-input-wrapper'>";
-  html += "<button type='button' class='btn'>Choose File</button>";
-  html += "<input type='file' name='image' accept='.jpg,.jpeg' id='file-input'>";
-  html += "</div>";
-  html += "<div id='file-info' style='margin: 10px 0;'><span id='file-selected'>No file selected</span></div>";
-  html += "<button type='submit' id='upload-button' class='btn btn-success'>Upload</button>";
-  html += "</form>";
-  html += "<div id='status' class='info' style='display:none;'></div>";
-  html += "<div id='progress-container' style='display:none;'><div id='progress-bar'></div></div>";
-  html += "</div>";
-
-  html += "<script>";
-  html += "document.addEventListener('DOMContentLoaded', function() {";
-  html += "  const form = document.getElementById('upload-form');";
-  html += "  const fileInput = document.getElementById('file-input');";
-  html += "  const fileSelected = document.getElementById('file-selected');";
-  html += "  const status = document.getElementById('status');";
-  html += "  const progressBar = document.getElementById('progress-bar');";
-  html += "  const progressContainer = document.getElementById('progress-container');";
-  html += "  const uploadButton = document.getElementById('upload-button');";
-
-  html += "  // Ensure file input change event works correctly";
-  html += "  if (fileInput) {";
-  html += "    fileInput.addEventListener('click', function(e) {";
-  html += "      console.log('File input clicked');";
-  html += "    });";
-  
-  html += "    fileInput.addEventListener('change', function(e) {";
-  html += "      console.log('File input changed', this.files);";
-  html += "      if (this.files && this.files.length > 0) {";
-  html += "        const file = this.files[0];";
-  html += "        fileSelected.textContent = file.name + ' (' + formatBytes(file.size) + ')';";
-  html += "        fileSelected.style.color = '#16a34a'; // Green text";
-  html += "        console.log('File selected:', file.name, file.size);";
-  
-  html += "        // Validate file type";
-  html += "        if (!file.name.toLowerCase().endsWith('.jpg') && ";
-  html += "            !file.name.toLowerCase().endsWith('.jpeg')) {";
-  html += "          status.textContent = 'Warning: File does not have .jpg extension';";
-  html += "          status.className = 'warning';";
-  html += "          status.style.display = 'block';";
-  html += "        } else if (file.size > 3000000) { // 3MB";
-  html += "          status.textContent = 'Warning: File is large ('+formatBytes(file.size)+') and may fail to upload';";
-  html += "          status.className = 'warning';";
-  html += "          status.style.display = 'block';";
-  html += "        } else {";
-  html += "          status.style.display = 'none';";
-  html += "        }";
-  html += "      } else {";
-  html += "        fileSelected.textContent = 'No file selected';";
-  html += "        fileSelected.style.color = '';";
-  html += "        status.style.display = 'none';";
-  html += "      }";
-  html += "    });";
-  html += "  }";
-
-  html += "  // Set up form submission handling";
-  html += "  if (form) {";
-  html += "    form.addEventListener('submit', function(e) {";
-  html += "      e.preventDefault();";
-  
-  html += "      if (!fileInput || !fileInput.files || !fileInput.files.length) {";
-  html += "        alert('Please select a file to upload');";
-  html += "        return;";
-  html += "      }";
-  
-  html += "      const file = fileInput.files[0];";
-  
-  html += "      // Show progress UI";
-  html += "      status.textContent = 'Preparing upload...';";
-  html += "      status.style.display = 'block';";
-  html += "      status.className = 'info';";
-  html += "      progressContainer.style.display = 'block';";
-  html += "      progressBar.style.width = '0%';";
-  html += "      uploadButton.disabled = true;";
-  html += "      fileInput.disabled = true;";
-  
-  html += "      // Create FormData";
-  html += "      const formData = new FormData();";
-  html += "      formData.append('image', file);";
-  html += "      console.log('Uploading file:', file.name, file.size);";
-  
-  html += "      const xhr = new XMLHttpRequest();";
-  
-  html += "      // Set up upload progress handler";
-  html += "      xhr.upload.addEventListener('progress', function(e) {";
-  html += "        if (e.lengthComputable) {";
-  html += "          const percent = Math.round((e.loaded / e.total) * 100);";
-  html += "          progressBar.style.width = percent + '%';";
-  html += "          status.textContent = `Uploading: ${percent}% (${formatBytes(e.loaded)} of ${formatBytes(e.total)})`;";
-  html += "          console.log(`Upload progress: ${percent}%`);";
-  html += "        }";
-  html += "      });";
-  
-  html += "      // Set up completion handler";
-  html += "      xhr.addEventListener('load', function() {";
-  html += "        if (xhr.status === 200) {";
-  html += "          progressBar.style.width = '100%';";
-  html += "          status.textContent = 'Upload complete! Processing...';";
-  html += "          status.className = 'success';";
-  
-  html += "          // Add processing animation";
-  html += "          let dots = '';";
-  html += "          const processingInterval = setInterval(function() {";
-  html += "            dots = dots.length >= 3 ? '' : dots + '.';";
-  html += "            status.textContent = 'Upload complete! Processing' + dots;";
-  html += "          }, 500);";
-  
-  html += "          // Refresh page after delay";
-  html += "          setTimeout(function() {";
-  html += "            clearInterval(processingInterval);";
-  html += "            window.location.reload();";
-  html += "          }, 3000);";
-  html += "        } else {";
-  html += "          status.textContent = 'Upload failed: ' + xhr.responseText;";
-  html += "          status.className = 'error';";
-  html += "          uploadButton.disabled = false;";
-  html += "          fileInput.disabled = false;";
-  html += "        }";
-  html += "      });";
-  
-  html += "      // Set up error handler";
-  html += "      xhr.addEventListener('error', function() {";
-  html += "        status.textContent = 'Upload failed due to network error';";
-  html += "        status.className = 'error';";
-  html += "        uploadButton.disabled = false;";
-  html += "        fileInput.disabled = false;";
-  html += "      });";
-  
-  html += "      // Set up timeout handler";
-  html += "      xhr.timeout = 30000; // 30 seconds";
-  html += "      xhr.addEventListener('timeout', function() {";
-  html += "        status.textContent = 'Upload timed out';";
-  html += "        status.className = 'error';";
-  html += "        uploadButton.disabled = false;";
-  html += "        fileInput.disabled = false;";
-  html += "      });";
-  
-  html += "      // Open connection and send data";
-  html += "      xhr.open('POST', '/upload', true);";
-  html += "      xhr.send(formData);";
-  html += "    });";
-  html += "  }";
-  
-  html += "  // Helper function to format file size";
-  html += "  function formatBytes(bytes) {";
-  html += "    if (bytes === 0) return '0 Bytes';";
-  html += "    const k = 1024;";
-  html += "    const sizes = ['Bytes', 'KB', 'MB', 'GB'];";
-  html += "    const i = Math.floor(Math.log(bytes) / Math.log(k));";
-  html += "    return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];";
-  html += "  }";
-  html += "});";
-  html += "</script>";
-
-  return html;
+void add_test_page_handler() {
+    server.on("/test", HTTP_GET, []() {
+        Logger.info("Connection test page requested");
+        
+        String response = "<!DOCTYPE html><html><head>";
+        response += "<title>ESP32P4 Connection Test</title>";
+        response += "<meta name='viewport' content='width=device-width, initial-scale=1.0'>";
+        response += "<style>body {font-family: sans-serif; padding: 20px; max-width: 800px; margin: 0 auto; line-height: 1.6;}";
+        response += "h1 {color: #0066cc;} .success {color: green;} .error {color: red;}</style>";
+        response += "</head><body>";
+        response += "<h1>ESP32P4 Connection Test</h1>";
+        response += "<p class='success'>✅ Connection successful!</p>";
+        response += "<h2>Server Information:</h2>";
+        response += "<ul>";
+        response += "<li><strong>ESP32P4 IP:</strong> " + WiFi.softAPIP().toString() + "</li>";
+        response += "<li><strong>Connected Clients:</strong> " + String(WiFi.softAPgetStationNum()) + "</li>";
+        response += "<li><strong>Free Memory:</strong> " + String(ESP.getFreeHeap() / 1024) + " KB</li>";
+        response += "<li><strong>Free PSRAM:</strong> " + String(ESP.getFreePsram() / 1024) + " KB</li>";
+        response += "<li><strong>WiFi Channel:</strong> 6</li>";
+        response += "<li><strong>Server Uptime:</strong> " + String(millis() / 1000) + " seconds</li>";
+        response += "<li><strong>Image Count:</strong> " + String(image_count) + "</li>";
+        response += "</ul>";
+        response += "<p><a href='/'>Go to Gallery</a></p>";
+        
+        // Add ping test
+        response += "<h2>Connection Test:</h2>";
+        response += "<div id='pingResult'>Testing connection speed...</div>";
+        response += "<script>";
+        response += "let startTime = Date.now();";
+        response += "fetch('/ping').then(r => r.text()).then(data => {";
+        response += "  let pingTime = Date.now() - startTime;";
+        response += "  document.getElementById('pingResult').innerHTML = ";
+        response += "    `<p>Ping time: <strong>${pingTime}ms</strong></p>`;";
+        response += "});";
+        response += "</script>";
+        response += "</body></html>";
+        
+        server.send(200, "text/html", response);
+        Logger.info("Connection test page served successfully");
+    });
+    
+    // Simple ping endpoint for testing connection speed
+    server.on("/ping", HTTP_GET, []() {
+        server.send(200, "text/plain", "pong");
+    });
 }
 
 /**
  * Enhanced file upload handler with improved error handling and timeouts
- * Updated: 2025-06-17 11:58:18
+ * Updated: 2025-06-20 12:07:40
  * User: Chamil1983
  */
 void handle_upload() {
@@ -3234,6 +1560,16 @@ void handle_upload() {
             return;
         }
         
+        // Make sure /images directory exists
+        if (!SD_MMC.exists("/images")) {
+            if (!SD_MMC.mkdir("/images")) {
+                Logger.error("Failed to create /images directory");
+                xSemaphoreGive(sd_mutex);
+                uploadError = true;
+                return;
+            }
+        }
+        
         // Open file for writing with reduced buffer size
         uploadFile = SD_MMC.open(uploadPath.c_str(), FILE_WRITE);
         
@@ -3246,37 +1582,34 @@ void handle_upload() {
         
         Logger.info("File created successfully for upload: %s", uploadPath.c_str());
     }
-else if (upload.status == UPLOAD_FILE_WRITE && !uploadError) {
-    if (!uploadFile) {
-        Logger.error("Upload file not open");
-        uploadError = true;
-        return;
-    }
-    
-    // Write data using safe SD write function
-    size_t written = safeSDWrite(uploadFile, upload.buf, upload.currentSize);
-    
-    // Check if write was successful
-    if (written != upload.currentSize) {
-        Logger.error("SD Write error: %d of %d bytes written", 
-                    written, upload.currentSize);
-        uploadError = true;
-    } else {
-        // Log progress periodically (not for every chunk)
-        uint32_t now = millis();
-        if (now - lastProgressTime > 1000) {
-            Logger.debug("Upload progress: %d bytes received", 
-                        uploadReceivedBytes + written);
-            lastProgressTime = now;
+    else if (upload.status == UPLOAD_FILE_WRITE && !uploadError) {
+        if (!uploadFile) {
+            Logger.error("Upload file not open");
+            uploadError = true;
+            return;
         }
         
-        uploadReceivedBytes += written;
-        uploadTotalBytes += upload.currentSize;
+        // Write data using safe SD write function
+        size_t written = safeSDWrite(uploadFile, upload.buf, upload.currentSize);
         
-        // Print diagnostic info
-        Logger.debug("Received %d bytes of upload data", upload.currentSize);
+        // Check if write was successful
+        if (written != upload.currentSize) {
+            Logger.error("SD Write error: %d of %d bytes written", 
+                        written, upload.currentSize);
+            uploadError = true;
+        } else {
+            // Log progress periodically (not for every chunk)
+            uint32_t now = millis();
+            if (now - lastProgressTime > 1000) {
+                Logger.debug("Upload progress: %d bytes received", 
+                            uploadReceivedBytes + written);
+                lastProgressTime = now;
+            }
+            
+            uploadReceivedBytes += written;
+            uploadTotalBytes += upload.currentSize;
+        }
     }
-}
     else if (upload.status == UPLOAD_FILE_END && !uploadError) {
         // Finish upload
         if (uploadFile) {
@@ -3343,227 +1676,854 @@ else if (upload.status == UPLOAD_FILE_WRITE && !uploadError) {
 }
 
 /**
- * Emergency SD card recovery
+ * Safe SD Write function to handle potential write failures
  */
-bool emergency_sd_recovery() {
-  Logger.info("Performing comprehensive emergency SD card recovery");
-  
-  // End any existing SD session
-  SD_MMC.end();
-  
-  // Wait for full discharge and card reset
-  delay(2000);
-  
-  // Reset pins individually with careful timing
-  const uint8_t sdPins[] = {
-    SDMMC_CLK_PIN, SDMMC_CMD_PIN, 
-    SDMMC_D0_PIN, SDMMC_D1_PIN, SDMMC_D2_PIN, SDMMC_D3_PIN
-  };
-  
-  // First set all pins to input mode
-  for (int i = 0; i < 6; i++) {
-    pinMode(sdPins[i], INPUT);
-  }
-  delay(300);
-  
-  // Now drive them low to discharge
-  for (int i = 0; i < 6; i++) {
-    pinMode(sdPins[i], OUTPUT);
-    digitalWrite(sdPins[i], LOW);
-    delay(50); // Short delay between pins
-  }
-  delay(500);
-  
-  // Release pins in reverse order with pull-ups
-  for (int i = 5; i >= 0; i--) {
-    pinMode(sdPins[i], INPUT_PULLUP);
-    delay(50);
-  }
-  delay(500);
-  
-  // Reset SD host controller
-  Logger.info("Reinitializing SD host controller");
-  
-  // Configure with explicit pins
-  SD_MMC.setPins(SDMMC_CLK_PIN, SDMMC_CMD_PIN, SDMMC_D0_PIN, 
-                SDMMC_D1_PIN, SDMMC_D2_PIN, SDMMC_D3_PIN);
-  
-  // Try ultra-conservative initialization
-  bool success = SD_MMC.begin("/sdcard", false, false, 80000); // Even lower speed (80KHz)
-  
-  if (!success) {
-    Logger.warn("First SD recovery attempt failed, trying with different settings");
-    delay(1000);
+size_t safeSDWrite(File &file, const uint8_t *buf, size_t size) {
+    if (!file || !buf || size == 0) {
+        return 0;
+    }
     
-    // Try 1-bit mode with slightly higher speed
-    success = SD_MMC.begin("/sdcard", true, false, 125000);
-  }
-  
-  if (success) {
-    Logger.info("SD card recovery successful");
-    sd_ready = true;
+    size_t totalWritten = 0;
+    size_t chunkSize = 512; // Small chunks to prevent watchdog issues
+    const uint8_t maxRetries = 3;
     
-    // Test a simple write operation
-    File testFile = SD_MMC.open("/recovery_test.txt", FILE_WRITE);
-    if (testFile) {
-      testFile.print("RECOVERY");
-      testFile.close();
-      
-      // Very small delay to ensure SD card operation completes
-      delay(100);
-      
-      // Read back to verify
-      testFile = SD_MMC.open("/recovery_test.txt", FILE_READ);
-      if (testFile) {
-        char buf[10] = {0};
-        int bytesRead = testFile.read((uint8_t*)buf, 8);
-        testFile.close();
+    for (size_t offset = 0; offset < size; offset += chunkSize) {
+        // Calculate current chunk size
+        size_t currentChunk = (chunkSize < (size - offset)) ? chunkSize : (size - offset);
+        uint8_t retries = 0;
+        size_t written = 0;
         
-        if (bytesRead == 8 && strcmp(buf, "RECOVERY") == 0) {
-          Logger.info("SD card test write successful");
-        } else {
-          Logger.warn("SD card write test failed, but continuing");
+        // Try to write with retries
+        while (retries < maxRetries && written < currentChunk) {
+            written = file.write(buf + offset, currentChunk);
+            
+            if (written == currentChunk) {
+                break; // Success
+            }
+            
+            // If write failed or was partial, retry
+            retries++;
+            if (retries < maxRetries) {
+                delay(10); // Short delay before retry
+            }
         }
-      }
-      
-      // Clean up test file
-      SD_MMC.remove("/recovery_test.txt");
+        
+        // Update total bytes written
+        totalWritten += written;
+        
+        // If write failed after all retries, abort
+        if (written < currentChunk) {
+            Logger.error("SD write failed after %d retries (%d/%d bytes written)", 
+                        maxRetries, totalWritten, size);
+            break;
+        }
+        
+        // Periodically call yield() to prevent watchdog triggers
+        if (offset % (chunkSize * 4) == 0) {
+            yield();
+        }
     }
     
-    // Ensure images directory exists
-    if (!SD_MMC.exists("/images")) {
-      if (SD_MMC.mkdir("/images")) {
-        Logger.info("Created /images directory");
-      }
-    }
-    
-    return true;
-  } else {
-    Logger.error("All SD card recovery attempts failed");
-    sd_ready = false;
-    return false;
-  }
+    return totalWritten;
 }
 
 /**
- * Function to recover SD card for uploads
+ * Enhanced LVGL task function with better error handling
+ * Updated: 2025-06-20 12:07:40
+ * User: Chamil1983
  */
-bool recover_sd_card_for_upload() {
-  Logger.info("Performing special SD recovery for uploads...");
-  
-  // First end any active SD session
-  SD_MMC.end();
-  
-  // Wait for a complete discharge of the SD card interface
-  delay(1000);
-  
-  // Reset pins one by one with timing gaps
-  pinMode(SDMMC_CLK_PIN, INPUT);
-  pinMode(SDMMC_CMD_PIN, INPUT);
-  pinMode(SDMMC_D0_PIN, INPUT);
-  pinMode(SDMMC_D1_PIN, INPUT);
-  pinMode(SDMMC_D2_PIN, INPUT);
-  pinMode(SDMMC_D3_PIN, INPUT);
-  delay(100);
-  
-  // Set to outputs and drive low to discharge
-  pinMode(SDMMC_CLK_PIN, OUTPUT);
-  digitalWrite(SDMMC_CLK_PIN, LOW);
-  pinMode(SDMMC_CMD_PIN, OUTPUT);
-  digitalWrite(SDMMC_CMD_PIN, LOW);
-  pinMode(SDMMC_D0_PIN, OUTPUT);
-  digitalWrite(SDMMC_D0_PIN, LOW);
-  pinMode(SDMMC_D1_PIN, OUTPUT);
-  digitalWrite(SDMMC_D1_PIN, LOW);
-  pinMode(SDMMC_D2_PIN, OUTPUT);
-  digitalWrite(SDMMC_D2_PIN, LOW);
-  pinMode(SDMMC_D3_PIN, OUTPUT);
-  digitalWrite(SDMMC_D3_PIN, LOW);
-  delay(200);
-  
-  // Reset to inputs with pullups
-  pinMode(SDMMC_CLK_PIN, INPUT_PULLUP);
-  pinMode(SDMMC_CMD_PIN, INPUT_PULLUP);
-  pinMode(SDMMC_D0_PIN, INPUT_PULLUP);
-  pinMode(SDMMC_D1_PIN, INPUT_PULLUP);
-  pinMode(SDMMC_D2_PIN, INPUT_PULLUP);
-  pinMode(SDMMC_D3_PIN, INPUT_PULLUP);
-  delay(200);
-  
-  // Configure SD MMC pins
-  SD_MMC.setPins(SDMMC_CLK_PIN, SDMMC_CMD_PIN, SDMMC_D0_PIN, 
-                SDMMC_D1_PIN, SDMMC_D2_PIN, SDMMC_D3_PIN);
-  
-  // Try to initialize with ultra-conservative parameters
-  bool success = SD_MMC.begin("/sdcard", false, false, 100000); // 1-bit mode, 100KHz speed
-  
-  if (success) {
-    // Test if SD card is working by writing a small test file
-    File testFile = SD_MMC.open("/sd_test.txt", FILE_WRITE);
-    if (testFile) {
-      testFile.println("SD recovery test");
-      testFile.close();
-      SD_MMC.remove("/sd_test.txt");
-      
-      Logger.info("SD card recovery successful");
-      sd_ready = true;
-      return true;
+void lvgl_task(void *pvParameters) {
+    // Initialize task-specific variables
+    uint32_t last_error_time = 0;
+    uint32_t last_wdt_feed = 0;
+    
+    Logger.info("LVGL task started on core %d", xPortGetCoreID());
+    
+    while (true) {
+        uint32_t now = millis();
+        
+        // Feed watchdog periodically for this task
+        if (now - last_wdt_feed >= 1000) {
+            if (wdt_enabled) {
+                esp_task_wdt_reset();
+            }
+            last_wdt_feed = now;
+        }
+        
+        try {
+            // Protect with mutex and timeout
+            if (xSemaphoreTake(ui_mutex, pdMS_TO_TICKS(100)) == pdTRUE) {
+                // Execute LVGL tasks
+                lv_timer_handler();
+                xSemaphoreGive(ui_mutex);
+            }
+        } 
+        catch (...) {
+            // Only log errors periodically to prevent log flooding
+            if (now - last_error_time > 5000) {
+                Logger.error("Error in LVGL task, continuing");
+                last_error_time = now;
+            }
+        }
+        
+        // Delay to yield CPU and control update rate
+        vTaskDelay(pdMS_TO_TICKS(10));
+    }
+}
+
+/**
+ * Fixed slideshowTask implementation with enhanced error handling
+ * Updated: 2025-06-20 12:07:40
+ * User: Chamil1983
+ */
+void slideshowTask(void *parameter) {
+    // Initialize local variables for better error handling
+    uint32_t last_image_change = 0;
+    uint32_t last_error_time = 0;
+    uint32_t last_wdt_feed = 0;
+    
+    Logger.info("Slideshow task started on core %d", xPortGetCoreID());
+    
+    // Main slideshow loop
+    while (true) {
+        // Get current time
+        uint32_t now = millis();
+        
+        // Feed watchdog periodically
+        if (wdt_enabled && now - last_wdt_feed >= 2000) {
+            esp_task_wdt_reset();
+            last_wdt_feed = now;
+        }
+        
+        // Process slideshow logic only if slideshow is active
+        if (slideshow_active && image_count > 0 && now - last_image_change >= slideshow_interval) {
+            try {
+                // Find the next valid image index with wrap-around
+                int nextImage = (current_image + 1) % image_count;
+                
+                // Try to display the next image without blocking too long for mutex
+                if (xSemaphoreTake(sd_mutex, pdMS_TO_TICKS(500)) == pdTRUE) {
+                    // Display next image
+                    display_image(nextImage);
+                    xSemaphoreGive(sd_mutex);
+                    
+                    // Update timestamp
+                    last_image_change = now;
+                    Logger.debug("Slideshow advanced to image %d", nextImage);
+                } else {
+                    // Only log errors periodically
+                    if (now - last_error_time > 5000) {
+                        Logger.warn("Slideshow couldn't acquire SD mutex, will retry");
+                        last_error_time = now;
+                    }
+                }
+            } 
+            catch (...) {
+                // Log errors, but don't flood the logs
+                if (now - last_error_time > 5000) {
+                    Logger.error("Exception in slideshow task - continuing");
+                    last_error_time = now;
+                }
+                
+                // Safety check to ensure mutex is released in case of exception
+                xSemaphoreGive(sd_mutex);
+            }
+        }
+        
+        // Short delay to prevent CPU hogging
+        vTaskDelay(pdMS_TO_TICKS(100));
+    }
+}
+
+/**
+ * Helper function to find the next valid image for slideshow
+ */
+int findNextValidImage(int currentIndex) {
+    // Safety check
+    if (image_count <= 0) return -1;
+    
+    // Start with next image index
+    int nextIndex = (currentIndex + 1) % image_count;
+    int startIndex = nextIndex; // Remember where we started to avoid infinite loop
+    
+    // Try each image until we find a valid one or tried them all
+    do {
+        // Check if the image at this index is valid
+        if (image_list[nextIndex] && SD_MMC.exists(image_list[nextIndex])) {
+            bool isValid = isValidJPEG(image_list[nextIndex]);
+            if (isValid) {
+                return nextIndex; // Found a valid image
+            } else {
+                Logger.warn("Skipping invalid image at index %d: %s", 
+                          nextIndex, image_list[nextIndex]);
+            }
+        }
+        
+        // Move to next image
+        nextIndex = (nextIndex + 1) % image_count;
+    } while (nextIndex != startIndex); // Continue until we've checked all images
+    
+    // If we get here, no valid image was found
+    return -1;
+}
+
+/**
+ * Enhanced slideshow control functions with better error handling
+ * Updated: 2025-06-20 12:07:40
+ * User: Chamil1983
+ */
+void startSlideshow(uint32_t interval_ms) {
+    // Set a reasonable minimum interval
+    if (interval_ms < 2000) {
+        interval_ms = 2000; // Minimum 2 seconds for stability
+    }
+    
+    // Prevent unreasonable large intervals
+    if (interval_ms > 60000) {
+        interval_ms = 60000; // Maximum 1 minute
+    }
+    
+    Logger.info("Starting slideshow with %d ms interval", interval_ms);
+    
+    // Set slideshow interval
+    slideshow_interval = interval_ms;
+    
+    // Update status label
+    if (ui_ready && status_label != nullptr) {
+        if (xSemaphoreTake(ui_mutex, pdMS_TO_TICKS(100)) == pdTRUE) {
+            lv_label_set_text(status_label, "Slideshow: ON");
+            xSemaphoreGive(ui_mutex);
+        }
+    }
+    
+    // Enable slideshow
+    slideshow_active = true;
+}
+
+void stopSlideshow() {
+    Logger.info("Stopping slideshow");
+    
+    // Disable slideshow
+    slideshow_active = false;
+    
+    // Update status label
+    if (ui_ready && status_label != nullptr) {
+        if (xSemaphoreTake(ui_mutex, pdMS_TO_TICKS(100)) == pdTRUE) {
+            lv_label_set_text(status_label, "Slideshow: OFF");
+            xSemaphoreGive(ui_mutex);
+        }
+    }
+}
+
+void toggleSlideshow(uint32_t interval_ms) {
+    if (slideshow_active) {
+        stopSlideshow();
     } else {
-      Logger.error("SD card recovery - cannot write test file");
-      sd_ready = false;
-      return false;
+        startSlideshow(interval_ms);
     }
-  } else {
-    Logger.error("SD card recovery failed");
-    sd_ready = false;
-    return false;
-  }
 }
 
 /**
- * General SD card recovery
+ * Check if image needs rotation
  */
-bool recover_sd_card() {
-  Logger.info("Attempting SD card recovery...");
-  
-  // End any active SD session
-  SD_MMC.end();
-  delay(1000);
-  
-  // Reset pins to default state
-  pinMode(SDMMC_CLK_PIN, INPUT_PULLUP);
-  pinMode(SDMMC_CMD_PIN, INPUT_PULLUP);
-  pinMode(SDMMC_D0_PIN, INPUT_PULLUP);
-  pinMode(SDMMC_D1_PIN, INPUT_PULLUP);
-  pinMode(SDMMC_D2_PIN, INPUT_PULLUP);
-  pinMode(SDMMC_D3_PIN, INPUT_PULLUP);
-  delay(500);
-  
-  // Try to initialize with conservative settings
-  SD_MMC.setPins(SDMMC_CLK_PIN, SDMMC_CMD_PIN, SDMMC_D0_PIN, 
-                SDMMC_D1_PIN, SDMMC_D2_PIN, SDMMC_D3_PIN);
-  
-  bool success = SD_MMC.begin("/sdcard", true, false, SDMMC_FREQ_PROBING);
-  
-  if (success) {
-    sd_ready = true;
-    Logger.info("SD card recovery successful");
-    return true;
-  }
-  
-  Logger.error("SD card recovery failed");
-  sd_ready = false;
-  return false;
+bool check_image_needs_rotation(int img_width, int img_height) {
+    // Screen is 800x1280 (portrait orientation)
+    // Only rotate if image is in landscape (width > height)
+    return (img_width > img_height);
 }
 
 /**
- * Improved scan_images function with corruption detection and removal
- * Updated: 2025-06-17 10:03:45
+ * Enhanced JPEG rendering with better error handling
+ * Updated: 2025-06-20 12:07:40
+ * User: Chamil1983
+ */
+bool render_jpeg_file(const char* filename) {
+    if (!sd_ready || !filename) {
+        Logger.error("SD card not ready or invalid filename");
+        return false;
+    }
+    
+    uint32_t startTime = millis();
+    bool success = false;
+    
+    // Increment counter for stats
+    jpeg_decode_total_count++;
+    
+    // Take SD card mutex to ensure exclusive access
+    if (xSemaphoreTake(sd_mutex, pdMS_TO_TICKS(1000)) != pdTRUE) {
+        Logger.error("Failed to take SD mutex for JPEG loading");
+        return false;
+    }
+    
+    File jpegFile = SD_MMC.open(filename, FILE_READ);
+    if (!jpegFile) {
+        Logger.error("Failed to open JPEG file: %s", filename);
+        xSemaphoreGive(sd_mutex);
+        return false;
+    }
+    
+    size_t fileSize = jpegFile.size();
+    if (fileSize < 1024) {
+        Logger.error("File too small: %s (%d bytes)", filename, fileSize);
+        jpegFile.close();
+        xSemaphoreGive(sd_mutex);
+        return false;
+    }
+    
+    Logger.info("Starting JPEG decoding for %s (%u bytes)", filename, fileSize);
+    
+    // Initialize flags for image orientation
+    image_needs_rotation = false; // Default to no rotation
+    
+    // Store any JPEG decoding errors
+    const char* errorMsg = nullptr;
+    
+    // Set up error recovery
+    bool decodeFailed = false;
+    
+    // Try to decode the image with progressively lower quality if needed
+    if (jpeg.open(jpegFile, jpeg_draw_callback)) {
+        // Get image dimensions to determine if rotation is needed
+        int imgWidth = jpeg.getWidth();
+        int imgHeight = jpeg.getHeight();
+        
+        if (imgWidth <= 0 || imgHeight <= 0) {
+            Logger.error("Invalid image dimensions: %dx%d", imgWidth, imgHeight);
+            jpeg.close();
+            jpegFile.seek(0);
+            decodeFailed = true;
+        } else {
+            // Set rotation flag based on image orientation
+            image_needs_rotation = check_image_needs_rotation(imgWidth, imgHeight);
+            
+            // Attempt full resolution decode
+            if (jpeg.decode(0, 0, 0)) {
+                if (image_needs_rotation) {
+                    Logger.info("JPEG decoded successfully (rotated): %dx%d -> %dx%d",
+                                imgWidth, imgHeight, imgHeight, imgWidth);
+                } else {
+                    Logger.info("JPEG decoded successfully: %dx%d", imgWidth, imgHeight);
+                }
+                success = true;
+            } else {
+                Logger.warn("Full resolution decode failed, trying half resolution");
+                decodeFailed = true;
+                errorMsg = "Full resolution decode failed";
+            }
+        }
+    } else {
+        Logger.error("Failed to open JPEG for decoding");
+        decodeFailed = true;
+        errorMsg = "Failed to open JPEG decoder";
+    }
+    
+    // Try at half resolution if full resolution failed
+    if (decodeFailed) {
+        jpeg.close();
+        jpegFile.seek(0);
+        decodeFailed = false;
+        
+        if (jpeg.open(jpegFile, jpeg_draw_callback)) {
+            // Try with half resolution scaling
+            if (jpeg.decode(0, 0, JPEG_SCALE_HALF)) {
+                Logger.info("JPEG decoded successfully at half resolution");
+                success = true;
+            } else {
+                Logger.warn("Half resolution decode failed, trying quarter resolution");
+                decodeFailed = true;
+                errorMsg = "Half resolution decode failed";
+            }
+        }
+    }
+    
+    // Try at quarter resolution as last resort
+    if (decodeFailed) {
+        jpeg.close();
+        jpegFile.seek(0);
+        
+        if (jpeg.open(jpegFile, jpeg_draw_callback)) {
+            if (jpeg.decode(0, 0, JPEG_SCALE_QUARTER)) {
+                Logger.info("JPEG decoded successfully at quarter resolution");
+                success = true;
+            } else {
+                Logger.error("JPEG decode failed at all resolutions");
+                errorMsg = "All resolution attempts failed";
+            }
+        }
+    }
+    
+    // Always close the JPEG object
+    jpeg.close();
+    
+    // Close the file and release SD mutex
+    jpegFile.close();
+    xSemaphoreGive(sd_mutex);
+    
+    // Update success counter
+    if (success) {
+        jpeg_decode_success_count++;
+    }
+    
+    // Log the time taken to decode
+    uint32_t decodeTime = millis() - startTime;
+    if (decodeTime > 1500) {
+        Logger.warn("JPEG rendering took %lu ms", decodeTime);
+    } else {
+        Logger.info("JPEG decoding took %lu ms, result: %s", decodeTime, success ? "success" : "failed");
+    }
+    
+    return success;
+}
+
+/**
+ * Enhanced JPEG draw callback with guaranteed memory safety
+ * Updated: 2025-06-20 12:07:40
+ * User: Chamil1983
+ */
+// JPEG draw callback function with correct LCD function name
+int jpeg_draw_callback(JPEGDRAW *pDraw) {
+    // Safety check - don't proceed if pointers are invalid
+    if (!lcd_ready || !pDraw || !pDraw->pPixels) {
+        return 0;
+    }
+    
+    // Static timing control to prevent LCD driver overload
+    static uint32_t lastDrawTime = 0;
+    uint32_t currentTime = millis();
+    
+    // Add small delay between draw operations to prevent LCD driver errors
+    if (currentTime - lastDrawTime < 5) {
+        delay(5);
+    }
+    
+    // Verify draw dimensions
+    if (pDraw->iWidth <= 0 || pDraw->iHeight <= 0 ||
+        pDraw->iWidth > 1280 || pDraw->iHeight > 1280) {
+        Logger.error("Invalid JPEG draw dimensions: %dx%d", pDraw->iWidth, pDraw->iHeight);
+        return 0;
+    }
+    
+    // Get image dimensions from JPEG decoder
+    int imgWidth = jpeg.getWidth();
+    int imgHeight = jpeg.getHeight();
+    
+    // Skip drawing if invalid dimensions
+    if (imgWidth <= 0 || imgHeight <= 0 || imgWidth > 5000 || imgHeight > 5000) {
+        Logger.error("Invalid JPEG dimensions: %dx%d", imgWidth, imgHeight);
+        return 0;
+    }
+    
+    // Local copy of rotation flag to prevent race condition
+    bool needsRotation = image_needs_rotation;
+    
+    // Draw without rotation when possible
+    if (!needsRotation) {
+        // Calculate centering offsets
+        int centerX = (LCD_H_RES - imgWidth) / 2;
+        int centerY = (LCD_V_RES - imgHeight) / 2;
+        
+        // Ensure non-negative values
+        centerX = max(0, centerX);
+        centerY = max(0, centerY);
+        
+        // Calculate drawing coordinates
+        int x = pDraw->x + centerX;
+        int y = pDraw->y + centerY;
+        
+        // Draw within screen boundaries only
+        if (x >= 0 && y >= 0 && 
+            x + pDraw->iWidth <= LCD_H_RES && 
+            y + pDraw->iHeight <= LCD_V_RES) {
+            
+            try {
+                // Draw the image directly to the LCD using the CORRECT function name
+                lcd.lcd_draw_bitmap(x, y, 
+                                  x + pDraw->iWidth - 1, 
+                                  y + pDraw->iHeight - 1, 
+                                  (uint16_t*)pDraw->pPixels);
+                
+                // Update draw time tracker
+                lastDrawTime = millis();
+                return 1; // Success
+            } 
+            catch (...) {
+                Logger.error("Exception in LCD drawing");
+                return 0; // Failure
+            }
+        }
+    } 
+    else {
+        // Handle rotation case (landscape image on portrait screen)
+        int rotatedWidth = imgHeight;
+        int rotatedHeight = imgWidth;
+        
+        // Calculate centered position for rotated image
+        int centerX = (LCD_H_RES - rotatedWidth) / 2;
+        int centerY = (LCD_V_RES - rotatedHeight) / 2;
+        centerX = max(0, centerX);
+        centerY = max(0, centerY);
+        
+        // Calculate position in rotated coordinates
+        int rotX = centerX + pDraw->y;
+        int rotY = centerY + (imgWidth - pDraw->x - pDraw->iWidth);
+        int rotWidth = pDraw->iHeight;
+        int rotHeight = pDraw->iWidth;
+        
+        // Safety check for buffer size
+        uint32_t bufSize = (uint32_t)rotWidth * (uint32_t)rotHeight;
+        if (rotWidth <= 0 || rotHeight <= 0 || bufSize > 40000) {
+            Logger.error("Invalid rotation dimensions: %dx%d", rotWidth, rotHeight);
+            return 0; // Fail safely
+        }
+        
+        // Allocate memory for rotation - use PSRAM when available
+        uint16_t* rotatedData = (uint16_t*)ps_malloc(bufSize * sizeof(uint16_t));
+        if (!rotatedData) {
+            rotatedData = (uint16_t*)malloc(bufSize * sizeof(uint16_t));
+            if (!rotatedData) {
+                Logger.error("Failed to allocate %u bytes for rotation", bufSize * sizeof(uint16_t));
+                return 0; // Fail safely
+            }
+        }
+        
+        // Perform rotation with bounds checks
+        for (int y = 0; y < pDraw->iHeight && y < 1000; y++) {
+            for (int x = 0; x < pDraw->iWidth && x < 1000; x++) {
+                // For 90° rotation: new_x = y, new_y = width - 1 - x
+                int newX = y;
+                int newY = pDraw->iWidth - 1 - x;
+                
+                // Bounds check for both source and destination
+                if (newX >= 0 && newX < rotWidth && 
+                    newY >= 0 && newY < rotHeight && 
+                    y * pDraw->iWidth + x < pDraw->iWidth * pDraw->iHeight) {
+                    // Only use valid pixels from source image
+                    rotatedData[newY * rotWidth + newX] = ((uint16_t*)pDraw->pPixels)[y * pDraw->iWidth + x];
+                }
+            }
+        }
+        
+        // Draw only if within screen bounds
+        bool drawSuccess = false;
+        if (rotX >= 0 && rotY >= 0 && 
+            rotX + rotWidth <= LCD_H_RES && 
+            rotY + rotHeight <= LCD_V_RES) {
+            try {
+                // Draw rotated image to LCD using the CORRECT function name
+                lcd.lcd_draw_bitmap(rotX, rotY, 
+                                  rotX + rotWidth - 1, 
+                                  rotY + rotHeight - 1, 
+                                  rotatedData);
+                drawSuccess = true;
+            } 
+            catch (...) {
+                Logger.error("Exception in rotated LCD drawing");
+            }
+        }
+        
+        // Free allocated memory
+        free(rotatedData);
+        
+        // Update draw time tracker
+        lastDrawTime = millis();
+        return drawSuccess ? 1 : 0;
+    }
+    
+    return 0; // Default failure case for safety
+}
+
+/**
+ * Enhanced display_image function with better error recovery
+ * Updated: 2025-06-20 12:07:40
+ * User: Chamil1983
+ */
+void display_image(int index) {
+    // Validate parameters
+    if (!sd_ready || index < 0 || index >= image_count) {
+        Logger.error("Cannot display image - invalid index %d or SD not ready", index);
+        return;
+    }
+    
+    // Prevent concurrent image display requests
+    static bool display_in_progress = false;
+    static SemaphoreHandle_t displaySemaphore = NULL;
+    
+    if (displaySemaphore == NULL) {
+        displaySemaphore = xSemaphoreCreateMutex();
+    }
+    
+    if (display_in_progress) {
+        Logger.warn("Image display already in progress, skipping request");
+        return;
+    }
+    
+    // Try to acquire display semaphore with timeout
+    if (xSemaphoreTake(displaySemaphore, pdMS_TO_TICKS(500)) != pdTRUE) {
+        Logger.error("Failed to acquire display semaphore");
+        return;
+    }
+    
+    display_in_progress = true;
+    image_loading = true;
+    
+    try {
+        // Store current image index
+        current_image = index;
+        
+        // Update UI to reflect new image
+        updateImageCounter(index);
+        
+        // Save current backlight level and dim during loading
+        uint8_t originalBrightness = 100; // Default brightness level
+        lcd.example_bsp_set_lcd_backlight(50); // Dim to 50/255 during loading
+        
+        // Clear the screen
+        clearLCDScreen();
+        
+        // Make a safe local copy of the filename
+        char localFilename[128] = {0};
+        strncpy(localFilename, image_list[index], sizeof(localFilename) - 1);
+        
+        // Try to render the JPEG file
+        bool success = false;
+        
+        // Try to acquire jpeg mutex with a timeout
+        if (xSemaphoreTake(jpeg_mutex, pdMS_TO_TICKS(1000)) == pdTRUE) {
+            success = render_jpeg_file(localFilename);
+            xSemaphoreGive(jpeg_mutex);
+        } else {
+            Logger.error("Failed to acquire JPEG mutex");
+        }
+        
+        // Handle rendering result
+        if (success) {
+            // Fade in the backlight for a smooth transition
+            const int fadeStep = 10;
+            const int fadeDelay = 10;
+            
+            for (int brightness = 50; brightness <= originalBrightness; brightness += fadeStep) {
+                lcd.example_bsp_set_lcd_backlight(brightness);
+                delay(fadeDelay);
+            }
+            lcd.example_bsp_set_lcd_backlight(originalBrightness);
+        } else {
+            // Restore backlight and display error message
+            lcd.example_bsp_set_lcd_backlight(originalBrightness);
+            displayErrorMessage("Failed to load image");
+        }
+        
+        // Update status based on result
+        updateStatusAfterImageLoad(index, success);
+        
+    } catch (...) {
+        Logger.error("Exception during image display");
+        lcd.example_bsp_set_lcd_backlight(100); // Restore backlight
+        updateStatusAfterImageLoad(index, false);
+    }
+    
+    // Clean up and release semaphore
+    image_loading = false;
+    display_in_progress = false;
+    xSemaphoreGive(displaySemaphore);
+}
+
+/**
+ * Display a simple error message on screen
+ * Updated: 2025-06-20 12:07:40
+ * User: Chamil1983
+ */
+// Display error message function with correct LCD function name
+void displayErrorMessage(const char* message) {
+    if (!lcd_ready || !message) return;
+    
+    // Display colors
+    uint16_t bgColor = 0x0000;    // Black background
+    uint16_t fgColor = 0xF800;    // Red text/border
+    
+    // Create a message box in center of screen
+    int boxWidth = 300;
+    int boxHeight = 100;
+    int x = (LCD_H_RES - boxWidth) / 2;
+    int y = (LCD_V_RES - boxHeight) / 2;
+    
+    // Fill box with background color
+    uint16_t* boxBuffer = (uint16_t*)ps_malloc(boxWidth * boxHeight * sizeof(uint16_t));
+    if (!boxBuffer) {
+        boxBuffer = (uint16_t*)malloc(boxWidth * boxHeight * sizeof(uint16_t));
+        if (!boxBuffer) return; // Exit if can't allocate memory
+    }
+    
+    // Create box border and background
+    for (int py = 0; py < boxHeight; py++) {
+        for (int px = 0; px < boxWidth; px++) {
+            bool isBorder = (px < 3 || px >= boxWidth-3 || py < 3 || py >= boxHeight-3);
+            boxBuffer[py * boxWidth + px] = isBorder ? fgColor : bgColor;
+        }
+    }
+    
+    // Draw an X in the center
+    int centerX = boxWidth / 2;
+    int centerY = boxHeight / 2;
+    int size = 30;
+    
+    // Draw X lines
+    for (int i = -size; i <= size; i++) {
+        for (int j = -2; j <= 2; j++) {
+            // First diagonal (\)
+            int px = centerX + i;
+            int py = centerY + i + j;
+            if (px >= 5 && px < boxWidth-5 && py >= 5 && py < boxHeight-5) {
+                boxBuffer[py * boxWidth + px] = fgColor;
+            }
+            
+            // Second diagonal (/)
+            px = centerX + i;
+            py = centerY - i + j;
+            if (px >= 5 && px < boxWidth-5 && py >= 5 && py < boxHeight-5) {
+                boxBuffer[py * boxWidth + px] = fgColor;
+            }
+        }
+    }
+    
+    // Draw the box to screen using the CORRECT function name
+    lcd.lcd_draw_bitmap(x, y, x+boxWidth-1, y+boxHeight-1, boxBuffer);
+    
+    // Free memory
+    free(boxBuffer);
+    
+    // Log error
+    Logger.error("Error displayed: %s", message);
+}
+
+
+/**
+ * Enhanced screen clearing function with progressive display
+ * Updated: 2025-06-20 12:07:40
+ * User: Chamil1983
+ */
+// Screen clearing function with correct LCD function name
+void clearLCDScreen() {
+    if (!lcd_ready) return;
+    
+    uint32_t startTime = millis();
+    
+    // Create a buffer for clearing rows 
+    const uint32_t rowsAtOnce = 20;  // Process 20 rows at a time
+    const uint32_t pixelsPerRow = LCD_H_RES;
+    uint16_t* blackBuffer = (uint16_t*)ps_calloc(rowsAtOnce * pixelsPerRow, sizeof(uint16_t));
+    
+    if (!blackBuffer) {
+        // Fall back to smaller buffer if PSRAM allocation fails
+        uint16_t stackBuffer[LCD_H_RES];
+        memset(stackBuffer, 0, sizeof(stackBuffer));
+        
+        // Clear screen one row at a time with CORRECT function name
+        for (uint32_t y = 0; y < LCD_V_RES; y++) {
+            lcd.lcd_draw_bitmap(0, y, LCD_H_RES-1, y, stackBuffer);
+            
+            // Feed watchdog periodically
+            if (y % 100 == 0) {
+                feed_watchdog();
+                delay(1);  // Brief delay to allow other tasks to run
+            }
+        }
+    } else {
+        // Clear with larger buffer for better performance using CORRECT function name
+        for (uint32_t y = 0; y < LCD_V_RES; y += rowsAtOnce) {
+            uint32_t rowsToDraw = ((rowsAtOnce < (LCD_V_RES - y)) ? rowsAtOnce : (LCD_V_RES - y));
+            lcd.lcd_draw_bitmap(0, y, LCD_H_RES-1, y + rowsToDraw - 1, blackBuffer);
+            
+            // Feed watchdog periodically
+            if (y % 100 == 0) {
+                feed_watchdog();
+                delay(1);  // Brief delay to allow other tasks to run
+            }
+        }
+        
+        // Free buffer
+        free(blackBuffer);
+    }
+    
+    // Log timing information
+    Logger.debug("Screen cleared in %lu ms", millis() - startTime);
+}
+
+/**
+ * Enhanced JPEG file validation function
+ * Updated: 2025-06-20 12:07:40
+ * User: Chamil1983
+ */
+bool isValidJPEG(const char* filename) {
+    // Check parameters
+    if (!sd_ready || !filename) {
+        Logger.error("SD card not ready or null filename");
+        return false;
+    }
+    
+    // Check if file exists
+    if (!SD_MMC.exists(filename)) {
+        Logger.error("File not found: %s", filename);
+        return false;
+    }
+    
+    // Open the file for reading
+    File jpegFile = SD_MMC.open(filename, FILE_READ);
+    if (!jpegFile) {
+        Logger.error("Failed to open file: %s", filename);
+        return false;
+    }
+    
+    // Check file size - too small or too large files are suspicious
+    size_t fileSize = jpegFile.size();
+    if (fileSize < 1024) {
+        Logger.error("File too small to be valid JPEG: %s (%d bytes)", filename, fileSize);
+        jpegFile.close();
+        return false;
+    }
+    
+    if (fileSize > 10000000) { // 10MB max
+        Logger.error("File too large for reliable display: %s (%lu bytes)", filename, (unsigned long)fileSize);
+        jpegFile.close();
+        return false;
+    }
+    
+    // Check JPEG header (SOI marker)
+    uint8_t header[4];
+    size_t bytesRead = jpegFile.readBytes((char*)header, 4);
+    if (bytesRead != 4) {
+        Logger.error("Couldn't read header from: %s", filename);
+        jpegFile.close();
+        return false;
+    }
+    
+    // Verify JPEG header starts with FF D8 (SOI marker)
+    if (header[0] != 0xFF || header[1] != 0xD8) {
+        Logger.error("Invalid JPEG header (not FF D8): %s", filename);
+        jpegFile.close();
+        return false;
+    }
+    
+    // Check presence of APP0/APP1 marker (FF Ex)
+    if (header[2] != 0xFF) {
+        Logger.warn("Suspicious JPEG structure, missing APP marker in: %s", filename);
+        jpegFile.close();
+        return false;
+    }
+    
+    // Basic validation successful - it's likely a valid JPEG
+    jpegFile.close();
+    return true;
+}
+
+/**
+ * Enhanced image scanner with improved error handling
+ * Updated: 2025-06-20 12:07:40
  * User: Chamil1983
  */
 void scan_images() {
-    Logger.info("Scanning for images with enhanced validation...");
+    Logger.info("Scanning for images...");
     
+    // Return early if SD card isn't ready
     if (!sd_ready) {
         Logger.error("Cannot scan for images - SD card not ready");
         image_count = 0;
@@ -3598,11 +2558,6 @@ void scan_images() {
         }
     }
     
-    // Track corrupt files so we can delete them
-    const int MAX_CORRUPT_FILES = 20;
-    char* corruptFiles[MAX_CORRUPT_FILES] = {nullptr};
-    int corruptFileCount = 0;
-    
     // Open the directory
     File root = SD_MMC.open("/images");
     if (!root) {
@@ -3618,94 +2573,61 @@ void scan_images() {
         return;
     }
     
-    // First phase: Scan all files and mark corrupt ones for deletion
+    // Phase 1: Identify valid images
     Logger.info("Phase 1: Identifying valid and corrupt images...");
     File file = root.openNextFile();
     while (file && image_count < MAX_IMAGES) {
         if (!file.isDirectory()) {
             String filename = file.name();
-            // Convert to lowercase for case-insensitive comparison
             String lowerFilename = filename;
             lowerFilename.toLowerCase();
             
             if (lowerFilename.endsWith(".jpg") || lowerFilename.endsWith(".jpeg")) {
-                String fullPath = "/images/";
-                fullPath += filename;
+                String fullPath = "/images/" + filename;
                 
-                // Check file size first
+                // Skip tiny files immediately
                 size_t fileSize = file.size();
-                if (fileSize < 1024) { // Minimum 1KB
-                    Logger.warn("Marking small file for deletion: %s (%d bytes)", fullPath.c_str(), fileSize);
-                    
-                    // Add to corrupt files list
-                    if (corruptFileCount < MAX_CORRUPT_FILES) {
-                        corruptFiles[corruptFileCount] = strdup(fullPath.c_str());
-                        corruptFileCount++;
-                    }
-                    
+                if (fileSize < 1024) {
+                    Logger.warn("Skipping small file: %s (%d bytes)", fullPath.c_str(), fileSize);
                     file = root.openNextFile();
                     continue;
                 }
                 
-                // Perform full validation using our enhanced function
-                file.close(); // Close first because our validator will reopen it
-                bool isValid = isValidJPEG(fullPath.c_str());
-                file = root.openNextFile(); // Re-open next file
-                
-                if (!isValid) {
-                    Logger.warn("Marking corrupted file for deletion: %s", fullPath.c_str());
+                // Check basic JPEG validity (fast check)
+                uint8_t header[4];
+                file.seek(0);
+                if (file.read(header, 4) == 4) {
+                    // Valid JPEG files start with FF D8 FF Ex
+                    bool basicValid = (header[0] == 0xFF && header[1] == 0xD8 && header[2] == 0xFF);
                     
-                    // Add to corrupt files list
-                    if (corruptFileCount < MAX_CORRUPT_FILES) {
-                        corruptFiles[corruptFileCount] = strdup(fullPath.c_str());
-                        corruptFileCount++;
+                    if (basicValid) {
+                        // Add to image list
+                        char* pathCopy = (char*)malloc(fullPath.length() + 1);
+                        if (pathCopy) {
+                            strcpy(pathCopy, fullPath.c_str());
+                            image_list[image_count] = pathCopy;
+                            image_count++;
+                            
+                            Logger.debug("Found image %d: %s (%d bytes)", image_count - 1, pathCopy, fileSize);
+                        }
+                    } else {
+                        Logger.warn("Skipping invalid JPEG: %s", fullPath.c_str());
                     }
-                    
-                    continue;
-                }
-                
-                // If we get here, the file is valid - add it to our list
-                image_list[image_count] = (char*)malloc(fullPath.length() + 1);
-                if (image_list[image_count]) {
-                    strcpy(image_list[image_count], fullPath.c_str());
-                    Logger.debug("Found image %d: %s (%d bytes)", 
-                              image_count, image_list[image_count], fileSize);
-                    image_count++;
-                } else {
-                    Logger.error("Failed to allocate memory for image path");
                 }
             }
-        } else {
-            file = root.openNextFile();
         }
+        
+        // Move to next file
+        file = root.openNextFile();
     }
     
     // Close the directory
     root.close();
     
-    // Second phase: Delete corrupt files
-    if (corruptFileCount > 0) {
-        Logger.info("Phase 2: Deleting %d corrupted files...", corruptFileCount);
-        
-        for (int i = 0; i < corruptFileCount; i++) {
-            if (corruptFiles[i] != nullptr) {
-                Logger.info("Deleting corrupted file: %s", corruptFiles[i]);
-                
-                if (SD_MMC.remove(corruptFiles[i])) {
-                    Logger.info("Successfully deleted: %s", corruptFiles[i]);
-                } else {
-                    Logger.error("Failed to delete: %s", corruptFiles[i]);
-                }
-                
-                free(corruptFiles[i]);
-            }
-        }
-    }
-    
     // Release the mutex
     xSemaphoreGive(sd_mutex);
     
-    Logger.info("Found %d valid images, removed %d corrupted files", image_count, corruptFileCount);
+    Logger.info("Found %d images", image_count);
     
     // Create a test image if no images were found
     if (image_count == 0) {
@@ -3716,74 +2638,239 @@ void scan_images() {
 }
 
 /**
+ * Create a simple test pattern image when no images found
+ * Updated: 2025-06-20 12:07:40
+ * User: Chamil1983
+ */
+bool createTestImage() {
+    if (!sd_ready) return false;
+    
+    if (xSemaphoreTake(sd_mutex, pdMS_TO_TICKS(2000)) != pdTRUE) {
+        return false;
+    }
+    
+    bool success = false;
+    
+    try {
+        // Make sure directory exists
+        if (!SD_MMC.exists("/images")) {
+            SD_MMC.mkdir("/images");
+        }
+        
+        // Create a simple test file
+        File testFile = SD_MMC.open("/images/test_pattern.jpg", FILE_WRITE);
+        if (testFile) {
+            // This is a minimal valid JPEG file (JFIF header)
+            const uint8_t jpegHeader[] = {
+                0xFF, 0xD8, 0xFF, 0xE0, 0x00, 0x10, 0x4A, 0x46, 0x49, 0x46, 0x00, 0x01, 0x01, 0x01, 0x00, 0x60,
+                0x00, 0x60, 0x00, 0x00, 0xFF, 0xDB, 0x00, 0x43, 0x00, 0x08, 0x06, 0x06, 0x07, 0x06, 0x05, 0x08,
+                0x07, 0x07, 0x07, 0x09, 0x09, 0x08, 0x0A, 0x0C, 0x14, 0x0D, 0x0C, 0x0B, 0x0B, 0x0C, 0x19, 0x12,
+                0x13, 0x0F, 0x14, 0x1D, 0x1A, 0x1F, 0x1E, 0x1D, 0x1A, 0x1C, 0x1C, 0x20, 0x24, 0x2E, 0x27, 0x20,
+                0x22, 0x2C, 0x23, 0x1C, 0x1C, 0x28, 0x37, 0x29, 0x2C, 0x30, 0x31, 0x34, 0x34, 0x34, 0x1F, 0x27,
+                0x39, 0x3D, 0x38, 0x32, 0x3C, 0x2E, 0x33, 0x34, 0x32, 0xFF, 0xC0, 0x00, 0x11, 0x08, 0x00, 0x80,
+                0x00, 0x80, 0x03, 0x01, 0x22, 0x00, 0x02, 0x11, 0x01, 0x03, 0x11, 0x01, 0xFF, 0xC4, 0x00, 0x1F,
+                0x00, 0x00, 0x01, 0x05, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+                0x00, 0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0A, 0x0B, 0xFF, 0xC4, 0x00,
+                0xB5, 0x10, 0x00, 0x02, 0x01, 0x03, 0x03, 0x02, 0x04, 0x03, 0x05, 0x05, 0x04, 0x04, 0x00, 0x00,
+                0x01, 0x7D, 0x01, 0x02, 0x03, 0x00, 0x04, 0x11, 0x05, 0x12, 0x21, 0x31, 0x41, 0x06, 0x13, 0x51,
+                0x61, 0x07, 0x22, 0x71
+            };
+            
+            testFile.write(jpegHeader, sizeof(jpegHeader));
+            testFile.close();
+            Logger.info("Created test pattern image");
+            success = true;
+        }
+    } catch (...) {
+        Logger.error("Exception in createTestImage()");
+    }
+    
+    xSemaphoreGive(sd_mutex);
+    return success;
+}
+
+/**
  * Update system information
  */
 void update_system_info() {
-  // Start with heap info
-  ESP.getHeapSize();
-  ESP.getFreeHeap();
-  ESP.getMaxAllocHeap();
-  
-  // PSRAM info
-  ESP.getPsramSize();
-  ESP.getFreePsram();
-  ESP.getMaxAllocPsram();
-  
-  // Other useful info
-  ESP.getFlashChipSize();
-  ESP.getCpuFreqMHz();
-  
-  // Update UI elements if needed
-  last_system_update = millis();
+    // Report memory stats
+    uint32_t freeHeap = ESP.getFreeHeap();
+    uint32_t freePsram = ESP.getFreePsram();
+    
+    // Log memory info
+    Logger.info("Memory - Heap: %lu KB free, PSRAM: %lu KB free", 
+              freeHeap / 1024, freePsram / 1024);
+    
+    // Log JPEG decoding stats
+    Logger.info("JPEG stats - Success: %d/%d (%.1f%%)", 
+              jpeg_decode_success_count, jpeg_decode_total_count, 
+              jpeg_decode_total_count > 0 ? 
+                (100.0f * jpeg_decode_success_count / jpeg_decode_total_count) : 0.0f);
+    
+    // Store last update time
+    last_system_update = millis();
 }
 
-// Create a simple test pattern image
-bool createTestImage() {
-  if (!sd_ready) return false;
-  
-  if (xSemaphoreTake(sd_mutex, pdMS_TO_TICKS(2000)) != pdTRUE) {
-    return false;
-  }
-  
-  bool success = false;
-  
-  try {
-    // Make sure directory exists
-    if (!SD_MMC.exists("/images")) {
-      SD_MMC.mkdir("/images");
+/**
+ * Main setup function
+ * Updated: 2025-06-20 12:07:40
+ * User: Chamil1983
+ */
+void setup() {
+    // Initialize serial communication immediately
+    Serial.begin(115200);
+    delay(1000);  // Give serial time to initialize
+    
+    Serial.println();
+    Serial.println("=== ESP32P4 Gallery Debug Output ===");
+    Serial.println("Starting initialization sequence with enhanced error handling...");
+    
+    // CRITICAL: Disable task watchdog immediately to prevent early crashes
+    esp_task_wdt_deinit();
+    
+    // Initialize file system (fixed to use 'storage' partition)
+    bool fsAvailable = initializeFileSystem();
+    
+    // Set up logger in a safe way
+    safeLoggerInit(fsAvailable);
+    
+    Logger.info("====================================");
+    Logger.info("ESP32P4 Image Gallery Starting");
+    Logger.info("Date: 2025-06-20 12:07:40 UTC");
+    Logger.info("User: Chamil1983");
+    Logger.info("====================================");
+    
+    // Create mutexes
+    sd_mutex = xSemaphoreCreateMutex();
+    jpeg_mutex = xSemaphoreCreateMutex();
+    ui_mutex = xSemaphoreCreateMutex();
+    Logger.info("System mutexes initialized");
+    
+    // Setup watchdog
+    Logger.info("Initializing enhanced watchdog system");
+    if (setup_watchdog()) {
+        Logger.info("Watchdog initialized successfully");
+    } else {
+        Logger.warn("Watchdog initialization failed - continuing without WDT");
     }
     
-    // Create a simple test file
-    File testFile = SD_MMC.open("/images/test_pattern.jpg", FILE_WRITE);
-    if (testFile) {
-      // This is a minimal valid JPEG file (JFIF header)
-      const uint8_t jpegHeader[] = {
-        0xFF, 0xD8, 0xFF, 0xE0, 0x00, 0x10, 0x4A, 0x46, 0x49, 0x46, 0x00, 0x01, 0x01, 0x01, 0x00, 0x60,
-        0x00, 0x60, 0x00, 0x00, 0xFF, 0xDB, 0x00, 0x43, 0x00, 0x08, 0x06, 0x06, 0x07, 0x06, 0x05, 0x08,
-        0x07, 0x07, 0x07, 0x09, 0x09, 0x08, 0x0A, 0x0C, 0x14, 0x0D, 0x0C, 0x0B, 0x0B, 0x0C, 0x19, 0x12,
-        0x13, 0x0F, 0x14, 0x1D, 0x1A, 0x1F, 0x1E, 0x1D, 0x1A, 0x1C, 0x1C, 0x20, 0x24, 0x2E, 0x27, 0x20,
-        0x22, 0x2C, 0x23, 0x1C, 0x1C, 0x28, 0x37, 0x29, 0x2C, 0x30, 0x31, 0x34, 0x34, 0x34, 0x1F, 0x27,
-        0x39, 0x3D, 0x38, 0x32, 0x3C, 0x2E, 0x33, 0x34, 0x32, 0xFF, 0xC0, 0x00, 0x11, 0x08, 0x00, 0x80,
-        0x00, 0x80, 0x03, 0x01, 0x22, 0x00, 0x02, 0x11, 0x01, 0x03, 0x11, 0x01, 0xFF, 0xC4, 0x00, 0x1F,
-        0x00, 0x00, 0x01, 0x05, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-        0x00, 0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0A, 0x0B, 0xFF, 0xC4, 0x00,
-        0xB5, 0x10, 0x00, 0x02, 0x01, 0x03, 0x03, 0x02, 0x04, 0x03, 0x05, 0x05, 0x04, 0x04, 0x00, 0x00,
-        0x01, 0x7D, 0x01, 0x02, 0x03, 0x00, 0x04, 0x11, 0x05, 0x12, 0x21, 0x31, 0x41, 0x06, 0x13, 0x51,
-        0x61, 0x07, 0x22, 0x71
-      };
-      
-      testFile.write(jpegHeader, sizeof(jpegHeader));
-      testFile.close();
-      Logger.info("Created test pattern image");
-      success = true;
+    // Initialize components in sequence with proper error handling
+    initializeWithRetry("LCD", setup_lcd, 2);
+    initializeWithRetry("Touch", setup_touch, 2);
+    initializeWithRetry("SD Card", setup_sd_card_reliable, 3);
+    initializeWithRetry("WiFi", setup_wifi_ap, 2);
+    initializeWithRetry("LVGL", setup_lvgl, 1);
+    initializeWithRetry("UI", setup_ui, 1);
+    initializeWithRetry("WebServer", setup_webserver, 2);
+    
+    // Create LVGL task
+    lvgl_task_handle = createTaskSafely(
+        lvgl_task,           // Function
+        "LVGL Task",         // Name
+        8192,                // Stack size
+        NULL,                // Parameters
+        1,                   // Priority
+        1                    // Core ID
+    );
+    
+    // Scan images if SD card is working
+    if (sd_ready) {
+        Logger.info("Scanning for images...");
+        scan_images();
+        Logger.info("Found %d images", image_count);
+        
+        if (image_count > 0 && lvgl_ready && ui_ready) {
+            Logger.info("Loading first image");
+            display_image(0);
+        }
+    } else {
+        Logger.warn("SD card not ready, skipping image scan");
     }
-  } catch (...) {
-    Logger.error("Exception in createTestImage()");
-  }
-  
-  xSemaphoreGive(sd_mutex);
-  return success;
+    
+    // Create slideshow task if we have functioning components
+    if (lvgl_ready && ui_ready) {
+        slideshow_task_handle = createTaskSafely(
+            slideshowTask,       // Function
+            "Slideshow Task",    // Name
+            4096,                // Stack size
+            NULL,                // Parameters
+            1,                   // Priority
+            0                    // Core ID
+        );
+    }
+    
+    Logger.info("Initialization complete, system status:");
+    Logger.info("LCD: %s, Touch: %s, SD: %s", 
+              lcd_ready ? "OK" : "FAIL",
+              touch_ready ? "OK" : "FAIL", 
+              sd_ready ? "OK" : "FAIL");
+    Logger.info("WiFi: %s, LVGL: %s, UI: %s, Server: %s",
+              wifi_ready ? "OK" : "FAIL",
+              lvgl_ready ? "OK" : "FAIL",
+              ui_ready ? "OK" : "FAIL",
+              server_ready ? "OK" : "FAIL");
 }
 
-// End of code
+/**
+ * Enhanced main loop with more robust connection handling
+ * Updated: 2025-06-20 12:07:40
+ * User: Chamil1983
+ */
+void loop() {
+    static uint32_t last_wdt_feed = 0;
+    static uint32_t last_status_update = 0;
+    static uint32_t last_dns_process = 0;
+    static uint32_t last_wifi_check = 0;
+    uint32_t now = millis();
+    
+    // Feed watchdog occasionally
+    if (now - last_wdt_feed >= 2000) {
+        feed_watchdog();
+        last_wdt_feed = now;
+    }
+    
+    // Process DNS requests more frequently for better captive portal
+    if (dnsServerActive && now - last_dns_process >= 30) {
+        try {
+            dnsServer.processNextRequest();
+        } catch (...) {
+            // Catch any DNS processing errors
+        }
+        last_dns_process = now;
+    }
+    
+    // Check WiFi status periodically 
+    if (now - last_wifi_check >= 10000) {
+        if (wifi_ready && WiFi.softAPgetStationNum() > 0) {
+            Logger.debug("WiFi: %d client(s) connected", WiFi.softAPgetStationNum());
+        }
+        last_wifi_check = now;
+    }
+    
+    // Handle web server clients - CRITICAL for connectivity
+    if (server_ready) {
+        try {
+            server.handleClient();
+        } catch (...) {
+            Logger.warn("Exception in server.handleClient() - continuing");
+        }
+    }
+    
+    // Periodically update system stats (every 30 seconds)
+    if (now - last_status_update >= 30000) {
+        update_system_info();
+        last_status_update = now;
+    }
+    
+    // Check if system reset is requested
+    if (reset_requested) {
+        Logger.info("System reset requested");
+        delay(200);
+        ESP.restart();
+    }
+    
+    // Short delay to prevent CPU hogging
+    delay(5);
+}
+
 #pragma GCC pop_options
