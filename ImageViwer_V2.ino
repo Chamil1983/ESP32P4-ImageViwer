@@ -111,15 +111,11 @@ bool upload_active = false;
 uint32_t upload_start_time = 0;
 uint32_t upload_size = 0;
 char upload_filename[64];
-// Add these to your global variables section
-int16_t jpeg_x_offset = 0;
-int16_t jpeg_y_offset = 0;
 
 // Mutex for thread safety
 SemaphoreHandle_t sd_mutex = NULL;
 SemaphoreHandle_t jpeg_mutex = NULL;
 SemaphoreHandle_t ui_mutex = NULL;
-SemaphoreHandle_t lvgl_mutex = NULL;
 
 // Control flags
 volatile bool wdt_enabled = false;
@@ -431,11 +427,6 @@ void setup() {
     sd_mutex = xSemaphoreCreateMutex();
     jpeg_mutex = xSemaphoreCreateMutex();
     ui_mutex = xSemaphoreCreateMutex();
-        // Create LVGL mutex
-    lvgl_mutex = xSemaphoreCreateMutex();
-    if (lvgl_mutex == NULL) {
-        Logger.error("Failed to create LVGL mutex");
-    }
     Logger.info("System mutexes initialized");
     
     // Setup watchdog with much safer implementation
@@ -928,21 +919,16 @@ void handle_touch_event(uint16_t x, uint16_t y) {
 }
 
 /**
- * Fixed slideshowTask with proper image cycling
- * Updated: 2025-06-19 12:09:31
+ * Fixed slideshowTask implementation with enhanced error handling
+ * Updated: 2025-06-17 11:58:18
  * User: Chamil1983
  */
 void slideshowTask(void *parameter) {
     Logger.info("Slideshow task started");
     
-    // Allow task to stabilize before entering main loop
-    delay(500);
-    Logger.info("Slideshow task initialized");
-    
     // Initialize variables
     uint32_t last_image_change = 0;
-    int last_displayed_image = -1;  // Track last displayed image
-    bool mutex_was_taken = false;
+    uint32_t slideshow_interval = 5000; // Default 5 seconds
     
     while (true) {
         uint32_t now = millis();
@@ -951,42 +937,29 @@ void slideshowTask(void *parameter) {
         if (slideshow_active && now - last_image_change >= slideshow_interval) {
             Logger.debug("Slideshow advancing to next image");
             
+            // Only proceed if we have images
             if (image_count > 0) {
-                // IMPORTANT FIX: Calculate next image index with proper cycling
+                // Calculate next image index with wrap-around
                 int next_image = (current_image + 1) % image_count;
                 
-                // If it's the same as last displayed, try to move forward
-                if (next_image == last_displayed_image && image_count > 1) {
-                    next_image = (next_image + 1) % image_count;
-                }
-                
-                // Clear mutex_was_taken flag before attempting to take mutex
-                mutex_was_taken = false;
-                
-                // Try to get SD mutex with timeout
-                if (xSemaphoreTake(sd_mutex, pdMS_TO_TICKS(2000)) == pdTRUE) {
-                    mutex_was_taken = true;
-                    
-                    try {
+                // Try to safely display the next image
+                try {
+                    // Get SD mutex with timeout to avoid deadlocks
+                    if (xSemaphoreTake(sd_mutex, pdMS_TO_TICKS(2000)) == pdTRUE) {
                         // Display next image
                         display_image(next_image);
-                        last_displayed_image = next_image;
                         
-                        // Log the advancement
+                        // Release SD mutex
+                        xSemaphoreGive(sd_mutex);
+                        
                         Logger.debug("Slideshow advanced to image %d", next_image);
-                    } catch (...) {
-                        Logger.error("Exception in slideshow task - continuing");
+                    } else {
+                        Logger.warn("Slideshow couldn't acquire SD mutex, skipping cycle");
                     }
+                } catch (...) {
+                    Logger.error("Exception in slideshow task - continuing");
                     
-                    // Release the mutex when done
-                    xSemaphoreGive(sd_mutex);
-                    mutex_was_taken = false;
-                } else {
-                    Logger.error("Failed to take SD mutex for JPEG loading");
-                }
-                
-                // Safety check - release mutex if somehow still held
-                if (mutex_was_taken) {
+                    // Make sure to release mutex in case of exception
                     xSemaphoreGive(sd_mutex);
                 }
             }
@@ -995,68 +968,66 @@ void slideshowTask(void *parameter) {
             last_image_change = now;
         }
         
-        // Feed watchdog to keep task active
+        // Feed watchdog to keep the task alive
         feed_watchdog();
         
         // Delay to prevent CPU hogging
-        delay(slideshow_active ? 50 : 200);
+        delay(100);
     }
 }
 
 /**
- * Find next valid image, skipping corrupted ones
- * Updated: 2025-06-18 13:20:43
+ * Helper function to find the next valid image for slideshow
+ * Updated: 2025-06-17 10:03:45
  * User: Chamil1983
  */
 int findNextValidImage(int currentIndex) {
-    if (image_count <= 0) {
-        return -1; // No images available
-    }
+    // Safety check
+    if (image_count <= 0) return -1;
     
-    // Start with the next image
+    // Start with next image index
     int nextIndex = (currentIndex + 1) % image_count;
-    int startIndex = nextIndex; // Remember where we started
+    int startIndex = nextIndex; // Remember where we started to avoid infinite loop
     
-    // Try to find a valid image
+    // Try each image until we find a valid one or tried them all
     do {
-        // Check if this image is valid without accessing SD card
-        const char* filename = image_list[nextIndex];
-        if (filename && strlen(filename) > 0 && 
-            (strstr(filename, ".jpg") || strstr(filename, ".jpeg"))) {
-            return nextIndex;
+        // Check if the image at this index is valid
+        if (image_list[nextIndex] && SD_MMC.exists(image_list[nextIndex])) {
+            bool isValid = isValidJPEG(image_list[nextIndex]);
+            if (isValid) {
+                return nextIndex; // Found a valid image
+            } else {
+                Logger.warn("Skipping invalid image at index %d: %s", 
+                          nextIndex, image_list[nextIndex]);
+            }
         }
         
-        // Try next image
+        // Move to next image
         nextIndex = (nextIndex + 1) % image_count;
-    } while (nextIndex != startIndex); // Avoid infinite loop
+    } while (nextIndex != startIndex); // Continue until we've checked all images
     
-    // If we got here, we couldn't find a valid image
-    return currentIndex; // Return original index as fallback
+    // If we get here, no valid image was found
+    return -1;
 }
 
 
 /**
- * Enhanced startSlideshow function
- * Updated: 2025-06-19 12:09:31
+ * Enhanced slideshow control functions with better error handling
+ * Updated: 2025-06-17 11:58:18
  * User: Chamil1983
  */
 void startSlideshow(uint32_t interval_ms) {
-    if (interval_ms < 3000) interval_ms = 3000; // Minimum 3 seconds
+    if (interval_ms < 2000) interval_ms = 2000; // Minimum 2 seconds for stability
     
     Logger.info("Starting slideshow with %d ms interval", interval_ms);
     
-    // Set slideshow parameters
+    // Set slideshow interval
     slideshow_interval = interval_ms;
     
     // Enable slideshow
     slideshow_active = true;
 }
 
-/**
- * Enhanced stopSlideshow function
- * Updated: 2025-06-19 12:09:31
- * User: Chamil1983
- */
 void stopSlideshow() {
     Logger.info("Stopping slideshow");
     
@@ -1083,323 +1054,511 @@ bool check_image_needs_rotation(int img_width, int img_height) {
 }
 
 /**
- * Enhanced LVGL task with proper error handling to fix core dumps
- * Updated: 2025-06-19 11:56:17
- * User: Chamil1983
+ * LVGL task function 
  */
 void lvgl_task(void *pvParameters) {
-    Logger.info("LVGL task started on core %d", xPortGetCoreID());
-    
-    // Add this task to watchdog if supported
-    esp_task_wdt_add(NULL);
-    
-    // Initialize timing variables
-    uint32_t last_tick = millis();
-    uint32_t last_watchdog_feed = millis();
-    
-    // Fixed scheduling to avoid hangs
-    const TickType_t xFrequency = pdMS_TO_TICKS(5);
-    
-    while (true) {
-        // Current time
-        uint32_t now = millis();
-        
-        // Feed the watchdog periodically
-        if (now - last_watchdog_feed >= 1000) {
-            esp_task_wdt_reset();
-            feed_watchdog();
-            last_watchdog_feed = now;
-        }
-        
-        // Run LVGL tasks safely
-        try {
-            // Calculate time elapsed
-            uint32_t elapsed = now - last_tick;
-            
-            // Take UI mutex with timeout
-            if (xSemaphoreTake(ui_mutex, pdMS_TO_TICKS(50)) == pdTRUE) {
-                // Update LVGL
-                lv_tick_inc(elapsed);
-                lv_timer_handler();
-                
-                // Release UI mutex
-                xSemaphoreGive(ui_mutex);
-            }
-            
-            // Update last tick time
-            last_tick = now;
-        } catch (...) {
-            // Log any exceptions but continue
-            Logger.error("Exception in LVGL task - continuing");
-            
-            // Make sure mutex is released in case of exception
-            xSemaphoreGive(ui_mutex);
-        }
-        
-        // Sleep to avoid CPU overload - use vTaskDelay for better scheduling
-        vTaskDelay(xFrequency);
+  while (true) {
+    // Protect with mutex
+    if (xSemaphoreTake(ui_mutex, pdMS_TO_TICKS(10)) == pdTRUE) {
+      lv_timer_handler(); // Handle LVGL tasks
+      xSemaphoreGive(ui_mutex);
     }
+    
+    vTaskDelay(pdMS_TO_TICKS(10)); // Run at ~100Hz
+  }
 }
 
 /**
- * Improved image scaling function with screen ratio consideration
- * Updated: 2025-06-19 10:41:58
- * User: Chamil1983
- */
-void calculateBestFit(uint16_t imageWidth, uint16_t imageHeight, uint16_t screenWidth, uint16_t screenHeight,
-                     uint16_t& scaledWidth, uint16_t& scaledHeight, uint16_t& xOffset, uint16_t& yOffset) {
-    // Calculate aspect ratio of image and screen
-    float imageRatio = (float)imageWidth / imageHeight;
-    float screenRatio = (float)screenWidth / screenHeight;
-    
-    // Determine if we need to fit by width or height
-    if (imageRatio > screenRatio) {
-        // Image is wider than screen (relative to height)
-        scaledWidth = screenWidth;
-        scaledHeight = (uint16_t)(screenWidth / imageRatio);
-        xOffset = 0;
-        yOffset = (screenHeight - scaledHeight) / 2;
-    } else {
-        // Image is taller than screen (relative to width)
-        scaledHeight = screenHeight;
-        scaledWidth = (uint16_t)(screenHeight * imageRatio);
-        xOffset = (screenWidth - scaledWidth) / 2;
-        yOffset = 0;
-    }
-}
-
-/**
- * Enhanced render_jpeg_file with proper screen scaling
- * Updated: 2025-06-19 12:09:31
+ * Enhanced JPEG rendering with better error handling
+ * Updated: 2025-06-16 10:32:38
  * User: Chamil1983
  */
 bool render_jpeg_file(const char* filename) {
-    if (!filename || strlen(filename) == 0) {
-        Logger.error("Invalid filename for rendering");
+    if (!sd_ready || !filename) {
+        Logger.error("SD card not ready or invalid filename");
         return false;
     }
     
-    Logger.info("Starting JPEG decoding for %s", filename);
-    
-    // Open file
-    File jpegFile = SD_MMC.open(filename, FILE_READ);
-    if (!jpegFile) {
-        Logger.error("Failed to open file: %s", filename);
-        return false;
-    }
-    
+    uint32_t startTime = millis();
     bool success = false;
     
-    try {
-        // Take JPEG mutex
-        if (xSemaphoreTake(jpeg_mutex, pdMS_TO_TICKS(1000)) != pdTRUE) {
-            Logger.error("Failed to take JPEG mutex for decoding");
-            jpegFile.close();
-            return false;
-        }
-        
-        // Open JPEG for decoding
-        success = jpeg.open(jpegFile, jpeg_draw_callback);
-        
-        if (success) {
-            // Get image dimensions
-            int width = jpeg.getWidth();
-            int height = jpeg.getHeight();
-            
-            // Calculate scale option based on image and screen dimensions
-            // CRITICAL: This handles both orientations to fit the screen properly
-            int options = 0; // Default: no scaling or rotation
-            
-            // Calculate aspect ratios to decide on best orientation
-            float img_aspect = (float)width / height;
-            float screen_aspect_portrait = 800.0f / 1280.0f;
-            float screen_aspect_landscape = 1280.0f / 800.0f;
-            
-            // Determine if the image needs rotation for best fit
-            bool needs_rotation = false;
-            
-            if (img_aspect > 1.0f) {  // Landscape image
-                if (img_aspect < screen_aspect_landscape) {
-                    // Landscape image fits better in portrait orientation
-                    needs_rotation = true;
-                }
-            } else {  // Portrait image
-                if (img_aspect > screen_aspect_portrait) {
-                    // Portrait image fits better in landscape orientation
-                    needs_rotation = false;
-                } else {
-                    // Standard portrait image fits better in portrait mode
-                    needs_rotation = false;
-                }
-            }
-            
-            // Set rotation option - 0=0°, 2=180°, 1=90°, 3=270°
-            // For most landscape images on a portrait screen, we use 3 (270°)
-            options = needs_rotation ? 3 : 0;
-            
-            // SCALE option bits:
-            // 0 = full size, 1 = half size, 2 = quarter size
-            // Add scale option based on image size to fit screen
-            int scaleOption = 0;  // Default: full size
-            
-            if (width > 1600 || height > 1600) {
-                scaleOption = 1;  // Half size for very large images
-            } else if (width > 3200 || height > 3200) {
-                scaleOption = 2;  // Quarter size for extremely large images
-            }
-            
-            // Combine rotation and scale options
-            options |= (scaleOption << 4);  // Scale in bits 4-5
-            
-            // Decode with calculated options
-            success = jpeg.decode(0, 0, options);
-            
-            if (success) {
-                // Log success with dimensions 
-                if (needs_rotation) {
-                    // Rotated dimensions are swapped
-                    Logger.info("JPEG decoded successfully (rotated): %dx%d -> %dx%d", 
-                              width, height, height, width);
-                } else {
-                    Logger.info("JPEG decoded successfully: %dx%d", width, height);
-                }
-            } else {
-                Logger.error("JPEG decoding failed");
-            }
-            
-            // Close JPEG decoder
-            jpeg.close();
-        } else {
-            Logger.error("Failed to open JPEG for decoding");
-        }
-        
-        // Release JPEG mutex
-        xSemaphoreGive(jpeg_mutex);
-        
-    } catch (...) {
-        Logger.error("Exception during JPEG decoding");
-        
-        // Make sure mutex is released and file closed
-        xSemaphoreGive(jpeg_mutex);
-        jpegFile.close();
+    // Perform robust validation before attempting decode
+    if (!isValidJPEG(filename)) {
+        Logger.error("JPEG validation failed: %s", filename);
         return false;
     }
     
-    // Close the file
+    // Take SD card mutex to ensure exclusive access
+    if (xSemaphoreTake(sd_mutex, pdMS_TO_TICKS(1000)) != pdTRUE) {
+        Logger.error("Failed to take SD mutex for JPEG loading");
+        return false;
+    }
+    
+    File jpegFile = SD_MMC.open(filename, FILE_READ);
+    if (!jpegFile) {
+        Logger.error("Failed to open JPEG file: %s", filename);
+        xSemaphoreGive(sd_mutex);
+        return false;
+    }
+    
+    size_t fileSize = jpegFile.size();
+    if (fileSize < 1024) {
+        Logger.error("File too small: %s (%d bytes)", filename, fileSize);
+        jpegFile.close();
+        xSemaphoreGive(sd_mutex);
+        return false;
+    }
+    
+    Logger.info("Starting JPEG decoding for %s (%u bytes)", filename, fileSize);
+    
+    // Initialize flags for image orientation
+    image_needs_rotation = false; // Default to no rotation
+    
+    // Try decoding at full resolution first
+    Logger.info("Decoding image at full resolution");
+    
+    // Store any JPEG decoding errors
+    const char* errorMsg = nullptr;
+    
+    // Set up error recovery
+    bool decodeFailed = false;
+    
+    // Try to decode the image with progressively lower quality if needed
+    if (jpeg.open(jpegFile, jpeg_draw_callback)) {
+        // Get image dimensions to determine if rotation is needed
+        int imgWidth = jpeg.getWidth();
+        int imgHeight = jpeg.getHeight();
+        
+        if (imgWidth <= 0 || imgHeight <= 0) {
+            Logger.error("Invalid image dimensions: %dx%d", imgWidth, imgHeight);
+            jpeg.close();
+            jpegFile.seek(0);
+            decodeFailed = true;
+        } else {
+            // Set rotation flag based on image orientation
+            // For a portrait screen (800x1280), rotate if image is landscape
+            image_needs_rotation = (imgWidth > imgHeight);
+            
+            // Attempt full resolution decode
+            if (jpeg.decode(0, 0, 0)) {
+                if (image_needs_rotation) {
+                    Logger.info("JPEG decoded successfully (rotated): %dx%d -> %dx%d",
+                                imgWidth, imgHeight, imgHeight, imgWidth);
+                } else {
+                    Logger.info("JPEG decoded successfully: %dx%d", imgWidth, imgHeight);
+                }
+                success = true;
+            } else {
+                Logger.warn("Full resolution decode failed, trying half resolution");
+                decodeFailed = true;
+                errorMsg = "Full resolution decode failed";
+            }
+        }
+    } else {
+        Logger.error("Failed to open JPEG for decoding");
+        decodeFailed = true;
+        errorMsg = "Failed to open JPEG decoder";
+    }
+    
+    // Try at half resolution if full resolution failed
+    if (decodeFailed) {
+        jpeg.close();
+        jpegFile.seek(0);
+        decodeFailed = false;
+        
+        if (jpeg.open(jpegFile, jpeg_draw_callback)) {
+            // Try with half resolution scaling
+            if (jpeg.decode(0, 0, JPEG_SCALE_HALF)) {
+                Logger.info("JPEG decoded successfully at half resolution");
+                success = true;
+            } else {
+                Logger.warn("Half resolution decode failed, trying quarter resolution");
+                decodeFailed = true;
+                errorMsg = "Half resolution decode failed";
+            }
+        }
+    }
+    
+    // Try at quarter resolution as last resort
+    if (decodeFailed) {
+        jpeg.close();
+        jpegFile.seek(0);
+        
+        if (jpeg.open(jpegFile, jpeg_draw_callback)) {
+            if (jpeg.decode(0, 0, JPEG_SCALE_QUARTER)) {
+                Logger.info("JPEG decoded successfully at quarter resolution");
+                success = true;
+            } else {
+                Logger.error("JPEG decode failed at all resolutions");
+                errorMsg = "All resolution attempts failed";
+            }
+        }
+    }
+    
+    // Always close the JPEG object
+    jpeg.close();
+    
+    // Close the file and release SD mutex
     jpegFile.close();
+    xSemaphoreGive(sd_mutex);
+    
+    // Log the time taken to decode
+    uint32_t decodeTime = millis() - startTime;
+    Logger.info("JPEG decoding took %lu ms, result: %s", 
+               decodeTime, success ? "success" : "failed");
+    
+    // If decode failed, capture error details
+    if (!success && errorMsg) {
+        Logger.error("JPEG decode error: %s for file: %s", errorMsg, filename);
+    }
     
     return success;
 }
 
 /**
- * JPEG drawing callback function using direct LCD API calls
- * Updated: 2025-06-19 12:09:31
+ * Enhanced JPEG draw callback with guaranteed memory safety
+ * Updated: 2025-06-17 10:03:45
  * User: Chamil1983
  */
 int jpeg_draw_callback(JPEGDRAW *pDraw) {
-    if (!lcd_ready) return 0;  // Skip if LCD not ready
+    if (!lcd_ready || !pDraw || !pDraw->pPixels) {
+        // Safety check - don't proceed if pointers are invalid
+        return 0;
+    }
     
-    // Logging for debug
-    if (pDraw->x >= 800 || pDraw->y >= 1280 || 
-        pDraw->x + pDraw->iWidth > 800 || pDraw->y + pDraw->iHeight > 1280) {
+    // Static timing control to prevent LCD driver overload
+    static uint32_t lastDrawTime = 0;
+    uint32_t currentTime = millis();
+    
+    // Add small delay between draw operations to prevent LCD driver errors
+    if (currentTime - lastDrawTime < 5) {
+        delay(5);
+    }
+    
+    // Verify draw dimensions are realistic
+    if (pDraw->iWidth <= 0 || pDraw->iHeight <= 0 ||
+        pDraw->iWidth > 1280 || pDraw->iHeight > 1280) {
+        Logger.error("Invalid JPEG draw dimensions: %dx%d", pDraw->iWidth, pDraw->iHeight);
+        return 0;
+    }
+    
+    // Make local copies of key variables to prevent race conditions
+    int imgWidth = jpeg.getWidth();
+    int imgHeight = jpeg.getHeight();
+    
+    // Skip drawing if invalid dimensions
+    if (imgWidth <= 0 || imgHeight <= 0 || imgWidth > 5000 || imgHeight > 5000) {
+        Logger.error("Invalid JPEG dimensions: %dx%d", imgWidth, imgHeight);
+        return 0;
+    }
+    
+    // Make local copy of rotation flag to prevent race condition
+    bool needsRotation = image_needs_rotation;
+    
+    // Create a local failure flag we can use throughout the function
+    bool drawFailed = false;
+    
+    // When not rotating, simpler direct drawing path
+    if (!needsRotation) {
+        // Calculate centering offsets
+        int centerX = (lcd.width() - imgWidth) / 2;
+        int centerY = (lcd.height() - imgHeight) / 2;
         
-        Logger.warn("Draw coordinates out of bounds: x=%d, y=%d, w=%d, h=%d", 
-                  pDraw->x, pDraw->y, pDraw->iWidth, pDraw->iHeight);
-        // Continue anyway - the driver will clip it
-    }
-    
-    // Use the lcd object directly (from your driver)
-    // This is critical - using the lcd instance instead of an undefined tft object
-    lcd.lcd_draw_bitmap(
-        pDraw->x,                  // Starting X position
-        pDraw->y,                  // Starting Y position
-        pDraw->x + pDraw->iWidth,  // End X position
-        pDraw->y + pDraw->iHeight, // End Y position
-        (uint16_t*)pDraw->pPixels  // Pixel data
-    );
-    
-    // Return 1 to indicate success
-    return 1;
-}
-
-
-/**
- * Fixed display_image function to center images properly
- * Updated: 2025-06-19 12:09:31
- * User: Chamil1983
- */
-void display_image(int index) {
-    if (index < 0 || index >= image_count) {
-        Logger.error("Invalid image index: %d", index);
-        return;
-    }
-    
-    // Log which image is being displayed
-    Logger.info("Displaying image %d: %s", index, image_list[index]);
-    
-    // Update current image index
-    current_image = index;
-    
-    // Clear screen for clean display
-    clearLCDScreen();
-    
-    // Check if mutex is already held
-    bool mutex_taken_externally = (xSemaphoreGetMutexHolder(sd_mutex) == xTaskGetCurrentTaskHandle());
-    
-    // Take SD mutex if not already held
-    bool mutex_taken = false;
-    if (!mutex_taken_externally) {
-        mutex_taken = (xSemaphoreTake(sd_mutex, pdMS_TO_TICKS(2000)) == pdTRUE);
-        if (!mutex_taken) {
-            Logger.error("Failed to take SD mutex for JPEG loading");
-            displayErrorMessage("Failed to access SD card");
-            return;
+        // Ensure non-negative values
+        centerX = max(0, centerX);
+        centerY = max(0, centerY);
+        
+        // Calculate final drawing coordinates with bounds checking
+        int x = pDraw->x + centerX;
+        int y = pDraw->y + centerY;
+        
+        // Safety check - ensure we're drawing within screen boundaries
+        if (x >= 0 && y >= 0 && 
+            x + pDraw->iWidth <= lcd.width() && 
+            y + pDraw->iHeight <= lcd.height()) {
+            
+            // Try to draw with error handling
+            try {
+                lcd.lcd_draw_bitmap(x, y, 
+                                   x + pDraw->iWidth, 
+                                   y + pDraw->iHeight, 
+                                   (uint16_t*)pDraw->pPixels);
+            } catch (...) {
+                Logger.error("Exception in direct LCD drawing");
+                drawFailed = true;
+            }
+        } else {
+            Logger.warn("Draw coordinates out of bounds: x=%d, y=%d, w=%d, h=%d", 
+                      x, y, pDraw->iWidth, pDraw->iHeight);
+            drawFailed = true;
+        }
+    } else {
+        // Handling rotation - more complex with additional memory allocation
+        int rotatedWidth = imgHeight;
+        int rotatedHeight = imgWidth;
+        
+        // Center the rotated image
+        int centerX = (lcd.width() - rotatedWidth) / 2;
+        int centerY = (lcd.height() - rotatedHeight) / 2;
+        
+        // Ensure non-negative values
+        centerX = max(0, centerX);
+        centerY = max(0, centerY);
+        
+        // Calculate position in rotated space
+        int rotX = centerX + pDraw->y;
+        int rotY = centerY + (imgWidth - pDraw->x - pDraw->iWidth);
+        
+        // Calculate dimensions of rotated block with sanity check
+        int rotWidth = pDraw->iHeight;
+        int rotHeight = pDraw->iWidth;
+        
+        // Safety check - verify rotation dimensions
+        if (rotWidth <= 0 || rotHeight <= 0 || rotWidth * rotHeight > 100000) {
+            Logger.error("Invalid rotation dimensions: %dx%d", rotWidth, rotHeight);
+            return 0;
+        }
+        
+        // Try to allocate rotation buffer - stack for small, heap for large
+        uint16_t* rotatedBlock = nullptr;
+        bool useStack = false;
+        uint16_t stackBuffer[64]; // 128-byte stack buffer for small blocks
+        
+        if (rotWidth * rotHeight <= 64) {
+            // Use stack buffer for tiny blocks
+            rotatedBlock = stackBuffer;
+            useStack = true;
+        } else {
+            // Try PSRAM first
+            rotatedBlock = (uint16_t*)ps_calloc(rotWidth * rotHeight, sizeof(uint16_t));
+            
+            // If PSRAM fails, try regular heap
+            if (!rotatedBlock) {
+                rotatedBlock = (uint16_t*)calloc(rotWidth * rotHeight, sizeof(uint16_t));
+                
+                // If allocation failed, report error and skip drawing
+                if (!rotatedBlock) {
+                    Logger.error("Failed to allocate rotation buffer (%d bytes)",
+                              rotWidth * rotHeight * sizeof(uint16_t));
+                    return 0;
+                }
+            }
+        }
+        
+        // Safety check - verify our buffer allocation
+        if (!rotatedBlock) {
+            Logger.error("Rotation buffer is null despite checks");
+            return 0;
+        }
+        
+        // Rotate the block with safety bounds checking
+        uint16_t* pixels = (uint16_t*)pDraw->pPixels;
+        for (int y = 0; y < pDraw->iHeight; y++) {
+            for (int x = 0; x < pDraw->iWidth; x++) {
+                // For 90° rotation: new_x = y, new_y = width - 1 - x
+                int newX = y;
+                int newY = pDraw->iWidth - 1 - x;
+                
+                // Strict bounds checking to prevent buffer overflow
+                if (newX >= 0 && newX < rotWidth && 
+                    newY >= 0 && newY < rotHeight &&
+                    y < pDraw->iHeight && x < pDraw->iWidth &&
+                    y * pDraw->iWidth + x < pDraw->iWidth * pDraw->iHeight) {
+                    
+                    rotatedBlock[newY * rotWidth + newX] = pixels[y * pDraw->iWidth + x];
+                }
+            }
+        }
+        
+        // Draw if coordinates are within screen boundaries
+        if (rotX >= 0 && rotY >= 0 && 
+            rotX + rotWidth <= lcd.width() && 
+            rotY + rotHeight <= lcd.height()) {
+                
+            // Try to draw with error handling
+            try {
+                lcd.lcd_draw_bitmap(rotX, rotY, 
+                                  rotX + rotWidth, 
+                                  rotY + rotHeight, 
+                                  rotatedBlock);
+            } catch (...) {
+                Logger.error("Exception in rotated LCD drawing");
+                drawFailed = true;
+            }
+        } else {
+            Logger.warn("Rotated draw coordinates out of bounds: x=%d, y=%d, w=%d, h=%d", 
+                      rotX, rotY, rotWidth, rotHeight);
+            drawFailed = true;
+        }
+        
+        // Clean up memory if we used heap allocation
+        if (!useStack && rotatedBlock) {
+            free(rotatedBlock);
+            rotatedBlock = nullptr;
         }
     }
     
-    // Try to render the JPEG
-    bool success = render_jpeg_file(image_list[index]);
+    // Update timing tracker
+    lastDrawTime = currentTime;
     
-    // Release mutex if we took it
-    if (mutex_taken) {
-        xSemaphoreGive(sd_mutex);
-    }
-    
-    // Update UI with result
-    updateStatusAfterImageLoad(index, success);
-    
-    if (success) {
-        Logger.info("Successfully displayed image %d", index);
-    } else {
-        Logger.error("Failed to display image %d", index);
-        displayErrorMessage("Image could not be displayed");
-    }
+    // Return 0 (failure) on drawing errors, otherwise 1 (success)
+    return drawFailed ? 0 : 1;
 }
 
 /**
- * SD card recovery function when mutex operations fail
- * Updated: 2025-06-18 13:20:43
+ * Enhanced display_image function with better error recovery
+ * Updated: 2025-06-17 10:03:45
  * User: Chamil1983
  */
-void emergency_sd_mutex_recovery() {
-    Logger.warn("Attempting emergency SD mutex recovery");
-    
-    // First try normal semaphore give in case mutex is stuck
-    xSemaphoreGive(sd_mutex);
-    
-    // Create a new mutex as a last resort
-    SemaphoreHandle_t old_mutex = sd_mutex;
-    sd_mutex = xSemaphoreCreateMutex();
-    
-    if (sd_mutex == NULL) {
-        // Failed to create new mutex, restore old one
-        sd_mutex = old_mutex;
-        Logger.error("Failed to create new SD mutex in recovery");
-    } else {
-        // Successfully created new mutex
-        vSemaphoreDelete(old_mutex);
-        Logger.info("SD mutex recreated in recovery");
+void display_image(int index) {
+    if (!sd_ready || index < 0 || index >= image_count) {
+        Logger.error("Cannot display image - invalid index %d or SD not ready", index);
+        return;
     }
+    
+    // Prevent concurrent image loading
+    static SemaphoreHandle_t displaySemaphore = NULL;
+    if (displaySemaphore == NULL) {
+        displaySemaphore = xSemaphoreCreateMutex();
+    }
+    
+    // Try to take the display semaphore with timeout
+    if (xSemaphoreTake(displaySemaphore, pdMS_TO_TICKS(100)) != pdTRUE) {
+        Logger.warn("Image loading already in progress - ignoring request");
+        return;
+    }
+    
+    // Feed watchdog before starting image display process
+    feed_watchdog();
+    
+    // Set flag to indicate we're loading an image
+    image_loading = true;
+    
+    // Store current backlight level
+    uint8_t originalBrightness = 255; // Default to full brightness
+    
+    // Update current image index and UI
+    current_image = index;
+    
+    // Log display attempt
+    Logger.info("Displaying image %d: %s", index, image_list[index]);
+    updateImageCounter(index);
+    
+    // Dim backlight during transition
+    lcd.example_bsp_set_lcd_backlight(50); // Dim to 50/255
+    
+    // Clear the screen completely with enhanced clearing function
+    clearLCDScreen();
+    
+    // Make a local copy of the filename for safety
+    char localFilename[128] = {0};
+    strncpy(localFilename, image_list[index], sizeof(localFilename) - 1);
+    
+    // Revalidate the file before loading
+    bool isValid = isValidJPEG(localFilename);
+    if (!isValid) {
+        Logger.error("Image file failed validation check: %s", localFilename);
+        // Display error message
+        displayErrorMessage("Image failed validation");
+        
+        // Restore backlight
+        lcd.example_bsp_set_lcd_backlight(originalBrightness);
+        
+        // Update UI status
+        updateStatusAfterImageLoad(index, false);
+        
+        // Release resources
+        image_loading = false;
+        xSemaphoreGive(displaySemaphore);
+        return;
+    }
+    
+    // Add a short delay to ensure screen clearing is complete
+    delay(50);
+    
+    // Try to acquire JPEG mutex with a reasonable timeout
+    if (xSemaphoreTake(jpeg_mutex, pdMS_TO_TICKS(2000)) != pdTRUE) {
+        Logger.error("Failed to take JPEG mutex for display");
+        displayErrorMessage("Resource contention error");
+        
+        // Restore backlight
+        lcd.example_bsp_set_lcd_backlight(originalBrightness);
+        
+        // Update UI status
+        updateStatusAfterImageLoad(index, false);
+        
+        // Release resources
+        image_loading = false;
+        xSemaphoreGive(displaySemaphore);
+        return;
+    }
+    
+    // Track timing
+    uint32_t startTime = millis();
+    bool success = false;
+    
+    // Safely decode and render JPEG
+    try {
+        success = render_jpeg_file(localFilename);
+        
+        if (!success) {
+            Logger.error("Failed to render image %d: %s", index, localFilename);
+        }
+    } catch (...) {
+        Logger.error("Exception during JPEG rendering");
+        success = false;
+    }
+    
+    // Always release the mutex
+    xSemaphoreGive(jpeg_mutex);
+    
+    // Log timing information
+    uint32_t renderTime = millis() - startTime;
+    if (renderTime > 500) {
+        Logger.warn("JPEG rendering took %lu ms", renderTime);
+    } else {
+        Logger.debug("JPEG rendering took %lu ms", renderTime);
+    }
+    
+    // Fade the backlight back in if image rendering was successful
+    if (success) {
+        // Wait for any pending operations to complete
+        delay(20);
+        
+        // Gradually restore backlight with smooth fade-in effect
+        const int fadeStep = 10;
+        const int fadeDelay = 10; // ms between steps
+        
+        for (int brightness = 50; brightness <= originalBrightness; brightness += fadeStep) {
+            lcd.example_bsp_set_lcd_backlight(brightness);
+            delay(fadeDelay);
+        }
+        
+        // Ensure we're at the target brightness
+        lcd.example_bsp_set_lcd_backlight(originalBrightness);
+        
+        Logger.info("Successfully displayed image %d", index);
+    } else {
+        // Immediately restore backlight on failure
+        lcd.example_bsp_set_lcd_backlight(originalBrightness);
+        
+        // Display a "broken image" icon or message on screen
+        displayErrorMessage("Image could not be displayed");
+        
+        Logger.error("Failed to display image %d", index);
+    }
+    
+    // Update status in UI
+    updateStatusAfterImageLoad(index, success);
+    
+    // Done loading
+    image_loading = false;
+    
+    // Release the display semaphore
+    xSemaphoreGive(displaySemaphore);
+    
+    // Feed watchdog after completion
+    feed_watchdog();
 }
 
 
@@ -1581,66 +1740,162 @@ void clearLCDScreen() {
 
 
 /**
- * Enhanced image validation function that efficiently checks JPEGs
- * Updated: 2025-06-18 13:20:43
+ * Enhanced JPEG file validation with comprehensive checks
+ * Updated: 2025-06-17 10:03:45
  * User: Chamil1983
  */
 bool isValidJPEG(const char* filename) {
-    if (!filename || strlen(filename) == 0) {
+    if (!sd_ready || !filename) {
+        Logger.error("SD card not ready or null filename");
         return false;
     }
     
-    // Check file extension
-    if (!strstr(filename, ".jpg") && !strstr(filename, ".jpeg")) {
+    // Check if file exists
+    if (!SD_MMC.exists(filename)) {
+        Logger.error("File not found: %s", filename);
         return false;
     }
     
-    // Use static buffer to avoid excessive allocations
-    static uint8_t header[12];
-    bool result = false;
-    
-    // Open file and check minimum size
-    File file = SD_MMC.open(filename, FILE_READ);
-    if (!file) {
-        Logger.warn("Failed to open file for validation: %s", filename);
+    File jpegFile = SD_MMC.open(filename, FILE_READ);
+    if (!jpegFile) {
+        Logger.error("Failed to open file: %s", filename);
         return false;
     }
     
-    size_t fileSize = file.size();
-    if (fileSize < 100) {  // Minimum size for a valid JPEG
-        file.close();
-        Logger.warn("File too small to be valid JPEG: %s (%d bytes)", filename, fileSize);
+    // Check file size - reject if too small or suspiciously large
+    size_t fileSize = jpegFile.size();
+    if (fileSize < 1024) { // Minimum 1KB for a valid JPEG
+        Logger.error("File too small to be valid JPEG: %s (%d bytes)", filename, fileSize);
+        jpegFile.close();
         return false;
     }
     
-    // Read header bytes (SOI marker: 0xFF 0xD8)
-    if (file.read(header, 2) == 2) {
-        if (header[0] == 0xFF && header[1] == 0xD8) {
-            // It has a valid JPEG header
-            
-            // Now check for EOI marker at the end (0xFF 0xD9)
-            if (fileSize > 2) {
-                // Seek to end - 2 bytes
-                if (file.seek(fileSize - 2)) {
-                    if (file.read(header, 2) == 2) {
-                        if (header[0] == 0xFF && header[1] == 0xD9) {
-                            // Valid EOI marker
-                            result = true;
-                        } else {
-                            Logger.warn("JPEG missing EOI marker - may be corrupted: %s", filename);
-                            // We'll still try to decode it, so return true
-                            result = true;
-                        }
-                    }
-                }
+    if (fileSize > 5000000) { // 5MB max
+        Logger.warn("File too large for reliable display: %s (%d bytes)", filename, fileSize);
+        jpegFile.close();
+        return false;
+    }
+    
+    // Check JPEG header (SOI marker)
+    uint8_t header[4];
+    size_t bytesRead = jpegFile.readBytes((char*)header, 4);
+    if (bytesRead != 4) {
+        Logger.error("Couldn't read header from: %s", filename);
+        jpegFile.close();
+        return false;
+    }
+    
+    if (header[0] != 0xFF || header[1] != 0xD8) {
+        Logger.error("Invalid JPEG header (not FF D8): %s", filename);
+        jpegFile.close();
+        return false;
+    }
+    
+    // Check for APP0/APP1 marker (should be 0xFF 0xE0 or 0xFF 0xE1)
+    if (header[2] != 0xFF) {
+        Logger.warn("Suspicious JPEG structure in: %s", filename);
+        jpegFile.close();
+        return false;
+    }
+    
+    // Scan for key JPEG markers to validate file integrity
+    const size_t MAX_SCAN_SIZE = 2048; // Scan first 2KB for markers
+    const size_t scanSize = min((int)fileSize, (int)MAX_SCAN_SIZE);
+    
+    // Reset file position
+    jpegFile.seek(0);
+    
+    // Read chunk for scanning - use stack buffer for small files, heap for larger ones
+    uint8_t* buffer = nullptr;
+    uint8_t stackBuffer[512];
+    
+    if (scanSize <= sizeof(stackBuffer)) {
+        buffer = stackBuffer;
+    } else {
+        // Try PSRAM first, then heap
+        buffer = (uint8_t*)ps_malloc(scanSize);
+        if (!buffer) {
+            buffer = (uint8_t*)malloc(scanSize);
+            if (!buffer) {
+                Logger.error("Failed to allocate scan buffer");
+                jpegFile.close();
+                return false;
             }
-        } else {
-            Logger.warn("Invalid JPEG header in file: %s", filename);
         }
     }
     
-    file.close();
-    return result;
+    bytesRead = jpegFile.readBytes((char*)buffer, scanSize);
+    if (bytesRead != scanSize) {
+        Logger.error("Failed to read scan data from: %s", filename);
+        if (buffer != stackBuffer && buffer != nullptr) {
+            free(buffer);
+        }
+        jpegFile.close();
+        return false;
+    }
+    
+    // Look for common JPEG markers
+    bool foundAppMarker = false;  // APP0-APP15 (0xE0-0xEF)
+    bool foundDQT = false;        // Define Quantization Table (0xDB)
+    bool foundSOF = false;        // Start of Frame (0xC0-0xCF, except 0xC4, 0xC8, 0xCC)
+    
+    for (size_t i = 0; i < scanSize - 1; i++) {
+        // Valid marker should start with 0xFF followed by non-zero code
+        if (buffer[i] == 0xFF && buffer[i+1] != 0x00 && buffer[i+1] != 0xFF) {
+            uint8_t markerType = buffer[i+1];
+            
+            // APP0-APP15 markers (0xE0-0xEF)
+            if (markerType >= 0xE0 && markerType <= 0xEF) {
+                foundAppMarker = true;
+            }
+            
+            // Define Quantization Table (0xDB)
+            if (markerType == 0xDB) {
+                foundDQT = true;
+            }
+            
+            // Start of Frame markers
+            if ((markerType >= 0xC0 && markerType <= 0xCF) && 
+                markerType != 0xC4 && markerType != 0xC8 && markerType != 0xCC) {
+                foundSOF = true;
+            }
+            
+            // If we found all required markers, we can stop scanning
+            if (foundAppMarker && foundDQT && foundSOF) {
+                break;
+            }
+        }
+    }
+    
+    if (buffer != stackBuffer && buffer != nullptr) {
+        free(buffer);
+    }
+    
+    // A valid JPEG should have at least APP marker and DQT
+    bool isValid = foundAppMarker && foundDQT;
+    
+    // Check for EOI marker (0xFF 0xD9) at end of file
+    bool hasValidEnd = false;
+    if (fileSize > 2) {
+        uint8_t footer[2];
+        jpegFile.seek(fileSize - 2);
+        if (jpegFile.readBytes((char*)footer, 2) == 2) {
+            hasValidEnd = (footer[0] == 0xFF && footer[1] == 0xD9);
+            
+            if (!hasValidEnd) {
+                Logger.warn("JPEG missing EOI marker - may be corrupted: %s", filename);
+            }
+        }
+    }
+    
+    jpegFile.close();
+    
+    if (!isValid) {
+        Logger.error("File failed JPEG structure validation: %s", filename);
+    }
+    
+    // If file has serious structural issues, return false
+    return isValid && (hasValidEnd || fileSize < 50000); // Be more strict with larger files
 }
 
 /**
@@ -2532,17 +2787,10 @@ bool setup_webserver() {
             }
         });
         
-// Improved slideshow control handler with proper mutex handling
-// Fixed slideshow control handler
+// Slideshow control handler with more reliable response handling
 server.on("/slideshow", HTTP_POST, []() {
     String action = server.arg("action");
     Logger.info("Slideshow control request: %s", action.c_str());
-    
-    // CRITICAL: Stop any currently running slideshow first
-    if (slideshow_active && action == "start") {
-        stopSlideshow();
-        delay(500); // Give time for slideshow task to settle
-    }
     
     if (action == "start") {
         uint32_t interval = 5000; // Default 5 seconds
@@ -2550,12 +2798,7 @@ server.on("/slideshow", HTTP_POST, []() {
         // Check if interval was provided
         if (server.hasArg("interval")) {
             interval = server.arg("interval").toInt();
-            // Enforce minimum interval for stability
-            if (interval < 3000) interval = 3000;
         }
-        
-        // Start with first image for better UX
-        current_image = 0;
         
         startSlideshow(interval);
         server.send(200, "text/plain", "Slideshow started with " + String(interval) + "ms interval");
